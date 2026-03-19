@@ -99,5 +99,49 @@ const options: swaggerJsdoc.Options = {
 const swaggerSpec = swaggerJsdoc(options);
 
 export const setupSwagger = (app: Express) => {
-  app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+  const swaggerOptions = {
+    swaggerOptions: {
+      url: "/api-docs.json", // if you want to serve the spec separately
+    },
+  };
+
+  // Serve the Swagger spec as JSON
+  app.get("/api-docs.json", (req, res) => {
+    res.setHeader("Content-Type", "application/json");
+    res.send(swaggerSpec);
+  });
+
+  // Custom HTML with CDN links
+  app.use("/api-docs", swaggerUi.serve, (req:any, res:any, next:any) => {
+    if (req.method === "GET" && req.url === "/") {
+      return res.send(`
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <title>Ayonaire API Documentation</title>
+            <link rel="stylesheet" type="text/css" href="https://unpkg.com/swagger-ui-dist@3/swagger-ui.css">
+          </head>
+          <body>
+            <div id="swagger-ui"></div>
+            <script src="https://unpkg.com/swagger-ui-dist@3/swagger-ui-bundle.js"></script>
+            <script src="https://unpkg.com/swagger-ui-dist@3/swagger-ui-standalone-preset.js"></script>
+            <script>
+              window.onload = function() {
+                SwaggerUIBundle({
+                  url: "/api-docs.json",
+                  dom_id: '#swagger-ui',
+                  presets: [
+                    SwaggerUIBundle.presets.apis,
+                    SwaggerUIStandalonePreset
+                  ],
+                  layout: "StandaloneLayout"
+                });
+              };
+            </script>
+          </body>
+        </html>
+      `);
+    }
+    next();
+  });
 };
