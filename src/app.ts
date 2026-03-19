@@ -35,6 +35,6 @@ app.use("/api-docs", express.static(path.join(process.cwd(), "public/swagger")))
 // Optional: redirect root to docs
 app.get("/", (req, res) => res.redirect("/api-docs"));
 
-app.use(errorHanlder);
+app.use(errorHanlder); 
 
 export default app;

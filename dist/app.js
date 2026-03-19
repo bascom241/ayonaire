@@ -10,7 +10,7 @@ import cohortRouter from "./routes/cohort.route.js";
 import paymentRouter from "./routes/payment.route.js";
 import enrollmentRouter from "./routes/enrollment.route.js";
 import quizRouter from "./routes/quiz.route.js";
-import { setupSwagger } from "./docs/index.js";
+import path from "path";
 const app = express();
 app.use(express.json());
 app.use(requestLogger);
@@ -23,6 +23,9 @@ app.use("/api/v1/cohort", cohortRouter);
 app.use("/api/v1/payment", paymentRouter);
 app.use("/api/v1/enrollment", enrollmentRouter);
 app.use("/api/v1/quiz", quizRouter);
+// Serve Swagger static folder (Vercel-friendly)
+app.use("/api-docs", express.static(path.join(process.cwd(), "public/swagger")));
+// Optional: redirect root to docs
+app.get("/", (req, res) => res.redirect("/api-docs"));
 app.use(errorHanlder);
-setupSwagger(app);
 export default app;
