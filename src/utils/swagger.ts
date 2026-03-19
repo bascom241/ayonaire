@@ -1,4 +1,7 @@
 import { Express } from "express";
+import express from "express"
+import fs from "fs";
+import path from "path";
 import swaggerJsdoc from "swagger-jsdoc";
 import swaggerUi from "swagger-ui-express";
 import packageJson from "../../package.json" with  { type: "json" };
@@ -96,52 +99,23 @@ const options: swaggerJsdoc.Options = {
   apis: [], 
 };
 
-const swaggerSpec = swaggerJsdoc(options);
+// Generate swagger.json on server start
+const generateSwaggerJSON = () => {
+  const swaggerSpec = swaggerJsdoc(options);
+  const outputDir = path.join(process.cwd(), "public/swagger");
+  fs.mkdirSync(outputDir, { recursive: true });
+  fs.writeFileSync(path.join(outputDir, "swagger.json"), JSON.stringify(swaggerSpec, null, 2));
+  console.log("swagger.json generated ✅");
+};
 
 export const setupSwagger = (app: Express) => {
-  const swaggerOptions = {
-    swaggerOptions: {
-      url: "/api-docs.json", // if you want to serve the spec separately
-    },
-  };
+  // Generate swagger.json automatically
+  generateSwaggerJSON();
 
-  // Serve the Swagger spec as JSON
-  app.get("/api-docs.json", (req, res) => {
-    res.setHeader("Content-Type", "application/json");
-    res.send(swaggerSpec);
-  });
+  // Serve static Swagger UI folder
+  const swaggerPath = path.join(process.cwd(), "public/swagger");
+  app.use("/api-docs", express.static(swaggerPath));
 
-  // Custom HTML with CDN links
-  app.use("/api-docs", swaggerUi.serve, (req:any, res:any, next:any) => {
-    if (req.method === "GET" && req.url === "/") {
-      return res.send(`
-        <!DOCTYPE html>
-        <html>
-          <head>
-            <title>Ayonaire API Documentation</title>
-            <link rel="stylesheet" type="text/css" href="https://unpkg.com/swagger-ui-dist@3/swagger-ui.css">
-          </head>
-          <body>
-            <div id="swagger-ui"></div>
-            <script src="https://unpkg.com/swagger-ui-dist@3/swagger-ui-bundle.js"></script>
-            <script src="https://unpkg.com/swagger-ui-dist@3/swagger-ui-standalone-preset.js"></script>
-            <script>
-              window.onload = function() {
-                SwaggerUIBundle({
-                  url: "/api-docs.json",
-                  dom_id: '#swagger-ui',
-                  presets: [
-                    SwaggerUIBundle.presets.apis,
-                    SwaggerUIStandalonePreset
-                  ],
-                  layout: "StandaloneLayout"
-                });
-              };
-            </script>
-          </body>
-        </html>
-      `);
-    }
-    next();
-  });
+  // Optional: redirect root to docs
+  app.get("/", (req, res) => res.redirect("/api-docs"));
 };
