@@ -1,5 +1,7 @@
+import express from "express";
+import fs from "fs";
+import path from "path";
 import swaggerJsdoc from "swagger-jsdoc";
-import swaggerUi from "swagger-ui-express";
 import packageJson from "../../package.json" with { type: "json" };
 const options = {
     definition: {
@@ -86,7 +88,20 @@ const options = {
     },
     apis: [],
 };
-const swaggerSpec = swaggerJsdoc(options);
+// Generate swagger.json on server start
+const generateSwaggerJSON = () => {
+    const swaggerSpec = swaggerJsdoc(options);
+    const outputDir = path.join(process.cwd(), "public/swagger");
+    fs.mkdirSync(outputDir, { recursive: true });
+    fs.writeFileSync(path.join(outputDir, "swagger.json"), JSON.stringify(swaggerSpec, null, 2));
+    console.log("swagger.json generated ✅");
+};
 export const setupSwagger = (app) => {
-    app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+    // Generate swagger.json automatically
+    generateSwaggerJSON();
+    // Serve static Swagger UI folder
+    const swaggerPath = path.join(process.cwd(), "public/swagger");
+    app.use("/api-docs", express.static(swaggerPath));
+    // Optional: redirect root to docs
+    app.get("/", (req, res) => res.redirect("/api-docs"));
 };
