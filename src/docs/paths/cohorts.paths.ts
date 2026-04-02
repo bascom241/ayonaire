@@ -1,4 +1,4 @@
-export default {
+const cohortPaths = {
   "/api/v1/cohort/create": {
     post: {
       tags: ["Cohorts"],
@@ -136,3 +136,6 @@ export default {
     }
   }
 };
+
+
+export default cohortPaths;

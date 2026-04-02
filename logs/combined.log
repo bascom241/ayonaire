@@ -184,3 +184,11 @@
 2026-03-21T19:08:34.379Z [[32minfo[39m]: PUT /api/v1/course/save-to-draft [31m500[39m 40ms
 2026-03-21T19:12:05.568Z [[32minfo[39m]: PUT /api/v1/course/save-to-draft [33m400[39m 40ms
 2026-03-21T19:12:09.063Z [[32minfo[39m]: PUT /api/v1/course/save-to-draft [33m400[39m 24ms
+2026-04-02T08:46:09.315Z [[32minfo[39m]: GET /api-docs [36m301[39m 5ms
+2026-04-02T08:46:09.331Z [[32minfo[39m]: GET /api-docs/ [32m200[39m 5ms
+2026-04-02T08:46:11.637Z [[32minfo[39m]: GET /api-docs.json [33m404[39m 4ms
+2026-04-02T08:46:11.748Z [[32minfo[39m]: GET /favicon.ico [33m404[39m 2ms
+2026-04-02T08:46:19.090Z [[32minfo[39m]: GET /api-docs/ [36m304[39m 2ms
+2026-04-02T08:46:19.770Z [[32minfo[39m]: GET /api-docs.json [33m404[39m 1ms
+2026-04-02T08:46:41.836Z [[32minfo[39m]: GET /api-docs/ [32m200[39m 2ms
+2026-04-02T08:46:42.704Z [[32minfo[39m]: GET /api-docs/swagger.json [33m404[39m 2ms
