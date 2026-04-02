@@ -134,3 +134,4 @@ export const setupSwagger = (app: Express) => {
 };
 
 export { swaggerSpec };
+

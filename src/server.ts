@@ -6,6 +6,7 @@ import { connecToDB } from "./utils/db.js";
 
 console.log("🚀 Starting server...");
 
+
 // 🔍 Check environment variables
 console.log("🌍 ENV CHECK:", {
   PORT: process.env.PORT || "❌ NOT SET",

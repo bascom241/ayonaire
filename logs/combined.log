@@ -178,3 +178,9 @@
 2026-03-19T12:49:08.221Z [[32minfo[39m]: GET /api-docs/swagger-ui-init.js [36m304[39m 1ms
 2026-03-19T12:49:08.227Z [[32minfo[39m]: GET /api-docs/swagger-ui-standalone-preset.js [36m304[39m 9ms
 2026-03-19T12:49:09.109Z [[32minfo[39m]: GET /api-docs/favicon-32x32.png [36m304[39m 11ms
+2026-03-21T19:01:47.508Z [[32minfo[39m]: POST /api/v1/auth/login [33m404[39m 234ms
+2026-03-21T19:02:57.824Z [[32minfo[39m]: POST /api/v1/auth/login [32m200[39m 787ms
+2026-03-21T19:03:34.305Z [[32minfo[39m]: PUT /api/v1/course/save-to-draft [33m400[39m 15ms
+2026-03-21T19:08:34.379Z [[32minfo[39m]: PUT /api/v1/course/save-to-draft [31m500[39m 40ms
+2026-03-21T19:12:05.568Z [[32minfo[39m]: PUT /api/v1/course/save-to-draft [33m400[39m 40ms
+2026-03-21T19:12:09.063Z [[32minfo[39m]: PUT /api/v1/course/save-to-draft [33m400[39m 24ms

@@ -3,7 +3,8 @@ import {
   createCourseCategory,
   createCourse,
   updateCourse,
-  assignInstuctorToCourse
+  assignInstuctorToCourse,
+  saveCourseAsDraft,
 } from "../services/course.service.js";
 import { CreateCourseRequest } from "../types/course.types.js";
 import { AppError } from "../errors/AppError.js";
@@ -43,7 +44,7 @@ export const create = async (
       instructor: req.body.instructorId,
       thumbnail: req.file,
       introVideo: req.file,
-      courseLevel: req.body
+      courseLevel: req.body,
     };
 
     const data = await createCourse(dataToSend);
@@ -94,6 +95,7 @@ export const edit = async (req: Request, res: Response, next: NextFunction) => {
   }
 };
 
+// Admin assing the course o an instructor
 export const assign = async (
   req: Request,
   res: Response,
@@ -109,8 +111,38 @@ export const assign = async (
     }
 
     const data = await assignInstuctorToCourse(instructorId, courseId);
-    res.status(200).json({success: true, message: data })
+    res.status(200).json({ success: true, message: data });
   } catch (error) {
-    next(error)
+    next(error);
+  }
+};
+
+export const saveToDraft = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    console.log("req.file:", req.file);
+
+    if (!req.file) {
+      return res.status(400).json({ message: "Thumbnail is required" });
+    }
+    const dataToSend: CreateCourseRequest = {
+      title: req.body.title,
+      description: req.body.description,
+      category: req.body.category,
+      price: req.body.price,
+      status: req.body.status,
+      instructor: req.body.instructorId,
+      thumbnail: req.file,
+      introVideo: req.file,
+      courseLevel: req.body,
+    };
+
+    const data = await saveCourseAsDraft(dataToSend);
+    res.status(200).json({ success: true, data });
+  } catch (error) {
+    next(error);
   }
 };
