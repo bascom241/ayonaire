@@ -192,3 +192,9 @@
 2026-04-02T08:46:19.770Z [[32minfo[39m]: GET /api-docs.json [33m404[39m 1ms
 2026-04-02T08:46:41.836Z [[32minfo[39m]: GET /api-docs/ [32m200[39m 2ms
 2026-04-02T08:46:42.704Z [[32minfo[39m]: GET /api-docs/swagger.json [33m404[39m 2ms
+2026-04-02T08:50:10.891Z [[32minfo[39m]: GET /api-docs/ [32m200[39m 10ms
+2026-04-02T08:50:11.155Z [[32minfo[39m]: GET /api-docs/swagger-ui-standalone-preset.js [32m200[39m 10ms
+2026-04-02T08:50:11.181Z [[32minfo[39m]: GET /api-docs/swagger-ui.css [32m200[39m 77ms
+2026-04-02T08:50:11.284Z [[32minfo[39m]: GET /api-docs/swagger-ui-init.js [32m200[39m 3ms
+2026-04-02T08:50:11.318Z [[32minfo[39m]: GET /api-docs/swagger-ui-bundle.js [32m200[39m 210ms
+2026-04-02T08:50:12.854Z [[32minfo[39m]: GET /api-docs/favicon-32x32.png [32m200[39m 17ms

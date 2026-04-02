@@ -1,4 +1,3 @@
-
 import { Express, Request, Response } from "express";
 import swaggerJsdoc from "swagger-jsdoc";
 import swaggerUi from "swagger-ui-express";
@@ -54,12 +53,12 @@ const options: swaggerJsdoc.Options = {
 
     servers: [
       {
-        url: "http://localhost:3000",
-        description: "Development server",
+        url: "https://ayonaire.onrender.com/",
+        description: "Testing server",
       },
       {
-        url: "https://api.ayonaire.com",
-        description: "Production server",
+        url: "http://localhost:3000",
+        description: "Development server",
       },
     ],
 
@@ -118,7 +117,7 @@ export const setupSwagger = (app: Express) => {
         filter: true,
         tryItOutEnabled: true,
       },
-    })
+    }),
   );
 
   app.get("/api-docs.json", (req: Request, res: Response) => {
@@ -134,4 +133,3 @@ export const setupSwagger = (app: Express) => {
 };
 
 export { swaggerSpec };
-
