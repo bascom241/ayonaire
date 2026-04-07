@@ -1,5 +1,5 @@
 import express from "express"
-import { registerUser,login, getNonAdminUsers, updateUser, getUserLoginHistory, getUserActivityHistory, assignRoleToUser, deactivateToUser, suspendToUser, viewMyProfile, uploadImage, edit, add} from "../controllers/user.controller.js";
+import { registerUser,login, getNonAdminUsers, updateUser, getUserLoginHistory, getUserActivityHistory, assignRoleToUser, deactivateToUser, suspendToUser, viewMyProfile, uploadImage, edit, add, invite, accept, inviteUserCsv} from "../controllers/user.controller.js";
 const router = express.Router();
 import { restrictTo, authorize } from "../middlewares/auth.middleware.js";
 import { upload } from "../middlewares/multer.js";
@@ -17,4 +17,10 @@ router.post("/get-profile", authorize, viewMyProfile)
 router.post("/add-profile", authorize, upload.single("profile"), uploadImage)
 router.put("/edit-profile", authorize, upload.single("profile"), edit )
 router.post("/add", authorize, restrictTo("admin"),add)
+// Not Documented with Swagger
+router.post("/invite",authorize,restrictTo("admin"), invite);
+// not Documented with swagger
+router.post("/accept-invite/:token",accept)
+// Not Documented with Swagger
+router.post("/invite/csv", upload.single("file"),inviteUserCsv)
 export default router;

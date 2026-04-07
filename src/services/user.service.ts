@@ -16,6 +16,10 @@ import {
   EditProfileRequest,
   EditProfileResponse,
   AddUserDto,
+  InviteRequest,
+  AcceptInviteRequest,
+  AcceptInviteRequestBody,
+  CsvRequestBody,
 } from "../types/user.types.js";
 import { AppError } from "../errors/AppError.js";
 import bcrypt from "bcryptjs";
@@ -26,7 +30,11 @@ import enrollmentModel from "../models/enrollment.model.js";
 import courseModel from "../models/course.model.js";
 import cohortModel from "../models/cohort.model.js";
 import { validateRequestBodyWithValues } from "../utils/validateRequestBody.js";
-
+import crypto from "crypto";
+import invitesModel from "../models/invites.model.js";
+import { sendEmailInvites } from "../config/mail.js";
+import { appendFile } from "fs";
+import { sendInviteEmail } from "../templates/emailTemplates.js";
 export const createUser = async (
   data: CreateUserDto,
 ): Promise<UserResponse> => {
@@ -370,3 +378,153 @@ export const addUser = async (data: AddUserDto): Promise<UserResponse> => {
     createdAt: user.createdAt,
   };
 };
+
+interface InviteRequestBody {
+  emails: string[];
+  courseId:string
+  cohortId: string
+}
+
+export const inviteUser = async (data: InviteRequest) => {
+  validateRequestBodyWithValues<InviteRequestBody>(data, ["emails", "courseId", "cohortId"]);
+
+  const results = {
+    sent: [] as string[],
+    skipped: [] as string[],
+  };
+
+  // For now we have all the invites in promises //
+
+  const invitePromises = data.emails.map(async (email) => {
+    try {
+      // check if the user with this email exits first;
+
+      const userExists = await userModel.findOne({ email });
+      if (userExists) {
+        results.skipped.push(email);
+        return;
+      }
+      // check if invites exist for this user/
+      const existingInvites = await invitesModel.findOne({ email });
+      if (existingInvites) {
+        results.skipped.push(email);
+        return;
+      }
+
+      const token = crypto.randomBytes(32).toString("hex");
+
+      await invitesModel.create({
+        email,
+        courseId: data.courseId,
+        cohortId: data.cohortId,
+        token,
+        expiresAt: Date.now() + 1000 * 60 * 60 * 24,
+      });
+
+      const inviteLink = `https://wwww.ayonaire.com/dashboard/register/accept-invite?token=${token}`;
+
+      await sendEmailInvites(email, inviteLink);
+      results.sent.push(email);
+    } catch (error) {
+      console.error(`failed for ${email}`, error);
+      results.skipped.push(email);
+    }
+  });
+
+  await Promise.all(invitePromises);
+
+  return {
+    message: "Invites Process completed",
+    ...results,
+  };
+};
+
+export const acceptInvite = async (data: AcceptInviteRequest):Promise<UserResponse> => {
+  const { token } = data;
+
+  if (!token) {
+    throw new AppError("token is required", 400);
+  }
+
+  const invite = await invitesModel.findOne({ token: data.token });
+
+  if (!invite || invite.used) {
+    throw new AppError("Invalid or expired invite", 400);
+  }
+
+  if (!invite || !invite.expiresAt) {
+    throw new AppError("invalid invite Token");
+  }
+  const currentTime = Date.now();
+
+  if (currentTime > invite.expiresAt.getTime()) {
+    await invitesModel.deleteOne({ _id: invite._id });
+    throw new AppError("token exired for this invites", 400);
+  }
+
+  validateRequestBodyWithValues<AcceptInviteRequestBody>(data, [
+    "name",
+    "password",
+  ]);
+
+  
+  const userExist = await userModel.findOne({ email: invite.email });
+
+  if (userExist) {
+    throw new AppError("user already exist", 404);
+  }
+
+  const hashPassword = await bcrypt.hash(data.password, 12);
+
+  const user = await userModel.create({
+    name: data.name,
+    email: invite.email,
+    password: hashPassword,
+  });
+
+  if (invite.courseId) {
+    const enrollmentExist = await await enrollmentModel.findOne({
+      student: user._id,
+      course: invite.courseId,
+    });
+
+    if (enrollmentExist) {
+      throw new AppError("student already exits", 400);
+    }
+
+    await enrollmentModel.create({
+      student: user._id,
+      course: invite.courseId,
+    });
+
+    await courseModel.findByIdAndUpdate(invite.courseId, {
+      $push: { students: user._id },
+    });
+  }
+
+  if (invite.cohortId) {
+    const cohort = await cohortModel.findById(invite.cohortId);
+
+    if (!cohort) {
+      throw new AppError("cant find cohhort", 404);
+    }
+
+    await cohortModel.findByIdAndUpdate(invite.cohortId, {
+      $push: { student: user._id },
+    });
+  }
+
+
+  return {
+     _id: user._id.toString(),
+    name: user.name,
+    email: user.email,
+    status: user.status,
+    createdAt: user.createdAt,
+  }
+};
+
+
+
+
+

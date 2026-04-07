@@ -38,5 +38,9 @@ export default [
   {
     name: "Modules",
     description: "Module management within courses"
+  },
+  {
+    name:"Invites",
+    description:"Invites Management for students "
   }
 ];

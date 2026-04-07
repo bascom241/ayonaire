@@ -23,4 +23,4 @@ const adminProfileSchema = new Schema ({
 }, {timestamps:true});
 
 
-export default mongoose.model("")
+export default mongoose.model("Admin", adminProfileSchema);

@@ -39,4 +39,5 @@ app.get("/", (req, res) => res.redirect("/api-docs"));
 app.use(errorHanlder); 
 setupSwagger(app);
 
+
 export default app;

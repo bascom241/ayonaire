@@ -26,6 +26,7 @@ import enrollmentSchemas from "./schemas/enrollment.schema.js";
 import moduleSchemas from "./schemas/module.schema.js";
 import assignmentSchemas from "./schemas/assignment.schema.js";
 import adminSchemas from "./schemas/admin.schema.js";
+import inviteShema from "./schemas/invite.shema.js";
 
 // Import components
 import { securitySchemes } from "./components/security.js";
@@ -57,7 +58,7 @@ const options: swaggerJsdoc.Options = {
         description: "Testing server",
       },
       {
-        url: "http://localhost:3000",
+        url: "http://localhost:5000",
         description: "Development server",
       },
     ],
@@ -78,6 +79,7 @@ const options: swaggerJsdoc.Options = {
         ...moduleSchemas,
         ...assignmentSchemas,
         ...adminSchemas,
+        ...inviteShema
       },
       responses,
       parameters,

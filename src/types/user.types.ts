@@ -158,3 +158,25 @@ export interface EditProfileResponse {
     publicId: string;
   } | undefined | null
 }
+
+export interface InviteRequest{
+  emails: string[]
+  courseId: string,
+  cohortId: string
+}
+export interface AcceptInviteRequest {
+  token: string
+  name: string
+  password: string
+}
+
+export interface AcceptInviteRequestBody {
+
+  name: string
+  password: string
+}
+
+
+export interface CsvRequestBody {
+  file:any
+}

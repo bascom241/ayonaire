@@ -1,7 +1,11 @@
 import { Request, Response, NextFunction } from "express";
+import csvParser from "csv-parser";
+import { Readable } from "node:stream";
 import {
+  AcceptInviteRequest,
   AddUserDto,
   EditProfileRequest,
+  InviteRequest,
   ProfileImageRequest,
   UserParams,
 } from "../types/user.types.js";
@@ -18,7 +22,9 @@ import {
   viewProfile,
   addProfileImage,
   editProfile,
-  addUser
+  addUser,
+  inviteUser,
+  acceptInvite,
 } from "../services/user.service.js";
 import { AppError } from "../errors/AppError.js";
 import { Express } from "express";
@@ -241,7 +247,7 @@ export const edit = async (
   }
 };
 
-// Not yet tested with post man 
+// Not yet tested with post man
 export const add = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const dataToSend: AddUserDto = {
@@ -256,8 +262,86 @@ export const add = async (req: Request, res: Response, next: NextFunction) => {
     };
 
     const data = await addUser(dataToSend);
-    res.status(201).json({success: true, data})
+    res.status(201).json({ success: true, data });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const invite = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const dataToSend: InviteRequest = {
+      emails: req.body.emails,
+      courseId: req.body.courseId,
+      cohortId: req.body.cohortId,
+    };
+
+    const data = await inviteUser(dataToSend);
+    res.status(200).json({ success: true, data });
+  } catch (error) {
+    console.log(error);
+    next(error);
+  }
+};
+
+export const accept = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const { token } = req.params;
+
+    if (typeof token !== "string") {
+      throw new AppError("Invalid token format",400);
+    }
+    const dataToSend: AcceptInviteRequest = {
+      token,
+      name: req.body.name,
+      password: req.body.password,
+    };
+
+    const data = await acceptInvite(dataToSend);
+    res.status(200).json({ success: true, data });
+  } catch (error) {
+    next(error);
+  }
+};
+
+
+export const inviteUserCsv = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+      if(!req.file){
+        throw new AppError("csv file is required", 400);
+      }
+      const emails: string[] = [];
+
+      const stream = Readable.from(req.file.buffer);
+      await new Promise((resolve, reject) => {
+        stream.pipe(csvParser())
+        .on("data", (row)=> {
+          if(row.email){
+            emails.push(row.email.trim())
+          }
+        })
+        .on("end", resolve)
+        .on("error", reject);
+      });
+
+      const uniqueEmails = [...new Set(emails)];
+
+      const data = await inviteUser({
+        emails: uniqueEmails,
+        courseId: req.body.courseId,
+      cohortId: req.body.cohortId,
+      });
+
+      res.status(200).json({success: true, data})
   } catch (error) {
     next(error)
   }
-};
+}

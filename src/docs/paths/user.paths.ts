@@ -1,5 +1,5 @@
 export default {
-  "/api/v1/user/register": {
+  "/api/v1/auth/register": {
     post: {
       tags: ["Users"],
       summary: "Register a new user",
@@ -42,7 +42,7 @@ export default {
     }
   },
 
-  "/api/v1/user/login": {
+  "/api/v1/auth/login": {
     post: {
       tags: ["Users"],
       summary: "Login a user",
@@ -575,5 +575,238 @@ export default {
         403: { $ref: "#/components/responses/ForbiddenError" }
       }
     }
+  },
+
+
+  "/api/v1/auth/invites": {
+  post: {
+    tags: ["Admin"],
+    summary: "Invite users (Admin)",
+    description: "Invite multiple users via email (Admin only)",
+    security: [{ bearerAuth: [] }],
+    requestBody: {
+      required: true,
+      content: {
+        "application/json": {
+          schema: {
+            type: "object",
+            required: ["emails", "cohortId", "courseId"],
+            properties: {
+              emails: {
+                type: "array",
+                items: {
+                  type: "string",
+                  format: "email"
+                }
+              },
+              cohortId: {
+                type: "string",
+                example: "661f2b1d9c1234567890efgh"
+              },
+              courseId: {
+                type: "string",
+                example: "661f2a8c9c1234567890abcd"
+              }
+            }
+          }
+        }
+      }
+    },
+    responses: {
+      200: {
+        description: "Invites processed successfully",
+        content: {
+          "application/json": {
+            schema: {
+              type: "object",
+              properties: {
+                success: { type: "boolean", example: true },
+                data: {
+                  type: "object",
+                  properties: {
+                    message: {
+                      type: "string",
+                      example: "Invites Process completed"
+                    },
+                    sent: {
+                      type: "array",
+                      items: { type: "string" }
+                    },
+                    skipped: {
+                      type: "array",
+                      items: { type: "string" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      400: { $ref: "#/components/responses/ValidationError" },
+      401: { $ref: "#/components/responses/UnauthorizedError" },
+      403: { $ref: "#/components/responses/ForbiddenError" }
+    }
   }
+},
+"/api/v1/auth/invite/csv": {
+  post: {
+    tags: ["Admin"],
+    summary: "Bulk invite via CSV",
+    description: "Upload a CSV file containing emails to invite users",
+    security: [{ bearerAuth: [] }],
+    requestBody: {
+      required: true,
+      content: {
+        "multipart/form-data": {
+          schema: {
+            type: "object",
+            required: ["file", "courseId", "cohortId"],
+            properties: {
+              file: {
+                type: "string",
+                format: "binary"
+              },
+              courseId: {
+                type: "string"
+              },
+              cohortId: {
+                type: "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    responses: {
+      200: {
+        description: "CSV processed successfully",
+        content: {
+          "application/json": {
+            schema: {
+              type: "object",
+              properties: {
+                success: { type: "boolean", example: true },
+                data: {
+                  type: "object",
+                  properties: {
+                    message: {
+                      type: "string",
+                      example: "Invites Process completed"
+                    },
+                    sent: {
+                      type: "array",
+                      items: { type: "string" }
+                    },
+                    skipped: {
+                      type: "array",
+                      items: { type: "string" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      400: { $ref: "#/components/responses/ValidationError" },
+      401: { $ref: "#/components/responses/UnauthorizedError" }
+    }
+  }
+},
+"/api/v1/auth/accept-invite/{token}": {
+  post: {
+    tags: ["Auth"],
+    summary: "Accept invite and create account",
+    description: "Allows a user to complete registration using an invite token",
+    
+    parameters: [
+      {
+        name: "token",
+        in: "path",
+        required: true,
+        schema: {
+          type: "string"
+        },
+        description: "Invite token sent via email"
+      }
+    ],
+
+    requestBody: {
+      required: true,
+      content: {
+        "application/json": {
+          schema: {
+            type: "object",
+            required: ["name", "password"],
+            properties: {
+              name: {
+                type: "string",
+                example: "John Doe"
+              },
+              password: {
+                type: "string",
+                example: "StrongPassword123"
+              }
+            }
+          }
+        }
+      }
+    },
+
+    responses: {
+      200: {
+        description: "Invite accepted successfully and user created",
+        content: {
+          "application/json": {
+            schema: {
+              type: "object",
+              properties: {
+                success: {
+                  type: "boolean",
+                  example: true
+                },
+                data: {
+                  type: "object",
+                  properties: {
+                    _id: {
+                      type: "string",
+                      example: "661f2a8c9c1234567890abcd"
+                    },
+                    name: {
+                      type: "string",
+                      example: "John Doe"
+                    },
+                    email: {
+                      type: "string",
+                      example: "student@gmail.com"
+                    },
+                    status: {
+                      type: "string",
+                      example: "active"
+                    },
+                    createdAt: {
+                      type: "string",
+                      format: "date-time"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+
+      400: {
+        description: "Invalid or expired token / validation error"
+      },
+
+      404: {
+        description: "Invite not found"
+      }
+    }
+  }
+}
+
+
 };
