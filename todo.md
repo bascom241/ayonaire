@@ -290,3 +290,9 @@ For the Instructor Dashboard, Do the following APIs:
 2. ⁠Course Management 
 3. ⁠Lesson & Topic Management 
 4. ⁠Assignments
+
+
+// Apis to deploy
+// 2 apis in coourse route
+// 3 apis in user route
+// 2 apis in payment route

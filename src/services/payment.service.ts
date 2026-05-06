@@ -5,14 +5,18 @@ import {
   PaymentStatus,
   PaystackWebhookEvent,
   PaymentResponse,
-  PaymentHistoryRequest
+  PaymentHistoryRequest,
+  OrderStatus,
 } from "../types/payment.types.js";
 import paymentModel from "../models/payment.model.js";
 import enrollmentModel from "../models/enrollment.model.js";
 import { AppError } from "../errors/AppError.js";
 import courseModel from "../models/course.model.js";
 import axios from "axios";
-
+import { EnrollmentStatus } from "../types/enrollment.types.js";
+import { BulkActionData, EditOrderRequest } from "../types/payment.types.js";
+import { validateRequestBodyWithValues } from "../utils/validateRequestBody.js";
+import { ViewSingleOrderRequest } from "../types/payment.types.js";
 export const initializePayment = async (
   data: PaymentRequest,
   userId: string | undefined,
@@ -32,35 +36,33 @@ export const initializePayment = async (
   const enrollment = await enrollmentModel.findOne({
     course: paymentData.course,
     student: userId,
+    status: EnrollmentStatus.COMPLETED,
   });
 
-  if (enrollment) {
+  if (enrollment && enrollment.status === EnrollmentStatus.COMPLETED) {
     throw new AppError("user already enrolled for this course", 400);
   }
 
   const successfulPayment = await paymentModel.findOne({
     student: userId,
-    course: paymentData.courseId,
+    course: paymentData.course,
     status: PaymentStatus.SUCCESS,
   });
 
   if (successfulPayment) {
-    throw new AppError("Course alraedy Paid for", 400);
+    throw new AppError("Course already Paid for", 400);
   }
 
   const pendingPayment = await paymentModel.findOne({
     student: userId,
-    course: paymentData.courseId,
-    status: PaymentStatus.FAILED,
+    course: paymentData.course,
+    status: PaymentStatus.PENDING,
   });
 
   if (pendingPayment) {
     throw new AppError("Pending payment exits for this course", 400);
   }
   const reference = "AYONAIRE-" + Date.now();
-
-  console.log(reference);
-  console.log(process.env.PAYSTACK_SECRET);
 
   /// failed here
   let payment;
@@ -71,6 +73,10 @@ export const initializePayment = async (
       amount: course.price,
       reference,
       status: PaymentStatus.PENDING,
+      orderStatus: OrderStatus.PENDING_PAYMENT,
+
+      billingAddress: data.billingAddress,
+      shippingAddress: data.shippingAddress,
     });
   } catch (err: any) {
     console.error("Payment create error:", err.message);
@@ -111,17 +117,7 @@ export const handlePaystackWebhook = async (
   }
 
   if (payment.status === PaymentStatus.SUCCESS) {
-    return {
-      student: payment.student,
-      course: payment.course,
-      enrollment: payment.enrollment,
-      amount: payment.amount,
-      currency: payment.currency,
-      reference: payment.reference,
-      channel: payment.channel,
-      status: payment.status,
-      paidAt: payment.paidAt,
-    };
+    return;
   }
 
   if (
@@ -132,13 +128,16 @@ export const handlePaystackWebhook = async (
   }
 
   payment.status = PaymentStatus.SUCCESS;
+  payment.orderStatus = OrderStatus.COMPLETED;
   payment.channel = channel;
   payment.paidAt = new Date();
+
   await payment.save();
 
   const existingEnrollment = await enrollmentModel.findOne({
     student: payment.student,
     course: payment.course,
+    status: EnrollmentStatus.COMPLETED,
   });
 
   if (!existingEnrollment) {
@@ -152,7 +151,7 @@ export const handlePaystackWebhook = async (
   }
 
   await courseModel.findByIdAndUpdate(metadata.courseId, {
-    $push: {
+    $addToSet: {
       students: metadata.studentId,
     },
   });
@@ -167,6 +166,7 @@ export const handlePaystackWebhook = async (
     channel: payment.channel,
     status: payment.status,
     paidAt: payment.paidAt,
+    orderStatus: payment.orderStatus,
   };
 };
 
@@ -181,21 +181,21 @@ export const payHistory = async (data: PaymentHistoryRequest) => {
   pipeline.push({
     $lookup: {
       from: "users",
-       let: {studentId: "$student"},
-       pipeline : [
+      let: { studentId: "$student" },
+      pipeline: [
         {
           $match: {
-            $expr: {$eq: ["$_id", "$$studentId"]}
-          }
+            $expr: { $eq: ["$_id", "$$studentId"] },
+          },
         },
         {
-          $project : {
-            _id: 1 ,
-            name : 1 ,
-            email: 1 
-          }
-        }
-       ],
+          $project: {
+            _id: 1,
+            name: 1,
+            email: 1,
+          },
+        },
+      ],
       // localField: "student",
       // foreignField: "_id",
       as: "student",
@@ -208,19 +208,19 @@ export const payHistory = async (data: PaymentHistoryRequest) => {
   pipeline.push({
     $lookup: {
       from: "courses",
-      let: {courseId: "$course"},
+      let: { courseId: "$course" },
       pipeline: [
         {
-          $match : {
-            $expr: {$eq: ["$_id", "$$courseId"]}
-          }
-        }, 
+          $match: {
+            $expr: { $eq: ["$_id", "$$courseId"] },
+          },
+        },
         {
-          $project : {
-            _id: 1 ,
-            title: 1
-          }
-        }
+          $project: {
+            _id: 1,
+            title: 1,
+          },
+        },
       ],
       // localField: "course",
       // foreignField: "_id",
@@ -246,20 +246,116 @@ export const payHistory = async (data: PaymentHistoryRequest) => {
   });
 
   // Pagination
-  pipeline.push({ $skip: skip } );
+  pipeline.push({ $skip: skip });
   pipeline.push({ $limit: limit });
 
-    const payments = await paymentModel.aggregate(pipeline);
+  const payments = await paymentModel.aggregate(pipeline);
 
-   const total = await paymentModel.aggregate([
+  const total = await paymentModel.aggregate([
     ...pipeline.slice(0, -2), // remove skip + limit
-    { $count: "total" }
+    { $count: "total" },
   ]);
 
   return {
     data: payments,
     total: total[0]?.total || 0,
     page,
-    limit
+    limit,
+  };
+};
+
+export const bulkActionForOrder = async (data: BulkActionData) => {
+  const hasAtLeastOne = Object.values(data).some(Boolean);
+
+  if (!hasAtLeastOne) {
+    throw new Error("At least one action must be provided");
+  }
+
+  const statusFields = [
+    data.Completed,
+    data.Onhold,
+    data.Cancelled,
+    data.Processing,
+  ].filter(Boolean);
+
+  if (statusFields.length > 1) {
+    throw new AppError("Only one status action allowed at a time", 400);
+  }
+
+  const updatedFields: any = {};
+
+  if (data.Cancelled) updatedFields.orderStatus = OrderStatus.CANCELLED;
+  if (data.Completed) updatedFields.orderStatus = OrderStatus.COMPLETED;
+  if (data.Onhold) updatedFields.orderStatus = OrderStatus.ON_HOLD;
+  if (data.Processing) updatedFields.orderStatus = OrderStatus.PROCESSING;
+
+  if (data.Delete) {
+    await paymentModel.updateMany({}, { $set: { isDeleted: true } });
+  }
+
+  return await paymentModel.updateMany({}, { $set: updatedFields });
+};
+
+export const editOrder = async (
+  data: EditOrderRequest,
+  userId: string | undefined,
+) => {
+  const { orderId, billingAddress, shippingAddress } = data;
+
+  const payment = await paymentModel.findById(orderId);
+
+  if (!payment) {
+    throw new AppError("Order not found", 404);
+  }
+
+  if (payment.student.toString() !== userId) {
+    throw new AppError("Unauthorized", 403);
+  }
+
+  if (payment.orderStatus === OrderStatus.COMPLETED) {
+    throw new AppError("Cannot edit a completed order", 400);
+  }
+
+  if (billingAddress) {
+    payment.billingAddress = {
+      paymentMethod: payment.billingAddress?.paymentMethod || "paystack",
+      ...payment.billingAddress,
+      ...billingAddress,
+    };
+  }
+
+  if (shippingAddress) {
+    payment.shippingAddress = {
+      ...payment.shippingAddress,
+      ...shippingAddress,
+    };
+  }
+
+  await payment.save();
+
+  return payment;
+};
+
+export const viewSingleOrder = async (
+  data: ViewSingleOrderRequest,
+): Promise<PaymentResponse> => {
+  validateRequestBodyWithValues<ViewSingleOrderRequest>(data, ["orderId"]);
+
+  const { orderId } = data;
+  const order = await paymentModel.findById(orderId).populate("student", "name");
+  if (!order) {
+    throw new AppError("order not found", 400);
+  }
+
+  return {
+    student: order.student,
+    course: order.course,
+    amount: order.amount,
+    currency: order.currency,
+    reference: order.reference,
+    channel: order.channel,
+    status: order.status,
+    paidAt: order.paidAt,
+    orderStatus: order.orderStatus,
   };
 };

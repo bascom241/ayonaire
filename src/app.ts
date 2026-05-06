@@ -11,8 +11,8 @@ import cohortRouter from "./routes/cohort.route.js";
 import paymentRouter from "./routes/payment.route.js";
 import enrollmentRouter from "./routes/enrollment.route.js";
 import quizRouter from "./routes/quiz.route.js";
-
-
+import announcementRouter from "./routes/announcement.route.js"
+import feedRouter from "./routes/feed.route.js"
 
 import { setupSwagger } from "./docs/index.js"
 const app = express();
@@ -29,7 +29,8 @@ app.use("/api/v1/cohort", cohortRouter);
 app.use("/api/v1/payment", paymentRouter);
 app.use("/api/v1/enrollment", enrollmentRouter);
 app.use("/api/v1/quiz", quizRouter);
-
+app.use("/api/v1/announcement", announcementRouter)
+app.use("/api/v1/feed", feedRouter)
 // Serve Swagger static folder (Vercel-friendly)
 
 

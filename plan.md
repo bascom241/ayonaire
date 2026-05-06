@@ -16,3 +16,14 @@ add the user to cohorts
 set invites to used 
 return user
 
+
+
+## Edit Orders by the Admin
+Admin edit the stautus of a particular order(done)
+Edit the Billing Info of an order(done)
+View Single Order (Ongoing)
+
+## Announcement Functionality
+Admin to create announcement for a cohort using rest apis and polling from the frontend (ongoing)
+Admin to fetch all anouncement 
+Admin to delete announcement 

@@ -5,9 +5,12 @@ import {
   updateCourse,
   assignInstuctorToCourse,
   saveCourseAsDraft,
+  getAllCoursesForAdminDashboard,
+  getASingleCourseForAdminDashboard
 } from "../services/course.service.js";
-import { CreateCourseRequest } from "../types/course.types.js";
+import { AllAdminCourse, CreateCourseRequest } from "../types/course.types.js";
 import { AppError } from "../errors/AppError.js";
+import redisClient from "../config/redis.js";
 
 export const createCourseCat = async (
   req: Request,
@@ -48,6 +51,7 @@ export const create = async (
     };
 
     const data = await createCourse(dataToSend);
+    await redisClient.del("cache:/course")
 
     res.status(201).json({
       success: true,
@@ -146,3 +150,36 @@ export const saveToDraft = async (
     next(error);
   }
 };
+
+
+export const getAdminCourses = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const query = req.query;
+
+    const data = await getAllCoursesForAdminDashboard(query);
+    res.status(200).json({success: true , ...data})
+  } catch (error) {
+    next(error)
+  }
+}
+
+
+export const getSingleAdminCourse = async ( req: Request, res: Response, next: NextFunction) => {
+  try {
+     const { courseId } = req.query;
+    if (!courseId || typeof courseId !== "string") {
+      throw new AppError("courseId is required", 400);
+    }
+
+    console.log(courseId);
+    if (!courseId) {
+      throw new AppError("courseId is is required", 404);
+    }
+
+    const data = getASingleCourseForAdminDashboard(courseId);
+
+    res.status(200).json({success: true, data})
+  } catch (error) {
+    next(error)
+  }
+}

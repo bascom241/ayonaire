@@ -1,18 +1,23 @@
 import { Request, Response, NextFunction } from "express";
 import {
+  bulkActionForOrder,
+  editOrder,
   handlePaystackWebhook,
   initializePayment,
-  payHistory
+  payHistory,
+  viewSingleOrder
 } from "../services/payment.service.js";
 import {
   PaymentRequest,
   PaystackWebhookEvent,
-  PaymentHistoryRequest
+  PaymentHistoryRequest,
+  EditOrderRequest
 } from "../types/payment.types.js";
 import crypto from "crypto";
-export interface AuthRequest extends Request {
-  body: PaymentRequest;
-  user?: { id: string; email: string };
+import { AppError } from "../errors/AppError.js";
+export interface AuthRequest<T = any> extends Request {
+  body: T;
+  user?: { id: string; email?: string };
 }
 
 export const pay = async (
@@ -66,6 +71,9 @@ export const handlePayWebHook = async (
         metadata: {
           studentId: req.body.data.metadata.studentId,
           courseId: req.body.data.metadata.courseId,
+
+          billingAddress: req.body.data.metadata.billingAddress,
+          shippingAddress:req.body.data.metadata.shippingAddress
         },
       },
     };
@@ -104,6 +112,73 @@ export const paymentHistory = async (req: Request , res: Response , next : NextF
 
     const data = await payHistory(dataToSend);
     res.status(200).json({success: true, data})
+  } catch (error) {
+    next(error)
+  }
+}
+
+export interface BulkActionData {
+  Completed: string
+  Onhold:string
+  Cancelled: string
+  Revoke:string
+  Refund: string 
+  Delete: string
+  Processing: string
+}
+
+
+export const bulkEdit = async(req: Request, res: Response, next: NextFunction) => {
+  try {
+    const dataToSend:BulkActionData = {
+      Completed: req.body.completed,
+      Onhold:req.body.completed,
+      Cancelled: req.body.cancelled,
+      Revoke:req.body.revoke,
+      Refund:req.body.refund,
+      Delete: req.body.delete,
+      Processing:req.body.processing
+    }
+
+    const data = await bulkActionForOrder(dataToSend);
+
+    res.status(200).json ({success: true, data})
+  } catch (error) {
+    next(error)
+  }
+} 
+
+
+interface EditOrderAuthRequest extends AuthRequest {
+  body:EditOrderRequest
+  user?: { id: string };
+}
+export const edit = async (req:EditOrderAuthRequest, res: Response, next: NextFunction) => {
+  try {
+     const userId = req.user?.id;
+     
+     const dataToSend: EditOrderRequest = {
+      orderId: req.body.orderId,
+      billingAddress: req.body.billingAddress,
+      shippingAddress: req.body.shippingAddress
+     }
+     const data = await editOrder(dataToSend, userId);
+     res.status(200).json({success: true, data})
+  } catch (error) {
+    next(error)
+  }
+}
+
+export const viewSingle = async(req:Request, res: Response, next:NextFunction) => {
+  try {
+    const {orderId} = req.params;
+
+    if(!orderId || typeof orderId !== "string"){
+      throw new AppError("order id is missing or Invalid format", 400)
+    };
+
+    const data = await viewSingleOrder({orderId});
+    res.status(200).json({success: true,data})
   } catch (error) {
     next(error)
   }

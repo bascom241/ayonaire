@@ -2,10 +2,12 @@ import { AppError } from "../errors/AppError.js";
 import CourseCategory from "../models/category.model.js";
 import { CourseCategoryEnum } from "../types/category.types.js";
 import {
+  AllAdminCourse,
   CourseLevel,
   CourseStatus,
   CreateCourseRequest,
   CreateCourseResponse,
+  SingleAdminCourse,
 } from "../types/course.types.js";
 import { uploadMedia } from "../utils/uploadToCloudinary.js";
 import courseModel from "../models/course.model.js";
@@ -13,6 +15,8 @@ import mongoose from "mongoose";
 import { deleteImage } from "../utils/uploadToCloudinary.js";
 import instructorProfileModel from "../models/instructorProfile.model.js";
 import { InstructorApplicationStatus } from "../types/instructor.types.js";
+import { getPagination } from "../utils/getPagination.js";
+import enrollmentModel from "../models/enrollment.model.js";
 export const createCourseCategory = async (title: CourseCategoryEnum) => {
   const existing = await CourseCategory.findOne({ title });
   if (existing) {
@@ -242,6 +246,86 @@ export const saveCourseAsDraft = async (
     enrollments: course.enrollments?.map((id) => id.toString()),
     completionCount: course.completionCount,
     completionCertificate: course.completionCertificate,
+  };
+};
+
+
+export const getAllCoursesForAdminDashboard = async (
+  data: any,
+): Promise<AllAdminCourse> => {
+  const { page, limit, skip } = getPagination(data);
+
+  const [courses, total] = await Promise.all([
+    courseModel
+      .find()
+      .skip(skip)
+      .limit(limit)
+      .populate({
+        path: "instructor",
+        populate: { path: "instructorId", select: "name" },
+      }),
+    courseModel.countDocuments(),
+  ]);
+
+  const courseIds = courses.map((course) => course._id);
+
+  const enrollments = await enrollmentModel.find({
+    course: { $in: courseIds },
+  });
+
+  const enrollmentCountMap: Record<string, number> = {};
+
+  enrollments.forEach((enroll) => {
+    const courseId = enroll.course.toString();
+    if (!enrollmentCountMap[courseId]) {
+      enrollmentCountMap[courseId] = 0;
+    }
+
+    enrollmentCountMap[courseId]++;
+  });
+
+  const formattedCourses = courses.map((course) => ({
+    _id: course._id.toString(),
+    title: course.title,
+    category: course.category.toString(),
+    description: course.description,
+    instructor: (course.instructor as any)?.instructorId?.name || "N/A",
+    price: course.price,
+    status: course.status,
+    enrollments: enrollmentCountMap[course._id.toString()] || 0,
+  }));
+
+  return {
+    courses: formattedCourses,
+    pagination: {
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    },
+  };
+};
+
+export const getASingleCourseForAdminDashboard = async (
+  courseId: string,
+): Promise<SingleAdminCourse> => {
+  if (!courseId) {
+    throw new AppError("courseId is required", 404);
+  }
+  const course = await courseModel.findById(courseId);
+
+  if (!course) {
+    throw new AppError("No course is found", 400);
+  }
+
+  return {
+    _id: course._id.toString(),
+    title: course.title,
+    category: course.category.toString(),
+    description: course.description,
+    instructor: (course.instructor as any)?.instructorId?.name || "N/A",
+    price: course.price,
+    status: course.status,
   };
 };
 

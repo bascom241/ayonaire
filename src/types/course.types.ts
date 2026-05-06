@@ -88,6 +88,37 @@ export interface CreateCourseResponse {
   introVideo: {
     url: string;
     publicId: string;
-    duration: number 
+    duration: number;
   };
+}
+
+export interface AllAdminCourse {
+  courses: {
+    _id: string;
+    title: string;
+    category: string;
+    description: string;
+    instructor?: string;
+    price: number;
+    status: string;
+    enrollments: number;
+  }[];
+  pagination: {
+    total: number
+    page: number
+    limit: number
+    totalPages: number
+  }
+}
+
+
+export interface SingleAdminCourse {
+   _id: string;
+    title: string;
+    category: string;
+    description: string;
+    instructor?: string;
+    price: number;
+    status: string;
+   
 }
