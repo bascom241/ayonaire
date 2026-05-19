@@ -42,5 +42,17 @@ export default [
   {
     name:"Invites",
     description:"Invites Management for students "
+  },
+  {
+    name: "Feeds",
+    description: "Feed operations (Create, like, comment)"
+  },
+  {
+    name: "Announcements",
+    description: "Platform Announcements"
+  },
+  {
+    name: "Workshops",
+    description: "Workshops Management"
   }
 ];

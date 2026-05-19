@@ -69,8 +69,12 @@ export interface CommentFeedRequest {
 
 
 export interface DeleteCommentRequest { 
-
   feedId: Types.ObjectId
   commentId: Types.ObjectId
-  
+}
+
+
+export enum FeedType {
+  FEED="feed",
+  WORKSHOP="workshop"
 }

@@ -3,7 +3,6 @@ dotenv.config();
 
 import app from "./app.js";
 import { connecToDB } from "./utils/db.js";
-import { connectRedis } from "./config/redis.js";
 
 console.log("Starting server...");
 
@@ -11,7 +10,6 @@ console.log("Starting server...");
 console.log("ENV CHECK:", {
   PORT: process.env.PORT || "NOT SET",
   MONGO_URI: process.env.MONGO_URI ? "SET" : "NOT SET",
-  REDIS_URL: process.env.REDIS_URL ? "SET" : "NOT SET",
 });
 
 const port = Number(process.env.PORT) || 3000;
@@ -31,10 +29,6 @@ const startServer = async () => {
     console.log("⏳ Connecting to database...");
     await connecToDB();
     console.log("✅ Database connected");
-
-    console.log("⏳ Connecting to Redis...");
-    await connectRedis();
-    console.log("✅ Redis connected");
 
     app.listen(port, "0.0.0.0", () => {
       console.log(`🚀 Server running on port ${port}`);

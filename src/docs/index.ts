@@ -13,6 +13,9 @@ import quizPaths from "./paths/quiz.paths.js";
 import instructorPaths from "./paths/instructor.paths.js";
 import enrollPaths from "./paths/enroll.paths.js";
 import modulePaths from "./paths/module.paths.js";
+import feedPaths from "./paths/feed.paths.js";
+import announcementPaths from "./paths/announcement.paths.js";
+import workshopPaths from "./paths/workshop.paths.js";
 
 // Import schemas
 import userSchemas from "./schemas/user.schema.js";
@@ -27,6 +30,9 @@ import moduleSchemas from "./schemas/module.schema.js";
 import assignmentSchemas from "./schemas/assignment.schema.js";
 import adminSchemas from "./schemas/admin.schema.js";
 import inviteShema from "./schemas/invite.shema.js";
+import feedSchemas from "./schemas/feed.schema.js";
+import announcementSchemas from "./schemas/announcement.schema.js";
+import workshopSchemas from "./schemas/workshop.schema.js";
 
 // Import components
 import { securitySchemes } from "./components/security.js";
@@ -79,7 +85,10 @@ const options: swaggerJsdoc.Options = {
         ...moduleSchemas,
         ...assignmentSchemas,
         ...adminSchemas,
-        ...inviteShema
+        ...inviteShema,
+        ...feedSchemas,
+        ...announcementSchemas,
+        ...workshopSchemas
       },
       responses,
       parameters,
@@ -97,6 +106,9 @@ const options: swaggerJsdoc.Options = {
       ...instructorPaths,
       ...enrollPaths,
       ...modulePaths,
+      ...feedPaths,
+      ...announcementPaths,
+      ...workshopPaths,
     },
   },
 

@@ -293,6 +293,6 @@ For the Instructor Dashboard, Do the following APIs:
 
 
 // Apis to deploy
-// 2 apis in coourse route
-// 3 apis in user route
-// 2 apis in payment route
+// 2 apis in coourse route   
+// 3 apis in user route  
+// 2 apis in payment route 

@@ -8,9 +8,11 @@ import cohortModel from "../models/cohort.model.js";
 import courseModel from "../models/course.model.js";
 import userModel from "../models/user.model.js";
 import {
+  AnnouncementResponse,
   CreateAnnouncement,
   CreateAnnouncementResponse,
 } from "../types/announcement.types.js";
+import { getPagination } from "../utils/getPagination.js";
 import { validateRequestBodyWithValues } from "../utils/validateRequestBody.js";
 
 export const createAnnouncement = async (
@@ -45,6 +47,7 @@ export const createAnnouncement = async (
     });
 
     return {
+        id: announcment._id.toString(),
       audience: announcment.audience,
       title: announcment.title,
       summary: announcment.summary,
@@ -72,6 +75,7 @@ export const createAnnouncement = async (
     });
 
     return {
+      id: announcment._id.toString(),
       audience: announcment.audience,
       title: announcment.title,
       summary: announcment.summary,
@@ -112,6 +116,7 @@ export const createAnnouncement = async (
       });
 
       return {
+        id: announcment._id.toString(),
         audience: announcment.audience,
         title: announcment.title,
         summary: announcment.summary,
@@ -122,4 +127,31 @@ export const createAnnouncement = async (
   }
 
   throw new AppError("could no send announcement", 400);
+};
+
+export const getAllAnnounceMents = async (
+  data: any,
+): Promise<AnnouncementResponse> => {
+  const { page, skip, limit } = getPagination(data);
+  const [announcements, total] = await Promise.all([
+    announcementModel.find().skip(skip).limit(limit),
+    announcementModel.countDocuments(),
+  ]);
+
+  const formattedAnnouceMent = announcements.map((announcement) => ({
+    id: announcement._id.toString(),
+    audience: announcement.audience,
+    title: announcement.title,
+    summary: announcement.summary,
+  }));
+
+  return {
+    announcement: formattedAnnouceMent,
+    pagination: {
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    },
+  };
 };
