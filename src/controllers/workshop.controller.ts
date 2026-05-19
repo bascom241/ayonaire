@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
-import { CreateWorkShopRequest } from "../types/workShop.types.js";
-import { createWorkShop } from "../services/workShop.service.js";
+import { CreateWorkShopRequest, GetAllWorkShopsResponse } from "../types/workShop.types.js";
+import { createWorkShop, getAllWorkShops } from "../services/workShop.service.js";
 
 
 interface WorkShopAuthRequest extends Request {
@@ -27,3 +27,14 @@ export const create = async (
     next(err)
   }
 };
+
+
+
+export const get = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const data = await getAllWorkShops(req.query)
+    return res.status(200).json({success: true, data, message: "Workshops fetched successfully"})
+  } catch (err) {
+    next(err)
+  }
+}

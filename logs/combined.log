@@ -373,3 +373,11 @@
 2026-05-18T10:37:37.597Z [[32minfo[39m]: POST /api/v1/workshop [31m500[39m 22ms
 2026-05-18T10:47:06.450Z [[32minfo[39m]: POST /api/v1/workshop [31m500[39m 128ms
 2026-05-18T10:49:06.308Z [[32minfo[39m]: POST /api/v1/workshop [32m200[39m 113ms
+2026-05-19T09:06:30.109Z [[32minfo[39m]: GET /api-docs [36m301[39m 6ms
+2026-05-19T09:06:30.125Z [[32minfo[39m]: GET /api-docs/ [32m200[39m 7ms
+2026-05-19T09:06:30.353Z [[32minfo[39m]: GET /api-docs/swagger-ui.css [32m200[39m 73ms
+2026-05-19T09:06:30.437Z [[32minfo[39m]: GET /api-docs/swagger-ui-standalone-preset.js [32m200[39m 108ms
+2026-05-19T09:06:30.464Z [[32minfo[39m]: GET /api-docs/swagger-ui-bundle.js [32m200[39m 118ms
+2026-05-19T09:06:30.511Z [[32minfo[39m]: GET /api-docs/swagger-ui-init.js [32m200[39m 1ms
+2026-05-19T09:06:31.606Z [[32minfo[39m]: GET /api-docs/favicon-32x32.png [32m200[39m 11ms
+2026-05-19T09:29:29.691Z [[32minfo[39m]: GET /api/v1/workshop [32m200[39m 135ms

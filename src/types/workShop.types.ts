@@ -38,3 +38,16 @@ export enum PlatformName {
   IN_PERSON = "inPerson",
   OTHER = "other",
 }
+
+
+
+
+export interface GetAllWorkShopsResponse {
+  workshops: CreateWorkShopResponse[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+}
