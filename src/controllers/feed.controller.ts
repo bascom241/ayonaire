@@ -1,11 +1,25 @@
-import { editFeed, createFeed, viewFeeds, deleteFeed, likePost, commentOnAPost, deleteComment } from "../services/feed.service.js";
+import { editFeed, createFeed, viewFeeds, deleteFeed, likePost, commentOnAPost, deleteComment, createTags } from "../services/feed.service.js";
 import { Response, Request, NextFunction } from "express";
-import { CommentFeedRequest, CreateFeedRequest, DeleteCommentRequest, DeleteFeedRequest, EditFeedRequest, LikeFeedRequest } from "../types/feed.types.js";
+import { CommentFeedRequest, CreateFeedRequest, CreateTagRequest, DeleteCommentRequest, DeleteFeedRequest, EditFeedRequest, LikeFeedRequest } from "../types/feed.types.js";
 import mongoose from "mongoose";
 
 export interface AuthRequest<T = any> extends Request {
   body: T;
   user?: { id: string; email?: string };
+}
+
+export const uploadTags = async (req:Request, res: Response, next: NextFunction) => {
+    try {
+
+        const {titles} = req.body;
+        const dataToSend: CreateTagRequest = {
+            titles
+        }
+        const data = await createTags(dataToSend);
+        res.status(201).json({success: true, data})
+    } catch (error) {
+        next(error)
+    }
 }
 
 export const create = async (req: AuthRequest, res: Response, next: NextFunction) => {
@@ -26,9 +40,10 @@ export const create = async (req: AuthRequest, res: Response, next: NextFunction
 export const edit = async (req: AuthRequest, res: Response , next: NextFunction) => {
     try {
    
-        const {content, feedId} = req.body;
+        const {content, feedId, tag} = req.body;
       const userId = req.user?.id;
         const dataToSend: EditFeedRequest = {
+            tag,
             feedId,
             content,
             media: req.file

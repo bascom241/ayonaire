@@ -8,11 +8,15 @@ export interface MediaData {
 
 export interface CreateFeedRequest {
     content: string
+    tag?: string
     media?:MediaData
 }
 
 
 export interface CreateFeedResponse {
+    tag: {
+      titles: string[]
+    }
     content: string,
     media?:{
      url: string;
@@ -22,6 +26,7 @@ export interface CreateFeedResponse {
 
 
 export interface EditFeedRequest {
+    tag: string
     feedId: string
     content: string
     media? :MediaData
@@ -77,4 +82,21 @@ export interface DeleteCommentRequest {
 export enum FeedType {
   FEED="feed",
   WORKSHOP="workshop"
+}
+
+
+export enum FeedTag {
+  CYBER_SECURITY="cyberSecurity",
+  AI_ENGINEERING="ai-engineering",
+  DATA_SCIENCE="data_science"
+}
+
+
+export interface CreateTagRequest {
+  titles:string[]
+}
+
+export interface CreateTagResponse {
+  id: string
+  titles:string[]
 }

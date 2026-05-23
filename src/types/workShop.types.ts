@@ -51,3 +51,19 @@ export interface GetAllWorkShopsResponse {
     totalPages: number;
   };
 }
+
+
+export interface EditWorkShopRequest {
+  workShopId: string
+   title: string;
+  description: string;
+  platform: {
+    name: string;
+    link: string;
+    type: string;
+  };
+  status: string;
+  startDate: string;
+  endDate: string;
+}
+

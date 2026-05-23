@@ -2,6 +2,10 @@ import mongoose, { Schema } from "mongoose";
 import { FeedType } from "../types/feed.types.js";
 const feedSchema = new Schema(
   {
+    tag: {
+      type: Schema.Types.ObjectId,
+      ref:"FeedTag" 
+    }, 
     userId: {
       type: Schema.Types.ObjectId,
       ref: "User",
