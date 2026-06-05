@@ -31,3 +31,34 @@ export interface MessageResponseData {
     publicId: string 
   }
 }
+
+export interface GetMessagesRoom {
+  roomId: string 
+  query: any
+}
+
+export interface GetMessagesResponse {
+  messages: {
+    senderId: {
+      id: string;
+      name: string;
+    };
+    roomId: string;
+    text: string;
+    media?: {
+      url: string;
+      publicId: string;
+    };
+    file?: {
+      url: string;
+      publicId: string;
+    };
+  }[];
+
+  pagination: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  };
+}

@@ -1,6 +1,7 @@
 import { AppError } from "../errors/AppError.js";
 import messageModel from "../models/message.model.js";
 import {
+    GetMessagesResponse,
   MessageRequestData,
   MessageResponseData,
 } from "../types/message.types.js";
@@ -8,6 +9,8 @@ import { uploadMedia, uploadFile } from "../utils/uploadToCloudinary.js";
 import { validateRequestBodyWithValues } from "../utils/validateRequestBody.js";
 import { io } from "../server.js";
 import roomModel from "../models/room.model.js";
+import { GetMessagesRoom } from "../types/message.types.js";
+import { getPagination } from "../utils/getPagination.js";
 export const sendMessage = async (
   data: MessageRequestData,
 ): Promise<MessageResponseData> => {
@@ -63,10 +66,7 @@ export const sendMessage = async (
     throw new AppError("Error in fetching messages", 400);
   }
 
-  console.log("EMITTING TO ROOM:", roomId);
   io.to(roomId).emit("message:new", fullMessage);
-  const socketsInRoom = await io.in(roomId).fetchSockets();
-console.log("SOCKETS IN ROOM:", socketsInRoom.length);
 
   return {
     senderId: {
@@ -88,4 +88,59 @@ console.log("SOCKETS IN ROOM:", socketsInRoom.length);
         }
       : undefined,
   };
+};
+
+export const getMessagesForRoom = async (
+  data: GetMessagesRoom,
+): Promise<GetMessagesResponse> => {
+  const { roomId, query} = data;
+  validateRequestBodyWithValues<GetMessagesRoom>(data, ["roomId"]);
+
+  const room = await roomModel.findById(roomId);
+  const {page, limit, skip} = getPagination(query)
+  if (!room) {
+    throw new AppError("room not found", 400);
+  }
+
+
+  const [messages, total] = await Promise.all([
+    messageModel
+      .find({ roomId })
+      .skip(skip)
+      .limit(limit)
+      .populate("senderId", "name"),
+      messageModel.countDocuments()
+
+  ])
+
+  const formattedMessages = messages.map((message) => ({
+    senderId: {
+      id: message.senderId.toString(),
+      name: (message.senderId as any).name,
+    },
+    roomId: message.roomId.toString(),
+    text: message.text ? message.text : "",
+    media: message.media
+      ? {
+          url: message.media?.url,
+          publicId: message.media?.publicId,
+        }
+      : undefined,
+    file: message.file
+      ? {
+          url: message.file?.url,
+          publicId: message.file?.publicId,
+        }
+      : undefined,
+  }));
+
+  return {
+    messages: formattedMessages,
+     pagination: {
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    },
+  }
 };
