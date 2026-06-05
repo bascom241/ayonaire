@@ -4,13 +4,23 @@ dotenv.config();
 import app from "./app.js";
 import { connecToDB } from "./utils/db.js";
 
-console.log("Starting server...");
 
-// Check environment variables
-console.log("ENV CHECK:", {
-  PORT: process.env.PORT || "NOT SET",
-  MONGO_URI: process.env.MONGO_URI ? "SET" : "NOT SET",
-});
+import http from "http"
+import {Server} from "socket.io"
+import connectSocket from "./socket/index.js";
+
+
+console.log("Starting server...");
+const server = http.createServer(app);
+
+export const io = new Server(server, {
+  cors: {
+    origin: "*"
+  }
+})
+
+
+connectSocket(io)
 
 const port = Number(process.env.PORT) || 3000;
 
@@ -30,7 +40,7 @@ const startServer = async () => {
     await connecToDB();
     console.log("✅ Database connected");
 
-    app.listen(port, "0.0.0.0", () => {
+    server.listen(port, "0.0.0.0", () => {
       console.log(`🚀 Server running on port ${port}`);
     });
 

@@ -14,6 +14,8 @@ import quizRouter from "./routes/quiz.route.js";
 import announcementRouter from "./routes/announcement.route.js"
 import feedRouter from "./routes/feed.route.js"
 import workShopRouter from "./routes/workshop.route.js"
+import messageRouter from "./routes/message.route.js"
+import roomRouter from "./routes/room.route.js"
 
 import { setupSwagger } from "./docs/index.js"
 const app = express();
@@ -33,6 +35,9 @@ app.use("/api/v1/quiz", quizRouter);
 app.use("/api/v1/announcement", announcementRouter)
 app.use("/api/v1/feed", feedRouter)
 app.use("/api/v1/workshop", workShopRouter)
+app.use("/api/v1/message", messageRouter);
+app.use("/api/v1/room", roomRouter)
+
 // Serve Swagger static folder (Vercel-friendly)
 
 
