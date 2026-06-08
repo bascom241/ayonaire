@@ -1,6 +1,6 @@
 import csvParser from "csv-parser";
 import { Readable } from "node:stream";
-import { createUser, fetchNonAdminUsers, loginUser, refreshAuthToken, logoutUser, editUser, loginHistory, userActivity, assignRole, deactivateUser, suspendUser, viewProfile, addProfileImage, editProfile, addUser, inviteUser, acceptInvite, } from "../services/user.service.js";
+import { createUser, fetchNonAdminUsers, forgotUserPassword, loginUser, refreshAuthToken, logoutUser, resendUserVerificationEmail, resetUserPassword, verifyUserEmail, editUser, loginHistory, userActivity, assignRole, deactivateUser, suspendUser, viewProfile, addProfileImage, editProfile, addUser, inviteUser, acceptInvite, } from "../services/user.service.js";
 import { AppError } from "../errors/AppError.js";
 export const registerUser = async (req, res, next) => {
     try {
@@ -15,6 +15,47 @@ export const login = async (req, res, next) => {
     try {
         const token = await loginUser(req.body, req.ip, req.headers["user-agent"]);
         res.status(200).json({ success: true, data: token });
+    }
+    catch (error) {
+        next(error);
+    }
+};
+export const verifyEmail = async (req, res, next) => {
+    try {
+        const message = await verifyUserEmail({
+            token: req.query.token || req.body.token,
+        });
+        res.status(200).json({ success: true, message });
+    }
+    catch (error) {
+        next(error);
+    }
+};
+export const resendVerificationEmail = async (req, res, next) => {
+    try {
+        const message = await resendUserVerificationEmail(req.body);
+        res.status(200).json({ success: true, message });
+    }
+    catch (error) {
+        next(error);
+    }
+};
+export const forgotPassword = async (req, res, next) => {
+    try {
+        const message = await forgotUserPassword(req.body);
+        res.status(200).json({ success: true, message });
+    }
+    catch (error) {
+        next(error);
+    }
+};
+export const resetPassword = async (req, res, next) => {
+    try {
+        const message = await resetUserPassword({
+            token: req.query.token || req.body.token,
+            password: req.body.password,
+        });
+        res.status(200).json({ success: true, message });
     }
     catch (error) {
         next(error);
@@ -170,7 +211,6 @@ export const add = async (req, res, next) => {
         const dataToSend = {
             name: req.body.name,
             email: req.body.email,
-            phoneNumber: req.body.phoneNumber,
             role: req.body.role,
             status: req.body.status,
             password: req.body.password,

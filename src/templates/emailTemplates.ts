@@ -138,3 +138,57 @@ export const getAnnouncementEmailHTML = (title: string, summary: string) => `
 </body>
 </html>
 `;
+
+export const getEmailVerificationHTML = (name: string, verificationLink: string) => `
+<!DOCTYPE html>
+<html lang="en">
+<body style="margin:0; padding:0; background:#f4f7fb; font-family:Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" bgcolor="#f4f7fb">
+    <tr>
+      <td align="center" style="padding:40px 20px;">
+        <table width="100%" style="max-width:480px; background:#ffffff; border-radius:12px; padding:30px;">
+          <tr>
+            <td>
+              <h2 style="margin:0 0 12px; color:#222;">Verify your email</h2>
+              <p style="font-size:14px; color:#555;">Hi ${name}, please verify your email address to activate your account.</p>
+              <p style="text-align:center; padding:20px 0;">
+                <a href="${verificationLink}" style="background:#1a73e8; color:#fff; text-decoration:none; padding:13px 24px; border-radius:8px; display:inline-block;">Verify Email</a>
+              </p>
+              <p style="font-size:13px; color:#777;">This link expires in 24 hours.</p>
+              <p style="font-size:12px; color:#999;">If you did not create this account, you can ignore this email.</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+`;
+
+export const getPasswordResetHTML = (name: string, resetLink: string) => `
+<!DOCTYPE html>
+<html lang="en">
+<body style="margin:0; padding:0; background:#f4f7fb; font-family:Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" bgcolor="#f4f7fb">
+    <tr>
+      <td align="center" style="padding:40px 20px;">
+        <table width="100%" style="max-width:480px; background:#ffffff; border-radius:12px; padding:30px;">
+          <tr>
+            <td>
+              <h2 style="margin:0 0 12px; color:#222;">Reset your password</h2>
+              <p style="font-size:14px; color:#555;">Hi ${name}, use the button below to set a new password.</p>
+              <p style="text-align:center; padding:20px 0;">
+                <a href="${resetLink}" style="background:#1a73e8; color:#fff; text-decoration:none; padding:13px 24px; border-radius:8px; display:inline-block;">Reset Password</a>
+              </p>
+              <p style="font-size:13px; color:#777;">This link expires in 1 hour.</p>
+              <p style="font-size:12px; color:#999;">If you did not request a password reset, you can ignore this email.</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+`;

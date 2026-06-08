@@ -106,6 +106,201 @@ export default {
     },
   },
 
+  "/api/v1/auth/verify-email": {
+    get: {
+      tags: ["Auth"],
+      summary: "Verify email address",
+      description: "Verifies a newly registered user's email address using the token sent by Brevo.",
+      security: [],
+      parameters: [
+        {
+          in: "query",
+          name: "token",
+          required: true,
+          schema: { type: "string" },
+          description: "Email verification token",
+        },
+      ],
+      responses: {
+        200: {
+          description: "Email verified successfully",
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  success: { type: "boolean", example: true },
+                  message: { type: "string", example: "Email verified successfully" },
+                },
+              },
+            },
+          },
+        },
+        400: { description: "Invalid or expired verification token" },
+      },
+    },
+    post: {
+      tags: ["Auth"],
+      summary: "Verify email address",
+      description: "Verifies a user's email address using a token in the JSON body.",
+      security: [],
+      requestBody: {
+        required: true,
+        content: {
+          "application/json": {
+            schema: {
+              type: "object",
+              required: ["token"],
+              properties: {
+                token: { type: "string" },
+              },
+            },
+          },
+        },
+      },
+      responses: {
+        200: { description: "Email verified successfully" },
+        400: { description: "Invalid or expired verification token" },
+      },
+    },
+  },
+
+  "/api/v1/auth/resend-verification-email": {
+    post: {
+      tags: ["Auth"],
+      summary: "Resend verification email",
+      description: "Sends a new email verification link through Brevo if the account exists and is not verified.",
+      security: [],
+      requestBody: {
+        required: true,
+        content: {
+          "application/json": {
+            schema: {
+              type: "object",
+              required: ["email"],
+              properties: {
+                email: { type: "string", format: "email", example: "john@example.com" },
+              },
+            },
+          },
+        },
+      },
+      responses: {
+        200: {
+          description: "Verification email response",
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  success: { type: "boolean", example: true },
+                  message: {
+                    type: "string",
+                    example: "If an account exists, a verification email has been sent",
+                  },
+                },
+              },
+            },
+          },
+        },
+        400: { $ref: "#/components/responses/ValidationError" },
+      },
+    },
+  },
+
+  "/api/v1/auth/forgot-password": {
+    post: {
+      tags: ["Auth"],
+      summary: "Request password reset",
+      description: "Generates a password reset token and sends a reset link through Brevo.",
+      security: [],
+      requestBody: {
+        required: true,
+        content: {
+          "application/json": {
+            schema: {
+              type: "object",
+              required: ["email"],
+              properties: {
+                email: { type: "string", format: "email", example: "john@example.com" },
+              },
+            },
+          },
+        },
+      },
+      responses: {
+        200: {
+          description: "Password reset email response",
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  success: { type: "boolean", example: true },
+                  message: {
+                    type: "string",
+                    example: "If an account exists, a password reset email has been sent",
+                  },
+                },
+              },
+            },
+          },
+        },
+        400: { $ref: "#/components/responses/ValidationError" },
+      },
+    },
+  },
+
+  "/api/v1/auth/reset-password": {
+    post: {
+      tags: ["Auth"],
+      summary: "Reset password",
+      description: "Sets a new password using a valid password reset token. Existing refresh sessions are revoked after reset.",
+      security: [],
+      parameters: [
+        {
+          in: "query",
+          name: "token",
+          required: false,
+          schema: { type: "string" },
+          description: "Password reset token. Can also be sent in the JSON body.",
+        },
+      ],
+      requestBody: {
+        required: true,
+        content: {
+          "application/json": {
+            schema: {
+              type: "object",
+              required: ["password"],
+              properties: {
+                token: { type: "string" },
+                password: { type: "string", format: "password", example: "NewStrongPassword123" },
+              },
+            },
+          },
+        },
+      },
+      responses: {
+        200: {
+          description: "Password reset successfully",
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  success: { type: "boolean", example: true },
+                  message: { type: "string", example: "Password reset successfully" },
+                },
+              },
+            },
+          },
+        },
+        400: { description: "Invalid or expired reset token or validation error" },
+      },
+    },
+  },
+
   "/api/v1/auth/login": {
     post: {
       tags: ["Auth"],
@@ -264,7 +459,6 @@ export default {
               properties: {
                 name: { type: "string", example: "John Doe" },
                 email: { type: "string", format: "email", example: "john@example.com" },
-                phoneNumber: { type: "string", example: "+2348012345678" },
               },
             },
           },
@@ -613,7 +807,6 @@ export default {
                 name: { type: "string", example: "Jane Student" },
                 email: { type: "string", format: "email", example: "jane@example.com" },
                 password: { type: "string", format: "password", example: "StrongPassword123" },
-                phoneNumber: { type: "string", example: "+2348012345678" },
                 role: { type: "string", enum: ["user", "instructor", "admin"], example: "user" },
                 status: { type: "string", enum: ["active", "inactive", "suspended"], example: "active" },
                 courseId: { type: "string", example: "661f2a8c9c1234567890abcd" },

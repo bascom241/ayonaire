@@ -26,7 +26,6 @@ const userSchema = new Schema({
         required: true,
         unique: true
     },
-    phoneNumber: String,
     password: {
         type: String,
         minLength: 8,
@@ -49,6 +48,10 @@ const userSchema = new Schema({
         enum: Object.values(UserStatus),
         default: UserStatus.ACTIVE,
         message: `Role must be one of: ${Object.values(UserStatus).join(", ")}`,
+    },
+    isEmailVerified: {
+        type: Boolean,
+        default: false,
     },
     cohorts: [
         {

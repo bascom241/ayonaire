@@ -42,8 +42,8 @@ export interface User {
  
   profile: Profile 
   role: UserRole;
-  phoneNumber: string 
   status: UserStatus;
+  isEmailVerified: boolean;
   loginHistory: loginHistory[]
   cohorts: [Types.ObjectId]
   activity: Activity[]
@@ -61,10 +61,26 @@ export interface CreateUserDto {
   password: string;
 }
 
+export interface VerifyEmailDto {
+  token: string;
+}
+
+export interface ResendVerificationDto {
+  email: string;
+}
+
+export interface ForgotPasswordDto {
+  email: string;
+}
+
+export interface ResetPasswordDto {
+  token: string;
+  password: string;
+}
+
 export interface AddUserDto {
   name: string;
   email: string
-  phoneNumber: string
   role: string 
   status: string 
   password: string 

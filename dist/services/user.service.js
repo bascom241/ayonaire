@@ -12,7 +12,7 @@ import { validateRequestBodyWithValues } from "../utils/validateRequestBody.js";
 import crypto from "crypto";
 import invitesModel from "../models/invites.model.js";
 import refreshTokenModel from "../models/refreshToken.model.js";
-import { sendEmailInvites } from "../config/mail.js";
+import { sendEmailInvites, sendPasswordResetEmail, sendVerificationEmail, } from "../config/mail.js";
 const ACCESS_TOKEN_EXPIRES_IN_SECONDS = 15 * 60;
 const REFRESH_TOKEN_EXPIRES_IN_DAYS = 30;
 const hashToken = (token) => crypto.createHash("sha256").update(token).digest("hex");
@@ -20,6 +20,32 @@ const getRefreshTokenExpiry = () => {
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + REFRESH_TOKEN_EXPIRES_IN_DAYS);
     return expiresAt;
+};
+const getAuthUrl = () => process.env.FRONTEND_URL ||
+    process.env.CLIENT_URL ||
+    "https://wwww.ayonaire.com";
+const createPlainToken = () => crypto.randomBytes(32).toString("hex");
+const createEmailVerificationToken = () => {
+    const token = createPlainToken();
+    const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24);
+    return {
+        token,
+        tokenHash: hashToken(token),
+        expiresAt,
+    };
+};
+const createPasswordResetToken = () => {
+    const token = createPlainToken();
+    const expiresAt = new Date(Date.now() + 1000 * 60 * 60);
+    return {
+        token,
+        tokenHash: hashToken(token),
+        expiresAt,
+    };
+};
+const sendUserVerificationEmail = async (user) => {
+    const verificationLink = `${getAuthUrl()}/verify-email?token=${user.verificationToken}`;
+    await sendVerificationEmail(user.email, user.name, verificationLink);
 };
 const ensureUserCanAuthenticate = (user) => {
     if (user.status === UserStatus.SUSPENDED) {
@@ -40,7 +66,21 @@ export const createUser = async (data) => {
         throw new AppError("user already exits", 409);
     }
     const hashPasssword = await bcrypt.hash(data.password, 12);
-    const user = await User.create({ ...data, password: hashPasssword });
+    const verification = createEmailVerificationToken();
+    const user = await User.create({
+        name: data.name,
+        email: data.email,
+        password: hashPasssword,
+        role: UserRole.USER,
+        isEmailVerified: false,
+        verificationToken: verification.tokenHash,
+        verificationTokenExpiresAt: verification.expiresAt,
+    });
+    await sendUserVerificationEmail({
+        email: user.email,
+        name: user.name,
+        verificationToken: verification.token,
+    });
     return {
         _id: user._id.toString(),
         name: user.name,
@@ -56,6 +96,9 @@ export const loginUser = async (data, ip, userAgent) => {
         throw new AppError("Invalid email or password", 401);
     }
     ensureUserCanAuthenticate(user);
+    if (user.isEmailVerified === false) {
+        throw new AppError("Please verify your email before logging in", 403);
+    }
     const isPassword = await bcrypt.compare(data.password, user.password);
     if (!isPassword) {
         throw new AppError("Invalid email or password", 401);
@@ -103,6 +146,71 @@ export const loginUser = async (data, ip, userAgent) => {
             status: user.status,
         },
     };
+};
+export const verifyUserEmail = async (data) => {
+    validateRequestBodyWithValues(data, ["token"]);
+    const user = await User.findOne({
+        verificationToken: hashToken(data.token),
+        verificationTokenExpiresAt: { $gt: new Date() },
+    });
+    if (!user) {
+        throw new AppError("Invalid or expired verification token", 400);
+    }
+    user.isEmailVerified = true;
+    user.verificationToken = undefined;
+    user.verificationTokenExpiresAt = undefined;
+    await user.save();
+    return "Email verified successfully";
+};
+export const resendUserVerificationEmail = async (data) => {
+    validateRequestBodyWithValues(data, ["email"]);
+    const user = await User.findOne({ email: data.email });
+    if (!user) {
+        return "If an account exists, a verification email has been sent";
+    }
+    if (user.isEmailVerified) {
+        return "Email is already verified";
+    }
+    const verification = createEmailVerificationToken();
+    user.verificationToken = verification.tokenHash;
+    user.verificationTokenExpiresAt = verification.expiresAt;
+    await user.save();
+    await sendUserVerificationEmail({
+        email: user.email,
+        name: user.name,
+        verificationToken: verification.token,
+    });
+    return "If an account exists, a verification email has been sent";
+};
+export const forgotUserPassword = async (data) => {
+    validateRequestBodyWithValues(data, ["email"]);
+    const user = await User.findOne({ email: data.email });
+    if (!user) {
+        return "If an account exists, a password reset email has been sent";
+    }
+    const reset = createPasswordResetToken();
+    user.resetPasswordToken = reset.tokenHash;
+    user.resetPasswordTokenExpiresAt = reset.expiresAt;
+    await user.save();
+    const resetLink = `${getAuthUrl()}/reset-password?token=${reset.token}`;
+    await sendPasswordResetEmail(user.email, user.name, resetLink);
+    return "If an account exists, a password reset email has been sent";
+};
+export const resetUserPassword = async (data) => {
+    validateRequestBodyWithValues(data, ["token", "password"]);
+    const user = await User.findOne({
+        resetPasswordToken: hashToken(data.token),
+        resetPasswordTokenExpiresAt: { $gt: new Date() },
+    });
+    if (!user) {
+        throw new AppError("Invalid or expired reset token", 400);
+    }
+    user.password = await bcrypt.hash(data.password, 12);
+    user.resetPasswordToken = undefined;
+    user.resetPasswordTokenExpiresAt = undefined;
+    await user.save();
+    await refreshTokenModel.updateMany({ user: user._id, revokedAt: { $exists: false } }, { revokedAt: new Date() });
+    return "Password reset successfully";
 };
 export const refreshAuthToken = async (data, ip, userAgent) => {
     validateRequestBodyWithValues(data, ["refreshToken"]);
@@ -376,6 +484,8 @@ export const addUser = async (data) => {
     }
     const hashPasssword = await bcrypt.hash(data.password, 12);
     const user = await userModel.create({ ...data, password: hashPasssword });
+    user.isEmailVerified = true;
+    await user.save();
     if (data.courseId) {
         const enrollmentExist = await enrollmentModel.findOne({
             student: user._id,
@@ -483,6 +593,7 @@ export const acceptInvite = async (data) => {
         name: data.name,
         email: invite.email,
         password: hashPassword,
+        isEmailVerified: true,
     });
     if (invite.courseId) {
         const enrollmentExist = await await enrollmentModel.findOne({

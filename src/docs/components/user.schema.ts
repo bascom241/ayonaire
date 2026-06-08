@@ -5,7 +5,6 @@ export default {
       _id: { type: "string", example: "60d21b4667d0d8992e610c85" },
       name: { type: "string", example: "John Doe" },
       email: { type: "string", example: "john@example.com" },
-      phoneNumber: { type: "string", example: "+1234567890" },
       password: { type: "string", format: "password" },
       profile: {
         type: "object",
@@ -24,6 +23,7 @@ export default {
         enum: ["active", "inactive", "suspended"],
         example: "active"
       },
+      isEmailVerified: { type: "boolean", example: false },
       cohorts: {
         type: "array",
         items: { type: "string" }
@@ -65,7 +65,6 @@ export default {
       name: { type: "string", example: "John Doe" },
       email: { type: "string", format: "email", example: "john@example.com" },
       password: { type: "string", format: "password", example: "password123" },
-      phoneNumber: { type: "string", example: "+1234567890" }
     }
   },
   UserLogin: {

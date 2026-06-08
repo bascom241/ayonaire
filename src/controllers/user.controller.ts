@@ -12,9 +12,13 @@ import {
 import {
   createUser,
   fetchNonAdminUsers,
+  forgotUserPassword,
   loginUser,
   refreshAuthToken,
   logoutUser,
+  resendUserVerificationEmail,
+  resetUserPassword,
+  verifyUserEmail,
   editUser,
   loginHistory,
   userActivity,
@@ -51,6 +55,63 @@ export const login = async (
   try {
     const token = await loginUser(req.body, req.ip, req.headers["user-agent"]);
     res.status(200).json({ success: true, data: token });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const verifyEmail = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const message = await verifyUserEmail({
+      token: (req.query.token as string) || req.body.token,
+    });
+    res.status(200).json({ success: true, message });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const resendVerificationEmail = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const message = await resendUserVerificationEmail(req.body);
+    res.status(200).json({ success: true, message });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const forgotPassword = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const message = await forgotUserPassword(req.body);
+    res.status(200).json({ success: true, message });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const resetPassword = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const message = await resetUserPassword({
+      token: (req.query.token as string) || req.body.token,
+      password: req.body.password,
+    });
+    res.status(200).json({ success: true, message });
   } catch (error) {
     next(error);
   }
@@ -285,7 +346,6 @@ export const add = async (req: Request, res: Response, next: NextFunction) => {
     const dataToSend: AddUserDto = {
       name: req.body.name,
       email: req.body.email,
-      phoneNumber: req.body.phoneNumber,
       role: req.body.role,
       status: req.body.status,
       password: req.body.password,

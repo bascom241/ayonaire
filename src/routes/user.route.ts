@@ -1,11 +1,16 @@
 import express from "express"
-import { registerUser,login, refreshToken, logout, getNonAdminUsers, updateUser, getUserLoginHistory, getUserActivityHistory, assignRoleToUser, deactivateToUser, suspendToUser, viewMyProfile, uploadImage, edit, add, invite, accept, inviteUserCsv} from "../controllers/user.controller.js";
+import { registerUser,login, verifyEmail, resendVerificationEmail, forgotPassword, resetPassword, refreshToken, logout, getNonAdminUsers, updateUser, getUserLoginHistory, getUserActivityHistory, assignRoleToUser, deactivateToUser, suspendToUser, viewMyProfile, uploadImage, edit, add, invite, accept, inviteUserCsv} from "../controllers/user.controller.js";
 const router = express.Router();
 import { restrictTo, authorize } from "../middlewares/auth.middleware.js";
 import { upload } from "../middlewares/multer.js";
 
 router.post("/register", registerUser);
 router.post("/login", login)
+router.post("/verify-email", verifyEmail)
+router.get("/verify-email", verifyEmail)
+router.post("/resend-verification-email", resendVerificationEmail)
+router.post("/forgot-password", forgotPassword)
+router.post("/reset-password", resetPassword)
 router.post("/refresh-token", refreshToken)
 router.post("/logout", logout)
 router.get("/non-admin-users", authorize, restrictTo("admin"), getNonAdminUsers)
