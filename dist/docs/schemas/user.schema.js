@@ -80,8 +80,25 @@ export default {
         type: "object",
         properties: {
             success: { type: "boolean", example: true },
-            token: { type: "string", example: "eyJhbGciOiJIUzI1NiIs..." },
-            user: { $ref: "#/components/schemas/User" }
+            data: {
+                type: "object",
+                properties: {
+                    token: { type: "string", example: "eyJhbGciOiJIUzI1NiIs..." },
+                    accessToken: { type: "string", example: "eyJhbGciOiJIUzI1NiIs..." },
+                    refreshToken: { type: "string", example: "eyJhbGciOiJIUzI1NiIs..." },
+                    expiresIn: { type: "number", example: 900 },
+                    user: {
+                        type: "object",
+                        properties: {
+                            id: { type: "string" },
+                            name: { type: "string" },
+                            email: { type: "string", format: "email" },
+                            role: { type: "string" },
+                            status: { type: "string" }
+                        }
+                    }
+                }
+            }
         }
     }
 };

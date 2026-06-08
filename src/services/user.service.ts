@@ -4,6 +4,8 @@ import {
   UserResponse,
   LoginUserDto,
   LoginResponseDto,
+  RefreshTokenDto,
+  LogoutDto,
   NonAdminUsers,
   editUserDto,
   UserRole,
@@ -23,7 +25,11 @@ import {
 } from "../types/user.types.js";
 import { AppError } from "../errors/AppError.js";
 import bcrypt from "bcryptjs";
-import { generateToken } from "../utils/generateToken.js";
+import {
+  generateRefreshToken,
+  generateToken,
+  verifyRefreshToken,
+} from "../utils/generateToken.js";
 import { deleteImage, uploadMedia } from "../utils/uploadToCloudinary.js";
 import userModel from "../models/user.model.js";
 import enrollmentModel from "../models/enrollment.model.js";
@@ -32,9 +38,32 @@ import cohortModel from "../models/cohort.model.js";
 import { validateRequestBodyWithValues } from "../utils/validateRequestBody.js";
 import crypto from "crypto";
 import invitesModel from "../models/invites.model.js";
+import refreshTokenModel from "../models/refreshToken.model.js";
 import { sendEmailInvites } from "../config/mail.js";
 import { appendFile } from "fs";
 import { sendInviteEmail } from "../templates/emailTemplates.js";
+
+const ACCESS_TOKEN_EXPIRES_IN_SECONDS = 15 * 60;
+const REFRESH_TOKEN_EXPIRES_IN_DAYS = 30;
+
+const hashToken = (token: string) =>
+  crypto.createHash("sha256").update(token).digest("hex");
+
+const getRefreshTokenExpiry = () => {
+  const expiresAt = new Date();
+  expiresAt.setDate(expiresAt.getDate() + REFRESH_TOKEN_EXPIRES_IN_DAYS);
+  return expiresAt;
+};
+
+const ensureUserCanAuthenticate = (user: { status: UserStatus }) => {
+  if (user.status === UserStatus.SUSPENDED) {
+    throw new AppError("account suspended", 403);
+  }
+
+  if (user.status === UserStatus.INACTIVE) {
+    throw new AppError("account inactive", 403);
+  }
+};
 export const createUser = async (
   data: CreateUserDto,
 ): Promise<UserResponse> => {
@@ -76,8 +105,9 @@ export const loginUser = async (
     throw new AppError("user not found", 404);
   }
 
+  ensureUserCanAuthenticate(user);
+
   const isPassword = await bcrypt.compare(data.password, user.password);
-  console.log(data.password);
 
   if (!isPassword) {
     throw new AppError("invalid credentials", 401);
@@ -98,14 +128,162 @@ export const loginUser = async (
   });
 
   const token = generateToken({
-    id: user._id,
+    id: user._id.toString(),
+    email: user.email,
+    role: user.role,
+  });
+  const refreshToken = generateRefreshToken({
+    id: user._id.toString(),
     email: user.email,
     role: user.role,
   });
 
+  await refreshTokenModel.create({
+    user: user._id,
+    tokenHash: hashToken(refreshToken),
+    ip,
+    userAgent,
+    expiresAt: getRefreshTokenExpiry(),
+  });
+
   return {
     token,
+    accessToken: token,
+    refreshToken,
+    expiresIn: ACCESS_TOKEN_EXPIRES_IN_SECONDS,
+    user: {
+      id: user._id.toString(),
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      status: user.status,
+    },
   };
+};
+
+export const refreshAuthToken = async (
+  data: RefreshTokenDto,
+  ip: string | undefined,
+  userAgent: string | undefined,
+): Promise<LoginResponseDto> => {
+  validateRequestBodyWithValues<RefreshTokenDto>(data, ["refreshToken"]);
+
+  let decoded;
+  try {
+    decoded = verifyRefreshToken(data.refreshToken);
+  } catch (error) {
+    throw new AppError("invalid refresh token", 401);
+  }
+
+  const tokenHash = hashToken(data.refreshToken);
+  const storedToken = await refreshTokenModel.findOne({ tokenHash });
+
+  if (!storedToken) {
+    throw new AppError("refresh session not found", 401);
+  }
+
+  if (storedToken.revokedAt) {
+    await refreshTokenModel.updateMany(
+      { user: storedToken.user, revokedAt: { $exists: false } },
+      { revokedAt: new Date() },
+    );
+    throw new AppError("refresh token already used or revoked", 401);
+  }
+
+  if (storedToken.expiresAt.getTime() <= Date.now()) {
+    storedToken.revokedAt = new Date();
+    await storedToken.save();
+    throw new AppError("refresh token expired", 401);
+  }
+
+  const user = await User.findById(decoded.id);
+  if (!user) {
+    throw new AppError("user not found", 404);
+  }
+
+  ensureUserCanAuthenticate(user);
+
+  const token = generateToken({
+    id: user._id.toString(),
+    email: user.email,
+    role: user.role,
+  });
+  const refreshToken = generateRefreshToken({
+    id: user._id.toString(),
+    email: user.email,
+    role: user.role,
+  });
+  const newTokenHash = hashToken(refreshToken);
+
+  storedToken.revokedAt = new Date();
+  storedToken.replacedByTokenHash = newTokenHash;
+  await storedToken.save();
+
+  await refreshTokenModel.create({
+    user: user._id,
+    tokenHash: newTokenHash,
+    ip,
+    userAgent,
+    expiresAt: getRefreshTokenExpiry(),
+  });
+
+  return {
+    token,
+    accessToken: token,
+    refreshToken,
+    expiresIn: ACCESS_TOKEN_EXPIRES_IN_SECONDS,
+    user: {
+      id: user._id.toString(),
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      status: user.status,
+    },
+  };
+};
+
+export const logoutUser = async (
+  data: LogoutDto,
+  userId: string | undefined,
+): Promise<string> => {
+  let storedToken = null;
+
+  if (data.refreshToken) {
+    storedToken = await refreshTokenModel.findOne({
+      tokenHash: hashToken(data.refreshToken),
+    });
+  }
+
+  if (data.allDevices) {
+    const sessionUserId = userId || storedToken?.user.toString();
+
+    if (!sessionUserId) {
+      throw new AppError("Unauthorized", 401);
+    }
+
+    await refreshTokenModel.updateMany(
+      { user: sessionUserId, revokedAt: { $exists: false } },
+      { revokedAt: new Date() },
+    );
+    return "logged out from all devices";
+  }
+
+  validateRequestBodyWithValues<{ refreshToken?: string }>(data, [
+    "refreshToken",
+  ]);
+
+  if (!storedToken || storedToken.revokedAt) {
+    return "logged out";
+  }
+
+  if (userId && storedToken.user.toString() !== userId) {
+    throw new AppError("Unauthorized", 401);
+  }
+
+  storedToken.revokedAt = new Date();
+  await storedToken.save();
+
+  return "logged out";
 };
 
 export const editUser = async (
@@ -514,6 +692,8 @@ export const acceptInvite = async (data: AcceptInviteRequest):Promise<UserRespon
     });
   }
 
+  invite.used = true;
+  await invite.save();
 
   return {
      _id: user._id.toString(),

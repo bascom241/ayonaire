@@ -413,3 +413,4 @@
 2026-06-05T14:28:18.207Z [[32minfo[39m]: POST /api/v1/message/send [32m200[39m 164ms
 2026-06-05T15:23:55.184Z [[32minfo[39m]: POST /api/v1/auth/login [32m200[39m 960ms
 2026-06-05T15:24:54.721Z [[32minfo[39m]: GET /api/v1/message [32m200[39m 94ms
+2026-06-05T15:26:02.578Z [[32minfo[39m]: GET /api/v1/message [32m200[39m 309ms

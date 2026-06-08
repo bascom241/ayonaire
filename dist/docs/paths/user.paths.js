@@ -1,287 +1,348 @@
+const authEnvelope = (data) => ({
+    type: "object",
+    properties: {
+        success: { type: "boolean", example: true },
+        data,
+    },
+});
+const userResponse = {
+    type: "object",
+    properties: {
+        _id: { type: "string", example: "661f2a8c9c1234567890abcd" },
+        name: { type: "string", example: "John Doe" },
+        email: { type: "string", format: "email", example: "john@example.com" },
+        status: { type: "string", example: "active" },
+        createdAt: { type: "string", format: "date-time" },
+    },
+};
+const inviteResult = {
+    type: "object",
+    properties: {
+        message: { type: "string", example: "Invites Process completed" },
+        sent: {
+            type: "array",
+            items: { type: "string", format: "email" },
+        },
+        skipped: {
+            type: "array",
+            items: { type: "string", format: "email" },
+        },
+    },
+};
+const userIdParam = {
+    in: "path",
+    name: "id",
+    required: true,
+    schema: { type: "string" },
+    description: "User ID",
+};
+const tokenPairResponse = {
+    type: "object",
+    properties: {
+        token: {
+            type: "string",
+            example: "eyJhbGciOiJIUzI1NiIs...",
+            description: "Access JWT kept for backward compatibility. Same value as accessToken.",
+        },
+        accessToken: {
+            type: "string",
+            example: "eyJhbGciOiJIUzI1NiIs...",
+            description: "Short-lived JWT. Send as Authorization: Bearer <accessToken>.",
+        },
+        refreshToken: {
+            type: "string",
+            example: "eyJhbGciOiJIUzI1NiIs...",
+            description: "Long-lived refresh token. Store securely and send to /refresh-token.",
+        },
+        expiresIn: {
+            type: "number",
+            example: 900,
+            description: "Access-token lifetime in seconds.",
+        },
+        user: {
+            type: "object",
+            properties: {
+                id: { type: "string", example: "661f2a8c9c1234567890abcd" },
+                name: { type: "string", example: "John Doe" },
+                email: { type: "string", format: "email", example: "john@example.com" },
+                role: { type: "string", example: "user" },
+                status: { type: "string", example: "active" },
+            },
+        },
+    },
+};
 export default {
-    "/api/v1/user/register": {
+    "/api/v1/auth/register": {
         post: {
             tags: ["Users"],
             summary: "Register a new user",
-            description: "Creates a new user account",
+            description: "Creates a user account. The backend hashes the password before saving it.",
+            security: [],
             requestBody: {
                 required: true,
                 content: {
                     "application/json": {
-                        schema: {
-                            type: "object",
-                            required: ["name", "email", "password"],
-                            properties: {
-                                name: { type: "string", example: "John Doe" },
-                                email: { type: "string", format: "email", example: "john@example.com" },
-                                password: { type: "string", format: "password", example: "password123" },
-                                phoneNumber: { type: "string", example: "+1234567890" }
-                            }
-                        }
-                    }
-                }
+                        schema: { $ref: "#/components/schemas/UserRegistration" },
+                    },
+                },
             },
             responses: {
                 201: {
                     description: "User created successfully",
                     content: {
                         "application/json": {
-                            schema: {
-                                type: "object",
-                                properties: {
-                                    success: { type: "boolean", example: true },
-                                    message: { type: "string", example: "User created successfully" },
-                                    user: { $ref: "#/components/schemas/User" }
-                                }
-                            }
-                        }
-                    }
+                            schema: authEnvelope(userResponse),
+                        },
+                    },
                 },
-                400: { $ref: "#/components/responses/ValidationError" }
-            }
-        }
+                400: { $ref: "#/components/responses/ValidationError" },
+                409: { description: "User already exists" },
+            },
+        },
     },
-    "/api/v1/user/login": {
+    "/api/v1/auth/login": {
         post: {
-            tags: ["Users"],
+            tags: ["Auth"],
             summary: "Login a user",
-            description: "Authenticates a user and returns a JWT token",
+            description: "Authenticates a user, returns a short-lived access token and a persisted refresh token session. Suspended and inactive accounts cannot login.",
+            security: [],
             requestBody: {
                 required: true,
                 content: {
                     "application/json": {
-                        schema: {
-                            type: "object",
-                            required: ["email", "password"],
-                            properties: {
-                                email: { type: "string", format: "email", example: "john@example.com" },
-                                password: { type: "string", format: "password", example: "password123" }
-                            }
-                        }
-                    }
-                }
+                        schema: { $ref: "#/components/schemas/UserLogin" },
+                    },
+                },
             },
             responses: {
                 200: {
                     description: "Login successful",
                     content: {
                         "application/json": {
-                            schema: {
-                                type: "object",
-                                properties: {
-                                    success: { type: "boolean", example: true },
-                                    token: { type: "string", example: "eyJhbGciOiJIUzI1NiIs..." },
-                                    user: { $ref: "#/components/schemas/User" }
-                                }
-                            }
-                        }
-                    }
+                            schema: authEnvelope(tokenPairResponse),
+                        },
+                    },
                 },
-                401: {
-                    description: "Invalid credentials",
+                401: { description: "Invalid credentials" },
+                403: { description: "Account suspended or inactive" },
+                404: { description: "User not found" },
+            },
+        },
+    },
+    "/api/v1/auth/refresh-token": {
+        post: {
+            tags: ["Auth"],
+            summary: "Refresh authentication tokens",
+            description: "Validates the refresh token, revokes it, creates a new refresh session, and returns a new access/refresh token pair. Reuse of a revoked refresh token revokes all active sessions for that user.",
+            security: [],
+            requestBody: {
+                required: true,
+                content: {
+                    "application/json": {
+                        schema: {
+                            type: "object",
+                            required: ["refreshToken"],
+                            properties: {
+                                refreshToken: {
+                                    type: "string",
+                                    example: "eyJhbGciOiJIUzI1NiIs...",
+                                },
+                            },
+                        },
+                    },
+                },
+            },
+            responses: {
+                200: {
+                    description: "Tokens refreshed successfully",
+                    content: {
+                        "application/json": {
+                            schema: authEnvelope(tokenPairResponse),
+                        },
+                    },
+                },
+                400: { $ref: "#/components/responses/ValidationError" },
+                401: { description: "Invalid, expired, missing, or revoked refresh token" },
+                403: { description: "Account suspended or inactive" },
+            },
+        },
+    },
+    "/api/v1/auth/logout": {
+        post: {
+            tags: ["Auth"],
+            summary: "Logout user",
+            description: "Revokes the provided refresh token. Set allDevices to true to revoke all refresh sessions for the same user. Access tokens remain valid until expiry, so frontend should clear stored tokens immediately.",
+            security: [],
+            requestBody: {
+                required: true,
+                content: {
+                    "application/json": {
+                        schema: {
+                            type: "object",
+                            properties: {
+                                refreshToken: {
+                                    type: "string",
+                                    example: "eyJhbGciOiJIUzI1NiIs...",
+                                },
+                                allDevices: {
+                                    type: "boolean",
+                                    example: false,
+                                },
+                            },
+                        },
+                    },
+                },
+            },
+            responses: {
+                200: {
+                    description: "Logout successful",
                     content: {
                         "application/json": {
                             schema: {
                                 type: "object",
                                 properties: {
-                                    success: { type: "boolean", example: false },
-                                    message: { type: "string", example: "Invalid email or password" }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
+                                    success: { type: "boolean", example: true },
+                                    message: { type: "string", example: "logged out" },
+                                },
+                            },
+                        },
+                    },
+                },
+                400: { $ref: "#/components/responses/ValidationError" },
+                401: { description: "Unauthorized" },
+            },
+        },
     },
-    "/api/v1/user/non-admin-users": {
+    "/api/v1/auth/non-admin-users": {
         get: {
             tags: ["Admin"],
             summary: "Get all non-admin users",
-            description: "Retrieves all users except admins (Admin only)",
+            description: "Retrieves all users except admins. Admin only.",
             security: [{ bearerAuth: [] }],
             responses: {
                 200: {
                     description: "Users retrieved successfully",
                     content: {
                         "application/json": {
-                            schema: {
-                                type: "object",
-                                properties: {
-                                    success: { type: "boolean", example: true },
-                                    count: { type: "number" },
-                                    users: {
-                                        type: "array",
-                                        items: { $ref: "#/components/schemas/User" }
-                                    }
-                                }
-                            }
-                        }
-                    }
+                            schema: authEnvelope({
+                                type: "array",
+                                items: userResponse,
+                            }),
+                        },
+                    },
                 },
                 401: { $ref: "#/components/responses/UnauthorizedError" },
-                403: { $ref: "#/components/responses/ForbiddenError" }
-            }
-        }
+                403: { $ref: "#/components/responses/ForbiddenError" },
+            },
+        },
     },
-    "/api/v1/user/{id}": {
+    "/api/v1/auth/user/{id}": {
         put: {
             tags: ["Admin"],
             summary: "Update user",
-            description: "Updates user information (Admin only)",
+            description: "Updates user information. Admin only.",
             security: [{ bearerAuth: [] }],
-            parameters: [
-                {
-                    in: "path",
-                    name: "id",
-                    required: true,
-                    schema: { type: "string" },
-                    description: "User ID"
-                }
-            ],
+            parameters: [userIdParam],
             requestBody: {
                 content: {
                     "application/json": {
                         schema: {
                             type: "object",
                             properties: {
-                                name: { type: "string" },
-                                email: { type: "string", format: "email" },
-                                phoneNumber: { type: "string" },
-                                role: { type: "string", enum: ["user", "instructor", "admin"] }
-                            }
-                        }
-                    }
-                }
+                                name: { type: "string", example: "John Doe" },
+                                email: { type: "string", format: "email", example: "john@example.com" },
+                                phoneNumber: { type: "string", example: "+2348012345678" },
+                            },
+                        },
+                    },
+                },
             },
             responses: {
                 200: {
                     description: "User updated successfully",
                     content: {
                         "application/json": {
-                            schema: {
-                                type: "object",
-                                properties: {
-                                    success: { type: "boolean", example: true },
-                                    user: { $ref: "#/components/schemas/User" }
-                                }
-                            }
-                        }
-                    }
+                            schema: authEnvelope(userResponse),
+                        },
+                    },
                 },
                 401: { $ref: "#/components/responses/UnauthorizedError" },
                 403: { $ref: "#/components/responses/ForbiddenError" },
-                404: { $ref: "#/components/responses/NotFoundError" }
-            }
-        }
+                404: { $ref: "#/components/responses/NotFoundError" },
+            },
+        },
     },
-    "/api/v1/user/{id}/login-history": {
+    "/api/v1/auth/user/{id}/login-history": {
         get: {
             tags: ["Admin"],
             summary: "Get user login history",
-            description: "Retrieves login history for a specific user (Admin only)",
+            description: "Retrieves login history for a specific user. Admin only.",
             security: [{ bearerAuth: [] }],
-            parameters: [
-                {
-                    in: "path",
-                    name: "id",
-                    required: true,
-                    schema: { type: "string" },
-                    description: "User ID"
-                }
-            ],
+            parameters: [userIdParam],
             responses: {
                 200: {
                     description: "Login history retrieved",
                     content: {
                         "application/json": {
-                            schema: {
-                                type: "object",
-                                properties: {
-                                    success: { type: "boolean", example: true },
-                                    history: {
-                                        type: "array",
-                                        items: {
-                                            type: "object",
-                                            properties: {
-                                                ip: { type: "string" },
-                                                userAgent: { type: "string" },
-                                                loggedInAt: { type: "string", format: "date-time" }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
+                            schema: authEnvelope({
+                                type: "array",
+                                items: {
+                                    type: "object",
+                                    properties: {
+                                        ip: { type: "string", example: "::1" },
+                                        userAgent: { type: "string" },
+                                        loggedInAt: { type: "string", format: "date-time" },
+                                    },
+                                },
+                            }),
+                        },
+                    },
                 },
                 401: { $ref: "#/components/responses/UnauthorizedError" },
                 403: { $ref: "#/components/responses/ForbiddenError" },
-                404: { $ref: "#/components/responses/NotFoundError" }
-            }
-        }
+                404: { $ref: "#/components/responses/NotFoundError" },
+            },
+        },
     },
-    "/api/v1/user/{id}/user-activity-history": {
+    "/api/v1/auth/user/{id}/user-activity-history": {
         get: {
             tags: ["Admin"],
             summary: "Get user activity history",
-            description: "Retrieves activity history for a specific user (Admin only)",
+            description: "Retrieves activity history for a specific user. Admin only.",
             security: [{ bearerAuth: [] }],
-            parameters: [
-                {
-                    in: "path",
-                    name: "id",
-                    required: true,
-                    schema: { type: "string" },
-                    description: "User ID"
-                }
-            ],
+            parameters: [userIdParam],
             responses: {
                 200: {
                     description: "Activity history retrieved",
                     content: {
                         "application/json": {
-                            schema: {
-                                type: "object",
-                                properties: {
-                                    success: { type: "boolean", example: true },
-                                    activities: {
-                                        type: "array",
-                                        items: {
-                                            type: "object",
-                                            properties: {
-                                                action: { type: "string" },
-                                                performedAt: { type: "string", format: "date-time" },
-                                                meta: { type: "object" }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
+                            schema: authEnvelope({
+                                type: "array",
+                                items: {
+                                    type: "object",
+                                    properties: {
+                                        action: { type: "string", example: "LOGIN" },
+                                        performedAt: { type: "string", format: "date-time" },
+                                        meta: { type: "object" },
+                                    },
+                                },
+                            }),
+                        },
+                    },
                 },
                 401: { $ref: "#/components/responses/UnauthorizedError" },
                 403: { $ref: "#/components/responses/ForbiddenError" },
-                404: { $ref: "#/components/responses/NotFoundError" }
-            }
-        }
+                404: { $ref: "#/components/responses/NotFoundError" },
+            },
+        },
     },
-    "/api/v1/user/{id}/assign-role": {
+    "/api/v1/auth/user/{id}/assign-role": {
         put: {
             tags: ["Admin"],
             summary: "Assign role to user",
-            description: "Assigns a new role to a user (Admin only)",
+            description: "Assigns a new role to a user. Admin only.",
             security: [{ bearerAuth: [] }],
-            parameters: [
-                {
-                    in: "path",
-                    name: "id",
-                    required: true,
-                    schema: { type: "string" },
-                    description: "User ID"
-                }
-            ],
+            parameters: [userIdParam],
             requestBody: {
                 required: true,
                 content: {
@@ -293,50 +354,35 @@ export default {
                                 role: {
                                     type: "string",
                                     enum: ["user", "instructor", "admin"],
-                                    example: "instructor"
-                                }
-                            }
-                        }
-                    }
-                }
+                                    example: "instructor",
+                                },
+                            },
+                        },
+                    },
+                },
             },
             responses: {
                 200: {
                     description: "Role assigned successfully",
                     content: {
                         "application/json": {
-                            schema: {
-                                type: "object",
-                                properties: {
-                                    success: { type: "boolean", example: true },
-                                    message: { type: "string", example: "Role assigned successfully" },
-                                    user: { $ref: "#/components/schemas/User" }
-                                }
-                            }
-                        }
-                    }
+                            schema: authEnvelope({ type: "string", example: "role INSTRUCTOR assinged to John Doe" }),
+                        },
+                    },
                 },
                 401: { $ref: "#/components/responses/UnauthorizedError" },
                 403: { $ref: "#/components/responses/ForbiddenError" },
-                404: { $ref: "#/components/responses/NotFoundError" }
-            }
-        }
+                404: { $ref: "#/components/responses/NotFoundError" },
+            },
+        },
     },
-    "/api/v1/user/{id}/deativate-user": {
+    "/api/v1/auth/user/{id}/deactivate-user": {
         put: {
             tags: ["Admin"],
             summary: "Deactivate user",
-            description: "Deactivates a user account (Admin only)",
+            description: "Deactivates a user account. Admin only. The legacy misspelled route /api/v1/auth/user/{id}/deativate-user is still available for backward compatibility.",
             security: [{ bearerAuth: [] }],
-            parameters: [
-                {
-                    in: "path",
-                    name: "id",
-                    required: true,
-                    schema: { type: "string" },
-                    description: "User ID"
-                }
-            ],
+            parameters: [userIdParam],
             responses: {
                 200: {
                     description: "User deactivated successfully",
@@ -346,33 +392,25 @@ export default {
                                 type: "object",
                                 properties: {
                                     success: { type: "boolean", example: true },
-                                    message: { type: "string", example: "User deactivated successfully" }
-                                }
-                            }
-                        }
-                    }
+                                    message: { type: "string", example: "user deactivated" },
+                                },
+                            },
+                        },
+                    },
                 },
                 401: { $ref: "#/components/responses/UnauthorizedError" },
                 403: { $ref: "#/components/responses/ForbiddenError" },
-                404: { $ref: "#/components/responses/NotFoundError" }
-            }
-        }
+                404: { $ref: "#/components/responses/NotFoundError" },
+            },
+        },
     },
-    "/api/v1/user/{id}/suspend-user": {
+    "/api/v1/auth/user/{id}/suspend-user": {
         put: {
             tags: ["Admin"],
             summary: "Suspend user",
-            description: "Suspends a user account (Admin only)",
+            description: "Suspends a user account. Admin only.",
             security: [{ bearerAuth: [] }],
-            parameters: [
-                {
-                    in: "path",
-                    name: "id",
-                    required: true,
-                    schema: { type: "string" },
-                    description: "User ID"
-                }
-            ],
+            parameters: [userIdParam],
             responses: {
                 200: {
                     description: "User suspended successfully",
@@ -382,48 +420,42 @@ export default {
                                 type: "object",
                                 properties: {
                                     success: { type: "boolean", example: true },
-                                    message: { type: "string", example: "User suspended successfully" }
-                                }
-                            }
-                        }
-                    }
+                                    message: { type: "string", example: "user suspended" },
+                                },
+                            },
+                        },
+                    },
                 },
                 401: { $ref: "#/components/responses/UnauthorizedError" },
                 403: { $ref: "#/components/responses/ForbiddenError" },
-                404: { $ref: "#/components/responses/NotFoundError" }
-            }
-        }
+                404: { $ref: "#/components/responses/NotFoundError" },
+            },
+        },
     },
-    "/api/v1/user/get-profile": {
+    "/api/v1/auth/get-profile": {
         post: {
             tags: ["Users"],
             summary: "View my profile",
-            description: "Retrieves the profile of the authenticated user",
+            description: "Retrieves the profile of the authenticated user.",
             security: [{ bearerAuth: [] }],
             responses: {
                 200: {
                     description: "Profile retrieved successfully",
                     content: {
                         "application/json": {
-                            schema: {
-                                type: "object",
-                                properties: {
-                                    success: { type: "boolean", example: true },
-                                    user: { $ref: "#/components/schemas/User" }
-                                }
-                            }
-                        }
-                    }
+                            schema: authEnvelope(userResponse),
+                        },
+                    },
                 },
-                401: { $ref: "#/components/responses/UnauthorizedError" }
-            }
-        }
+                401: { $ref: "#/components/responses/UnauthorizedError" },
+            },
+        },
     },
-    "/api/v1/user/add-profile": {
+    "/api/v1/auth/add-profile": {
         post: {
             tags: ["Users"],
             summary: "Upload profile image",
-            description: "Uploads a profile image for the authenticated user",
+            description: "Uploads or replaces the profile image for the authenticated user.",
             security: [{ bearerAuth: [] }],
             requestBody: {
                 required: true,
@@ -433,92 +465,89 @@ export default {
                             type: "object",
                             required: ["profile"],
                             properties: {
-                                profile: {
-                                    type: "string",
-                                    format: "binary",
-                                    description: "Profile image file"
-                                }
-                            }
-                        }
-                    }
-                }
+                                profile: { type: "string", format: "binary" },
+                            },
+                        },
+                    },
+                },
             },
             responses: {
                 200: {
                     description: "Profile image uploaded successfully",
                     content: {
                         "application/json": {
-                            schema: {
+                            schema: authEnvelope({
                                 type: "object",
                                 properties: {
-                                    success: { type: "boolean", example: true },
-                                    message: { type: "string", example: "Profile image uploaded successfully" },
                                     profile: {
                                         type: "object",
                                         properties: {
                                             url: { type: "string" },
-                                            publicId: { type: "string" }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
+                                            publicId: { type: "string" },
+                                        },
+                                    },
+                                },
+                            }),
+                        },
+                    },
                 },
                 400: { $ref: "#/components/responses/ValidationError" },
-                401: { $ref: "#/components/responses/UnauthorizedError" }
-            }
-        }
+                401: { $ref: "#/components/responses/UnauthorizedError" },
+            },
+        },
     },
-    "/api/v1/user/edit-profile": {
+    "/api/v1/auth/edit-profile": {
         put: {
             tags: ["Users"],
             summary: "Edit profile",
-            description: "Updates the profile of the authenticated user",
+            description: "Updates the authenticated user's name and profile image.",
             security: [{ bearerAuth: [] }],
             requestBody: {
+                required: true,
                 content: {
                     "multipart/form-data": {
                         schema: {
                             type: "object",
+                            required: ["profile"],
                             properties: {
-                                profile: {
-                                    type: "string",
-                                    format: "binary",
-                                    description: "New profile image"
-                                },
-                                name: { type: "string" },
-                                phoneNumber: { type: "string" }
-                            }
-                        }
-                    }
-                }
+                                profile: { type: "string", format: "binary" },
+                                name: { type: "string", example: "John Doe" },
+                            },
+                        },
+                    },
+                },
             },
             responses: {
                 200: {
                     description: "Profile updated successfully",
                     content: {
                         "application/json": {
-                            schema: {
+                            schema: authEnvelope({
                                 type: "object",
                                 properties: {
-                                    success: { type: "boolean", example: true },
-                                    message: { type: "string", example: "Profile updated successfully" },
-                                    user: { $ref: "#/components/schemas/User" }
-                                }
-                            }
-                        }
-                    }
+                                    name: { type: "string", example: "John Doe" },
+                                    profile: {
+                                        type: "object",
+                                        properties: {
+                                            url: { type: "string" },
+                                            publicId: { type: "string" },
+                                        },
+                                    },
+                                },
+                            }),
+                        },
+                    },
                 },
-                401: { $ref: "#/components/responses/UnauthorizedError" }
-            }
-        }
+                400: { $ref: "#/components/responses/ValidationError" },
+                401: { $ref: "#/components/responses/UnauthorizedError" },
+            },
+        },
     },
-    "/api/v1/user/add": {
+    "/api/v1/auth/add": {
         post: {
             tags: ["Admin"],
-            summary: "Add new user (Admin)",
-            description: "Creates a new user (Admin only)",
+            summary: "Add new user",
+            description: "Creates a new user manually. Admin only.",
             security: [{ bearerAuth: [] }],
             requestBody: {
                 required: true,
@@ -526,42 +555,156 @@ export default {
                     "application/json": {
                         schema: {
                             type: "object",
-                            required: ["name", "email", "password", "role"],
+                            required: ["name", "email", "password"],
                             properties: {
-                                name: { type: "string" },
-                                email: { type: "string", format: "email" },
-                                password: { type: "string", format: "password" },
-                                phoneNumber: { type: "string" },
-                                role: {
-                                    type: "string",
-                                    enum: ["user", "instructor", "admin"],
-                                    example: "user"
-                                }
-                            }
-                        }
-                    }
-                }
+                                name: { type: "string", example: "Jane Student" },
+                                email: { type: "string", format: "email", example: "jane@example.com" },
+                                password: { type: "string", format: "password", example: "StrongPassword123" },
+                                phoneNumber: { type: "string", example: "+2348012345678" },
+                                role: { type: "string", enum: ["user", "instructor", "admin"], example: "user" },
+                                status: { type: "string", enum: ["active", "inactive", "suspended"], example: "active" },
+                                courseId: { type: "string", example: "661f2a8c9c1234567890abcd" },
+                                cohortId: { type: "string", example: "661f2b1d9c1234567890efgh" },
+                            },
+                        },
+                    },
+                },
             },
             responses: {
                 201: {
                     description: "User created successfully",
                     content: {
                         "application/json": {
-                            schema: {
-                                type: "object",
-                                properties: {
-                                    success: { type: "boolean", example: true },
-                                    message: { type: "string", example: "User created successfully" },
-                                    user: { $ref: "#/components/schemas/User" }
-                                }
-                            }
-                        }
-                    }
+                            schema: authEnvelope(userResponse),
+                        },
+                    },
                 },
                 400: { $ref: "#/components/responses/ValidationError" },
                 401: { $ref: "#/components/responses/UnauthorizedError" },
-                403: { $ref: "#/components/responses/ForbiddenError" }
-            }
-        }
-    }
+                403: { $ref: "#/components/responses/ForbiddenError" },
+            },
+        },
+    },
+    "/api/v1/auth/invite": {
+        post: {
+            tags: ["Admin"],
+            summary: "Invite users",
+            description: "Invites multiple users by email. Admin only.",
+            security: [{ bearerAuth: [] }],
+            requestBody: {
+                required: true,
+                content: {
+                    "application/json": {
+                        schema: {
+                            type: "object",
+                            required: ["emails", "courseId", "cohortId"],
+                            properties: {
+                                emails: {
+                                    type: "array",
+                                    items: { type: "string", format: "email" },
+                                    example: ["student@example.com"],
+                                },
+                                courseId: { type: "string", example: "661f2a8c9c1234567890abcd" },
+                                cohortId: { type: "string", example: "661f2b1d9c1234567890efgh" },
+                            },
+                        },
+                    },
+                },
+            },
+            responses: {
+                200: {
+                    description: "Invites processed successfully",
+                    content: {
+                        "application/json": {
+                            schema: authEnvelope(inviteResult),
+                        },
+                    },
+                },
+                400: { $ref: "#/components/responses/ValidationError" },
+                401: { $ref: "#/components/responses/UnauthorizedError" },
+                403: { $ref: "#/components/responses/ForbiddenError" },
+            },
+        },
+    },
+    "/api/v1/auth/invite/csv": {
+        post: {
+            tags: ["Admin"],
+            summary: "Bulk invite users via CSV",
+            description: "Uploads a CSV with an email column and sends invites. Admin only.",
+            security: [{ bearerAuth: [] }],
+            requestBody: {
+                required: true,
+                content: {
+                    "multipart/form-data": {
+                        schema: {
+                            type: "object",
+                            required: ["file", "courseId", "cohortId"],
+                            properties: {
+                                file: { type: "string", format: "binary" },
+                                courseId: { type: "string", example: "661f2a8c9c1234567890abcd" },
+                                cohortId: { type: "string", example: "661f2b1d9c1234567890efgh" },
+                            },
+                        },
+                    },
+                },
+            },
+            responses: {
+                200: {
+                    description: "CSV processed successfully",
+                    content: {
+                        "application/json": {
+                            schema: authEnvelope(inviteResult),
+                        },
+                    },
+                },
+                400: { $ref: "#/components/responses/ValidationError" },
+                401: { $ref: "#/components/responses/UnauthorizedError" },
+                403: { $ref: "#/components/responses/ForbiddenError" },
+            },
+        },
+    },
+    "/api/v1/auth/accept-invite/{token}": {
+        post: {
+            tags: ["Auth"],
+            summary: "Accept invite and create account",
+            description: "Completes account registration from an invite token.",
+            security: [],
+            parameters: [
+                {
+                    name: "token",
+                    in: "path",
+                    required: true,
+                    schema: { type: "string" },
+                    description: "Invite token sent by email",
+                },
+            ],
+            requestBody: {
+                required: true,
+                content: {
+                    "application/json": {
+                        schema: {
+                            type: "object",
+                            required: ["name", "password"],
+                            properties: {
+                                name: { type: "string", example: "John Doe" },
+                                password: { type: "string", format: "password", example: "StrongPassword123" },
+                            },
+                        },
+                    },
+                },
+            },
+            responses: {
+                200: {
+                    description: "Invite accepted successfully and user created",
+                    content: {
+                        "application/json": {
+                            schema: authEnvelope(userResponse),
+                        },
+                    },
+                },
+                400: { description: "Invalid or expired token or validation error" },
+                404: { description: "Invite or user resource not found" },
+            },
+        },
+    },
 };

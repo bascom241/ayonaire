@@ -13,6 +13,8 @@ import {
   createUser,
   fetchNonAdminUsers,
   loginUser,
+  refreshAuthToken,
+  logoutUser,
   editUser,
   loginHistory,
   userActivity,
@@ -49,6 +51,36 @@ export const login = async (
   try {
     const token = await loginUser(req.body, req.ip, req.headers["user-agent"]);
     res.status(200).json({ success: true, data: token });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const refreshToken = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const data = await refreshAuthToken(
+      req.body,
+      req.ip,
+      req.headers["user-agent"],
+    );
+    res.status(200).json({ success: true, data });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const logout = async (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const message = await logoutUser(req.body, req.user?.id);
+    res.status(200).json({ success: true, message });
   } catch (error) {
     next(error);
   }
@@ -251,12 +283,12 @@ export const edit = async (
 export const add = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const dataToSend: AddUserDto = {
-      name: req.body.fulName,
+      name: req.body.name,
       email: req.body.email,
       phoneNumber: req.body.phoneNumber,
       role: req.body.role,
       status: req.body.status,
-      password: req.body.passsword,
+      password: req.body.password,
       courseId: req.body.courseId,
       cohortId: req.body.cohortId,
     };

@@ -1,5 +1,6 @@
-import { handlePaystackWebhook, initializePayment, payHistory } from "../services/payment.service.js";
+import { bulkActionForOrder, editOrder, handlePaystackWebhook, initializePayment, payHistory, viewSingleOrder } from "../services/payment.service.js";
 import crypto from "crypto";
+import { AppError } from "../errors/AppError.js";
 export const pay = async (req, res, next) => {
     try {
         const userId = req.user?.id;
@@ -37,6 +38,8 @@ export const handlePayWebHook = async (req, res, next) => {
                 metadata: {
                     studentId: req.body.data.metadata.studentId,
                     courseId: req.body.data.metadata.courseId,
+                    billingAddress: req.body.data.metadata.billingAddress,
+                    shippingAddress: req.body.data.metadata.shippingAddress
                 },
             },
         };
@@ -65,6 +68,53 @@ export const paymentHistory = async (req, res, next) => {
             sortBy,
         };
         const data = await payHistory(dataToSend);
+        res.status(200).json({ success: true, data });
+    }
+    catch (error) {
+        next(error);
+    }
+};
+export const bulkEdit = async (req, res, next) => {
+    try {
+        const dataToSend = {
+            Completed: req.body.completed,
+            Onhold: req.body.completed,
+            Cancelled: req.body.cancelled,
+            Revoke: req.body.revoke,
+            Refund: req.body.refund,
+            Delete: req.body.delete,
+            Processing: req.body.processing
+        };
+        const data = await bulkActionForOrder(dataToSend);
+        res.status(200).json({ success: true, data });
+    }
+    catch (error) {
+        next(error);
+    }
+};
+export const edit = async (req, res, next) => {
+    try {
+        const userId = req.user?.id;
+        const dataToSend = {
+            orderId: req.body.orderId,
+            billingAddress: req.body.billingAddress,
+            shippingAddress: req.body.shippingAddress
+        };
+        const data = await editOrder(dataToSend, userId);
+        res.status(200).json({ success: true, data });
+    }
+    catch (error) {
+        next(error);
+    }
+};
+export const viewSingle = async (req, res, next) => {
+    try {
+        const { orderId } = req.params;
+        if (!orderId || typeof orderId !== "string") {
+            throw new AppError("order id is missing or Invalid format", 400);
+        }
+        ;
+        const data = await viewSingleOrder({ orderId });
         res.status(200).json({ success: true, data });
     }
     catch (error) {

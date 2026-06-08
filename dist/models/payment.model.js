@@ -1,5 +1,5 @@
 import mongoose, { Schema } from "mongoose";
-import { PaymentStatus } from "../types/payment.types.js";
+import { OrderStatus, PaymentStatus } from "../types/payment.types.js";
 const paymentSchema = new Schema({
     student: {
         type: Schema.Types.ObjectId,
@@ -36,6 +36,43 @@ const paymentSchema = new Schema({
         enum: Object.values(PaymentStatus),
         default: PaymentStatus.PENDING,
     },
+    orderStatus: {
+        type: String,
+        enum: Object.values(OrderStatus),
+        default: OrderStatus.PROCESSING,
+    },
     paidAt: Date,
+    isDeleted: {
+        type: Boolean,
+        default: false,
+    },
+    // Embedded Billing Address (no separate schema)
+    billingAddress: {
+        firstName: String,
+        lastName: String,
+        company: String,
+        addressLine1: String,
+        addressLine2: String,
+        city: String,
+        zipCode: String,
+        country: String,
+        email: String,
+        paymentMethod: {
+            type: String,
+            default: "paystack",
+        },
+    },
+    //  Embedded Shipping Address (optional)
+    shippingAddress: {
+        firstName: String,
+        lastName: String,
+        company: String,
+        addressLine1: String,
+        addressLine2: String,
+        customerNote: String,
+        city: String,
+        zipCode: String,
+        country: String,
+    },
 }, { timestamps: true });
 export default mongoose.model("Payment", paymentSchema);

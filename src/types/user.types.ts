@@ -79,7 +79,25 @@ export interface LoginUserDto {
 
 export interface LoginResponseDto {
   token: string;
+  accessToken: string;
+  refreshToken: string;
+  expiresIn: number;
+  user: {
+    id: string;
+    name: string;
+    email: string;
+    role: string;
+    status: string;
+  };
+}
+
+export interface RefreshTokenDto {
+  refreshToken: string;
+}
+
+export interface LogoutDto {
   refreshToken?: string;
+  allDevices?: boolean;
 }
 
 export interface TokenPayload {

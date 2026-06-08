@@ -11,6 +11,7 @@ import { io } from "../server.js";
 import roomModel from "../models/room.model.js";
 import { GetMessagesRoom } from "../types/message.types.js";
 import { getPagination } from "../utils/getPagination.js";
+import bcrypt from "bcryptjs";
 export const sendMessage = async (
   data: MessageRequestData,
 ): Promise<MessageResponseData> => {

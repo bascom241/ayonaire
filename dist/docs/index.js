@@ -11,6 +11,9 @@ import quizPaths from "./paths/quiz.paths.js";
 import instructorPaths from "./paths/instructor.paths.js";
 import enrollPaths from "./paths/enroll.paths.js";
 import modulePaths from "./paths/module.paths.js";
+import feedPaths from "./paths/feed.paths.js";
+import announcementPaths from "./paths/announcement.paths.js";
+import workshopPaths from "./paths/workshop.paths.js";
 // Import schemas
 import userSchemas from "./schemas/user.schema.js";
 import courseSchemas from "./schemas/course.schema.js";
@@ -23,6 +26,10 @@ import enrollmentSchemas from "./schemas/enrollment.schema.js";
 import moduleSchemas from "./schemas/module.schema.js";
 import assignmentSchemas from "./schemas/assignment.schema.js";
 import adminSchemas from "./schemas/admin.schema.js";
+import inviteShema from "./schemas/invite.shema.js";
+import feedSchemas from "./schemas/feed.schema.js";
+import announcementSchemas from "./schemas/announcement.schema.js";
+import workshopSchemas from "./schemas/workshop.schema.js";
 // Import components
 import { securitySchemes } from "./components/security.js";
 import { responses } from "./components/responses.js";
@@ -46,12 +53,12 @@ const options = {
         },
         servers: [
             {
-                url: "http://localhost:3000",
-                description: "Development server",
+                url: "https://ayonaire.onrender.com/",
+                description: "Testing server",
             },
             {
-                url: "https://api.ayonaire.com",
-                description: "Production server",
+                url: "http://localhost:5000",
+                description: "Development server",
             },
         ],
         tags,
@@ -69,6 +76,10 @@ const options = {
                 ...moduleSchemas,
                 ...assignmentSchemas,
                 ...adminSchemas,
+                ...inviteShema,
+                ...feedSchemas,
+                ...announcementSchemas,
+                ...workshopSchemas
             },
             responses,
             parameters,
@@ -84,6 +95,9 @@ const options = {
             ...instructorPaths,
             ...enrollPaths,
             ...modulePaths,
+            ...feedPaths,
+            ...announcementPaths,
+            ...workshopPaths,
         },
     },
     apis: [],

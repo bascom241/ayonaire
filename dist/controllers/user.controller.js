@@ -1,4 +1,6 @@
-import { createUser, fetchNonAdminUsers, loginUser, editUser, loginHistory, userActivity, assignRole, deactivateUser, suspendUser, viewProfile, addProfileImage, editProfile, addUser } from "../services/user.service.js";
+import csvParser from "csv-parser";
+import { Readable } from "node:stream";
+import { createUser, fetchNonAdminUsers, loginUser, refreshAuthToken, logoutUser, editUser, loginHistory, userActivity, assignRole, deactivateUser, suspendUser, viewProfile, addProfileImage, editProfile, addUser, inviteUser, acceptInvite, } from "../services/user.service.js";
 import { AppError } from "../errors/AppError.js";
 export const registerUser = async (req, res, next) => {
     try {
@@ -13,6 +15,24 @@ export const login = async (req, res, next) => {
     try {
         const token = await loginUser(req.body, req.ip, req.headers["user-agent"]);
         res.status(200).json({ success: true, data: token });
+    }
+    catch (error) {
+        next(error);
+    }
+};
+export const refreshToken = async (req, res, next) => {
+    try {
+        const data = await refreshAuthToken(req.body, req.ip, req.headers["user-agent"]);
+        res.status(200).json({ success: true, data });
+    }
+    catch (error) {
+        next(error);
+    }
+};
+export const logout = async (req, res, next) => {
+    try {
+        const message = await logoutUser(req.body, req.user?.id);
+        res.status(200).json({ success: true, message });
     }
     catch (error) {
         next(error);
@@ -144,21 +164,83 @@ export const edit = async (req, res, next) => {
         next(error);
     }
 };
-// Not yet tested with post man 
+// Not yet tested with post man
 export const add = async (req, res, next) => {
     try {
         const dataToSend = {
-            name: req.body.fulName,
+            name: req.body.name,
             email: req.body.email,
             phoneNumber: req.body.phoneNumber,
             role: req.body.role,
             status: req.body.status,
-            password: req.body.passsword,
+            password: req.body.password,
             courseId: req.body.courseId,
             cohortId: req.body.cohortId,
         };
         const data = await addUser(dataToSend);
         res.status(201).json({ success: true, data });
+    }
+    catch (error) {
+        next(error);
+    }
+};
+export const invite = async (req, res, next) => {
+    try {
+        const dataToSend = {
+            emails: req.body.emails,
+            courseId: req.body.courseId,
+            cohortId: req.body.cohortId,
+        };
+        const data = await inviteUser(dataToSend);
+        res.status(200).json({ success: true, data });
+    }
+    catch (error) {
+        console.log(error);
+        next(error);
+    }
+};
+export const accept = async (req, res, next) => {
+    try {
+        const { token } = req.params;
+        if (typeof token !== "string") {
+            throw new AppError("Invalid token format", 400);
+        }
+        const dataToSend = {
+            token,
+            name: req.body.name,
+            password: req.body.password,
+        };
+        const data = await acceptInvite(dataToSend);
+        res.status(200).json({ success: true, data });
+    }
+    catch (error) {
+        next(error);
+    }
+};
+export const inviteUserCsv = async (req, res, next) => {
+    try {
+        if (!req.file) {
+            throw new AppError("csv file is required", 400);
+        }
+        const emails = [];
+        const stream = Readable.from(req.file.buffer);
+        await new Promise((resolve, reject) => {
+            stream.pipe(csvParser())
+                .on("data", (row) => {
+                if (row.email) {
+                    emails.push(row.email.trim());
+                }
+            })
+                .on("end", resolve)
+                .on("error", reject);
+        });
+        const uniqueEmails = [...new Set(emails)];
+        const data = await inviteUser({
+            emails: uniqueEmails,
+            courseId: req.body.courseId,
+            cohortId: req.body.cohortId,
+        });
+        res.status(200).json({ success: true, data });
     }
     catch (error) {
         next(error);
