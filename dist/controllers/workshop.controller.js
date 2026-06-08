@@ -35,7 +35,10 @@ export const get = async (req, res, next) => {
 export const edit = async (req, res, next) => {
     try {
         const { title, description, platform, status, startDate, endDate, } = req.body;
-        const id = req.params;
+        const id = req.params.id;
+        if (!id || typeof id !== "string") {
+            throw new Error("Workshop id is required");
+        }
         const authRequest = req;
         const userId = authRequest.user?.id;
         const dataToSend = {

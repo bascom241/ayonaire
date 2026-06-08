@@ -1,5 +1,5 @@
 export default {
-  "/api/v1/enroll/enrolled-coures": {
+  "/api/v1/enrollment/enrolled-coures": {
     get: {
       tags: ["Enrollment"],
       summary: "Get enrolled courses",

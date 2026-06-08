@@ -53,12 +53,12 @@ export const loginUser = async (data, ip, userAgent) => {
     validateRequestBodyWithValues(data, ["email", "password"]);
     const user = await User.findOne({ email: data.email });
     if (!user) {
-        throw new AppError("user not found", 404);
+        throw new AppError("Invalid email or password", 401);
     }
     ensureUserCanAuthenticate(user);
     const isPassword = await bcrypt.compare(data.password, user.password);
     if (!isPassword) {
-        throw new AppError("invalid credentials", 401);
+        throw new AppError("Invalid email or password", 401);
     }
     await User.findByIdAndUpdate(user.id, {
         $push: {

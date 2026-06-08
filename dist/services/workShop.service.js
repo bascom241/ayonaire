@@ -75,7 +75,6 @@ export const editWorkShop = async (data, userId) => {
     if (!workshop) {
         throw new AppError("workshop not found", 500);
     }
-    const { name, link, type } = platform;
     if (title !== undefined) {
         workshop.title = title;
         await feedModel.findOneAndUpdate({
@@ -88,6 +87,7 @@ export const editWorkShop = async (data, userId) => {
     if (description !== undefined)
         workshop.description = description;
     if (platform) {
+        const { name, link, type } = platform;
         if (name !== undefined)
             workshop.platform.name = name;
         if (link !== undefined)

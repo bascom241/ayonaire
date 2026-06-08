@@ -29,7 +29,7 @@ export default {
         get: {
             tags: ["Workshops"],
             summary: "Get all workshops",
-            security: [{ bearerAuth: [] }],
+            security: [],
             parameters: [
                 {
                     name: "page",
@@ -48,6 +48,55 @@ export default {
             ],
             responses: {
                 200: { description: "Workshops fetched successfully" }
+            }
+        }
+    },
+    "/api/v1/workshop/{id}": {
+        put: {
+            tags: ["Workshops"],
+            summary: "Edit a workshop",
+            description: "Updates an existing workshop. Admin/Instructor only.",
+            security: [{ bearerAuth: [] }],
+            parameters: [
+                {
+                    name: "id",
+                    in: "path",
+                    required: true,
+                    schema: { type: "string" },
+                    description: "Workshop ID"
+                }
+            ],
+            requestBody: {
+                required: true,
+                content: {
+                    "application/json": {
+                        schema: {
+                            type: "object",
+                            properties: {
+                                title: { type: "string" },
+                                description: { type: "string" },
+                                platform: {
+                                    type: "object",
+                                    properties: {
+                                        type: { type: "string" },
+                                        name: { type: "string" },
+                                        link: { type: "string" }
+                                    }
+                                },
+                                status: { type: "string" },
+                                startDate: { type: "string", format: "date-time" },
+                                endDate: { type: "string", format: "date-time" }
+                            }
+                        }
+                    }
+                }
+            },
+            responses: {
+                200: { description: "Workshop updated successfully" },
+                400: { $ref: "#/components/responses/ValidationError" },
+                401: { $ref: "#/components/responses/UnauthorizedError" },
+                403: { $ref: "#/components/responses/ForbiddenError" },
+                404: { $ref: "#/components/responses/NotFoundError" }
             }
         }
     }

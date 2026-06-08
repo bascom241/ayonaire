@@ -404,6 +404,35 @@ export default {
             },
         },
     },
+    "/api/v1/auth/user/{id}/deativate-user": {
+        put: {
+            tags: ["Admin"],
+            summary: "Deactivate user - deprecated legacy route",
+            description: "Legacy misspelled route kept for backward compatibility. Use /api/v1/auth/user/{id}/deactivate-user instead.",
+            deprecated: true,
+            security: [{ bearerAuth: [] }],
+            parameters: [userIdParam],
+            responses: {
+                200: {
+                    description: "User deactivated successfully",
+                    content: {
+                        "application/json": {
+                            schema: {
+                                type: "object",
+                                properties: {
+                                    success: { type: "boolean", example: true },
+                                    message: { type: "string", example: "user deactivated" },
+                                },
+                            },
+                        },
+                    },
+                },
+                401: { $ref: "#/components/responses/UnauthorizedError" },
+                403: { $ref: "#/components/responses/ForbiddenError" },
+                404: { $ref: "#/components/responses/NotFoundError" },
+            },
+        },
+    },
     "/api/v1/auth/user/{id}/suspend-user": {
         put: {
             tags: ["Admin"],

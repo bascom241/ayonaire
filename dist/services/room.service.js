@@ -22,10 +22,12 @@ export const createRoom = async (data) => {
         roomCreator: userId,
         name,
         description,
-        profile: {
-            url: uploadedProfile.secure_url,
-            publicId: uploadedProfile.public_id,
-        },
+        profile: uploadedProfile
+            ? {
+                url: uploadedProfile.secure_url,
+                publicId: uploadedProfile.public_id,
+            }
+            : undefined,
     });
     if (!room) {
         throw new AppError("Failed to create room", 400);

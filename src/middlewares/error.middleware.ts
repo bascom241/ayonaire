@@ -7,7 +7,7 @@ export const errorHanlder = (
   res: Response,
   _next: NextFunction,
 ) => {
- let statusCode = 500;
+  let statusCode = 500;
   let message = "Internal server error";
 
   if (err instanceof AppError) {
@@ -15,9 +15,12 @@ export const errorHanlder = (
     message = err.message;
   }
 
+  if (process.env.NODE_ENV !== "test") {
+    console.error(err);
+  }
+
   res.status(statusCode).json({
     success: false,
     message,
-    ...(process.env.NODE_ENV === "development" && { stack: err.stack }),
   });
 };

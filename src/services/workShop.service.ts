@@ -100,7 +100,6 @@ export const editWorkShop = async (
     throw new AppError("workshop not found", 500);
   }
 
-  const { name, link, type } = platform;
   if (title !== undefined) {
     workshop.title = title;
 
@@ -116,6 +115,7 @@ export const editWorkShop = async (
   }
   if (description !== undefined) workshop.description = description;
   if (platform) {
+    const { name, link, type } = platform;
     if (name !== undefined) workshop.platform.name = name;
     if (link !== undefined) workshop.platform.link = link;
     if (type !== undefined) workshop.platform.type = type as PlatformName;

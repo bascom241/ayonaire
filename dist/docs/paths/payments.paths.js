@@ -1,9 +1,9 @@
 export default {
-    "/api/v1/lesson/upload": {
+    "/api/v1/payment/initialize": {
         post: {
-            tags: ["Lessons"],
-            summary: "Upload lesson",
-            description: "Creates a new lesson (Admin/Instructor only)",
+            tags: ["Payments"],
+            summary: "Initialize payment",
+            description: "Creates a Paystack payment authorization URL for the authenticated user.",
             security: [{ bearerAuth: [] }],
             requestBody: {
                 required: true,
@@ -11,248 +11,187 @@ export default {
                     "application/json": {
                         schema: {
                             type: "object",
-                            required: ["title", "module", "course", "order"],
+                            required: ["courseId"],
                             properties: {
-                                title: { type: "string", example: "Variables and Data Types" },
-                                module: { type: "string", description: "Module ID" },
-                                course: { type: "string", description: "Course ID" },
-                                order: { type: "number", example: 1 },
-                                duration: { type: "number", example: 600 },
-                                isPublished: { type: "boolean", default: false },
-                                isFreePreview: { type: "boolean", default: false },
-                                isLocked: { type: "boolean", default: true }
-                            }
-                        }
-                    }
-                }
+                                courseId: { type: "string", example: "661f2a8c9c1234567890abcd" },
+                            },
+                        },
+                    },
+                },
             },
             responses: {
-                201: {
-                    description: "Lesson created successfully",
+                200: {
+                    description: "Payment initialized",
                     content: {
                         "application/json": {
                             schema: {
                                 type: "object",
                                 properties: {
                                     success: { type: "boolean", example: true },
-                                    message: { type: "string", example: "Lesson created successfully" },
-                                    lesson: { $ref: "#/components/schemas/Lesson" }
-                                }
-                            }
-                        }
-                    }
+                                    message: { type: "string", example: "Payment initialized" },
+                                    data: { type: "string", description: "Paystack authorization URL" },
+                                },
+                            },
+                        },
+                    },
                 },
                 400: { $ref: "#/components/responses/ValidationError" },
                 401: { $ref: "#/components/responses/UnauthorizedError" },
-                403: { $ref: "#/components/responses/ForbiddenError" }
-            }
-        }
+            },
+        },
     },
-    "/api/v1/lesson/upload-video": {
+    "/api/v1/payment/webhook": {
         post: {
-            tags: ["Lessons"],
-            summary: "Upload lesson videos",
-            description: "Uploads multiple videos for a lesson (Admin/Instructor only)",
+            tags: ["Payments"],
+            summary: "Paystack webhook",
+            description: "Receives Paystack webhook events. Requires x-paystack-signature header.",
+            security: [],
+            parameters: [
+                {
+                    in: "header",
+                    name: "x-paystack-signature",
+                    required: true,
+                    schema: { type: "string" },
+                    description: "Paystack HMAC SHA512 signature",
+                },
+            ],
+            requestBody: {
+                required: true,
+                content: {
+                    "application/json": {
+                        schema: {
+                            type: "object",
+                            properties: {
+                                event: { type: "string", example: "charge.success" },
+                                data: { type: "object" },
+                            },
+                        },
+                    },
+                },
+            },
+            responses: {
+                200: { description: "Webhook processed" },
+                401: { description: "Invalid Paystack signature" },
+                500: { description: "Webhook processing failed" },
+            },
+        },
+    },
+    "/api/v1/payment/get-all-payments": {
+        get: {
+            tags: ["Payments"],
+            summary: "Get payment history",
+            description: "Returns paginated payment/order history. Admin only.",
+            security: [{ bearerAuth: [] }],
+            parameters: [
+                { in: "query", name: "page", schema: { type: "number", default: 1 } },
+                { in: "query", name: "limit", schema: { type: "number", default: 10 } },
+                { in: "query", name: "search", schema: { type: "string" } },
+                { in: "query", name: "order", schema: { type: "string", enum: ["asc", "desc"], default: "desc" } },
+                { in: "query", name: "sortBy", schema: { type: "string", default: "createdAt" } },
+            ],
+            responses: {
+                200: {
+                    description: "Payments retrieved",
+                    content: {
+                        "application/json": {
+                            schema: {
+                                type: "object",
+                                properties: {
+                                    success: { type: "boolean", example: true },
+                                    data: { type: "object" },
+                                },
+                            },
+                        },
+                    },
+                },
+                401: { $ref: "#/components/responses/UnauthorizedError" },
+                403: { $ref: "#/components/responses/ForbiddenError" },
+            },
+        },
+    },
+    "/api/v1/payment/bulk-edit": {
+        post: {
+            tags: ["Payments"],
+            summary: "Bulk edit payment orders",
+            description: "Performs bulk order actions. Admin only.",
             security: [{ bearerAuth: [] }],
             requestBody: {
                 required: true,
                 content: {
-                    "multipart/form-data": {
+                    "application/json": {
                         schema: {
                             type: "object",
-                            required: ["lessonId", "videos"],
                             properties: {
-                                lessonId: { type: "string", description: "Lesson ID" },
-                                videos: {
-                                    type: "array",
-                                    items: {
-                                        type: "string",
-                                        format: "binary"
-                                    },
-                                    description: "Video files to upload (max 10)"
-                                }
-                            }
-                        }
-                    }
-                }
+                                completed: { type: "string" },
+                                cancelled: { type: "string" },
+                                revoke: { type: "string" },
+                                refund: { type: "string" },
+                                delete: { type: "string" },
+                                processing: { type: "string" },
+                            },
+                        },
+                    },
+                },
             },
             responses: {
-                200: {
-                    description: "Videos uploaded successfully",
-                    content: {
-                        "application/json": {
-                            schema: {
-                                type: "object",
-                                properties: {
-                                    success: { type: "boolean", example: true },
-                                    message: { type: "string", example: "Videos uploaded successfully" },
-                                    lesson: { $ref: "#/components/schemas/Lesson" }
-                                }
-                            }
-                        }
-                    }
+                200: { description: "Bulk action completed" },
+                401: { $ref: "#/components/responses/UnauthorizedError" },
+                403: { $ref: "#/components/responses/ForbiddenError" },
+            },
+        },
+    },
+    "/api/v1/payment/edit-order": {
+        put: {
+            tags: ["Payments"],
+            summary: "Edit payment order",
+            description: "Updates billing and shipping details for an order. Admin only.",
+            security: [{ bearerAuth: [] }],
+            requestBody: {
+                required: true,
+                content: {
+                    "application/json": {
+                        schema: {
+                            type: "object",
+                            required: ["orderId"],
+                            properties: {
+                                orderId: { type: "string" },
+                                billingAddress: { type: "object" },
+                                shippingAddress: { type: "object" },
+                            },
+                        },
+                    },
                 },
+            },
+            responses: {
+                200: { description: "Order updated" },
                 400: { $ref: "#/components/responses/ValidationError" },
                 401: { $ref: "#/components/responses/UnauthorizedError" },
                 403: { $ref: "#/components/responses/ForbiddenError" },
-                404: { $ref: "#/components/responses/NotFoundError" }
-            }
-        }
-    },
-    "/api/v1/lesson/mark-lesson-as-completed": {
-        post: {
-            tags: ["Lessons"],
-            summary: "Mark lesson as completed",
-            description: "Marks a lesson as completed by the authenticated user",
-            security: [{ bearerAuth: [] }],
-            requestBody: {
-                required: true,
-                content: {
-                    "application/json": {
-                        schema: {
-                            type: "object",
-                            required: ["lessonId"],
-                            properties: {
-                                lessonId: { type: "string" }
-                            }
-                        }
-                    }
-                }
             },
-            responses: {
-                200: {
-                    description: "Lesson marked as completed",
-                    content: {
-                        "application/json": {
-                            schema: {
-                                type: "object",
-                                properties: {
-                                    success: { type: "boolean", example: true },
-                                    message: { type: "string", example: "Lesson completed successfully" }
-                                }
-                            }
-                        }
-                    }
-                },
-                400: { $ref: "#/components/responses/ValidationError" },
-                401: { $ref: "#/components/responses/UnauthorizedError" },
-                404: { $ref: "#/components/responses/NotFoundError" }
-            }
-        }
+        },
     },
-    "/api/v1/lesson/update-last-lesson": {
-        post: {
-            tags: ["Lessons"],
-            summary: "Update last watched lesson",
-            description: "Updates the last watched lesson for a user",
-            security: [{ bearerAuth: [] }],
-            requestBody: {
-                required: true,
-                content: {
-                    "application/json": {
-                        schema: {
-                            type: "object",
-                            required: ["courseId", "lessonId"],
-                            properties: {
-                                courseId: { type: "string" },
-                                lessonId: { type: "string" }
-                            }
-                        }
-                    }
-                }
-            },
-            responses: {
-                200: {
-                    description: "Last lesson updated successfully",
-                    content: {
-                        "application/json": {
-                            schema: {
-                                type: "object",
-                                properties: {
-                                    success: { type: "boolean", example: true },
-                                    message: { type: "string", example: "Last lesson updated successfully" },
-                                    enrollment: { $ref: "#/components/schemas/Enrollment" }
-                                }
-                            }
-                        }
-                    }
-                },
-                400: { $ref: "#/components/responses/ValidationError" },
-                401: { $ref: "#/components/responses/UnauthorizedError" }
-            }
-        }
-    },
-    "/api/v1/lesson/resume-last-lesson": {
+    "/api/v1/payment/single-order/{orderId}": {
         get: {
-            tags: ["Lessons"],
-            summary: "Resume last lesson",
-            description: "Gets the last watched lesson for a specific course",
+            tags: ["Payments"],
+            summary: "Get single payment order",
+            description: "Returns one payment/order by ID. Admin only.",
             security: [{ bearerAuth: [] }],
             parameters: [
                 {
-                    in: "query",
-                    name: "courseId",
+                    in: "path",
+                    name: "orderId",
                     required: true,
                     schema: { type: "string" },
-                    description: "Course ID"
-                }
+                    description: "Payment order ID",
+                },
             ],
             responses: {
-                200: {
-                    description: "Last lesson retrieved successfully",
-                    content: {
-                        "application/json": {
-                            schema: {
-                                type: "object",
-                                properties: {
-                                    success: { type: "boolean", example: true },
-                                    lesson: { $ref: "#/components/schemas/Lesson" },
-                                    enrollment: { $ref: "#/components/schemas/Enrollment" }
-                                }
-                            }
-                        }
-                    }
-                },
+                200: { description: "Order retrieved" },
                 400: { $ref: "#/components/responses/ValidationError" },
                 401: { $ref: "#/components/responses/UnauthorizedError" },
-                404: { $ref: "#/components/responses/NotFoundError" }
-            }
-        }
+                403: { $ref: "#/components/responses/ForbiddenError" },
+                404: { $ref: "#/components/responses/NotFoundError" },
+            },
+        },
     },
-    "/api/v1/lesson/view-lesson-content": {
-        get: {
-            tags: ["Lessons"],
-            summary: "View lesson content",
-            description: "Retrieves the content of a specific lesson",
-            security: [{ bearerAuth: [] }],
-            parameters: [
-                {
-                    in: "query",
-                    name: "lessonId",
-                    required: true,
-                    schema: { type: "string" },
-                    description: "Lesson ID"
-                }
-            ],
-            responses: {
-                200: {
-                    description: "Lesson content retrieved successfully",
-                    content: {
-                        "application/json": {
-                            schema: {
-                                type: "object",
-                                properties: {
-                                    success: { type: "boolean", example: true },
-                                    lesson: { $ref: "#/components/schemas/Lesson" }
-                                }
-                            }
-                        }
-                    }
-                },
-                400: { $ref: "#/components/responses/ValidationError" },
-                401: { $ref: "#/components/responses/UnauthorizedError" },
-                404: { $ref: "#/components/responses/NotFoundError" }
-            }
-        }
-    }
 };

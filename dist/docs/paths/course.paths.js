@@ -103,13 +103,21 @@ export default {
             summary: "Edit a course",
             description: "Updates an existing course (Admin/Instructor only)",
             security: [{ bearerAuth: [] }],
+            parameters: [
+                {
+                    in: "query",
+                    name: "courseId",
+                    required: true,
+                    schema: { type: "string" },
+                    description: "Course ID to update"
+                }
+            ],
             requestBody: {
                 content: {
                     "multipart/form-data": {
                         schema: {
                             type: "object",
                             properties: {
-                                courseId: { type: "string", description: "Course ID to update" },
                                 title: { type: "string" },
                                 description: { type: "string" },
                                 category: { type: "string" },
@@ -161,21 +169,22 @@ export default {
             summary: "Assign instructor to course",
             description: "Assigns an instructor to a course (Admin only)",
             security: [{ bearerAuth: [] }],
-            requestBody: {
-                required: true,
-                content: {
-                    "application/json": {
-                        schema: {
-                            type: "object",
-                            required: ["courseId", "instructorId"],
-                            properties: {
-                                courseId: { type: "string" },
-                                instructorId: { type: "string" }
-                            }
-                        }
-                    }
+            parameters: [
+                {
+                    in: "query",
+                    name: "courseId",
+                    required: true,
+                    schema: { type: "string" },
+                    description: "Course ID"
+                },
+                {
+                    in: "query",
+                    name: "instructorId",
+                    required: true,
+                    schema: { type: "string" },
+                    description: "Instructor user ID"
                 }
-            },
+            ],
             responses: {
                 200: {
                     description: "Instructor assigned successfully",
@@ -192,6 +201,80 @@ export default {
                         }
                     }
                 },
+                400: { $ref: "#/components/responses/ValidationError" },
+                401: { $ref: "#/components/responses/UnauthorizedError" },
+                403: { $ref: "#/components/responses/ForbiddenError" },
+                404: { $ref: "#/components/responses/NotFoundError" }
+            }
+        }
+    },
+    "/api/v1/course/save-to-draft": {
+        put: {
+            tags: ["Courses"],
+            summary: "Save course as draft",
+            description: "Creates a draft course with thumbnail and intro video using the uploaded file. Admin only.",
+            security: [{ bearerAuth: [] }],
+            requestBody: {
+                required: true,
+                content: {
+                    "multipart/form-data": {
+                        schema: {
+                            type: "object",
+                            required: ["title", "thumbnail", "category"],
+                            properties: {
+                                title: { type: "string", example: "Introduction to Programming" },
+                                description: { type: "string" },
+                                category: { type: "string", description: "Category ID" },
+                                price: { type: "number", example: 99.99 },
+                                instructorId: { type: "string" },
+                                thumbnail: { type: "string", format: "binary" }
+                            }
+                        }
+                    }
+                }
+            },
+            responses: {
+                200: { description: "Course saved as draft" },
+                400: { $ref: "#/components/responses/ValidationError" },
+                401: { $ref: "#/components/responses/UnauthorizedError" },
+                403: { $ref: "#/components/responses/ForbiddenError" }
+            }
+        }
+    },
+    "/api/v1/course": {
+        get: {
+            tags: ["Courses"],
+            summary: "Get admin courses",
+            description: "Returns paginated courses for the admin dashboard. Admin only.",
+            security: [{ bearerAuth: [] }],
+            parameters: [
+                { in: "query", name: "page", schema: { type: "number", default: 1 } },
+                { in: "query", name: "limit", schema: { type: "number", default: 10 } }
+            ],
+            responses: {
+                200: { description: "Courses retrieved successfully" },
+                401: { $ref: "#/components/responses/UnauthorizedError" },
+                403: { $ref: "#/components/responses/ForbiddenError" }
+            }
+        }
+    },
+    "/api/v1/course/{courseId}": {
+        get: {
+            tags: ["Courses"],
+            summary: "Get single admin course",
+            description: "Returns one course for the admin dashboard. Admin only.",
+            security: [{ bearerAuth: [] }],
+            parameters: [
+                {
+                    in: "path",
+                    name: "courseId",
+                    required: true,
+                    schema: { type: "string" },
+                    description: "Course ID"
+                }
+            ],
+            responses: {
+                200: { description: "Course retrieved successfully" },
                 400: { $ref: "#/components/responses/ValidationError" },
                 401: { $ref: "#/components/responses/UnauthorizedError" },
                 403: { $ref: "#/components/responses/ForbiddenError" },

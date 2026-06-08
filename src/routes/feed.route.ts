@@ -10,7 +10,7 @@ router.delete("/", authorize, deleteF);
 router.get("/",authorize, view);
 router.post("/like", authorize, likeFeed)
 router.post("/comment", authorize, commentOnAfeed)
-router.delete("/", authorize,deleteC );
+router.delete("/comment", authorize,deleteC );
 router.post("/tag",authorize,restrictTo("admin"), uploadTags);
 
 export default router;

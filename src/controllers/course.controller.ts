@@ -166,7 +166,7 @@ export const getAdminCourses = async (req: Request, res: Response, next: NextFun
 
 export const getSingleAdminCourse = async ( req: Request, res: Response, next: NextFunction) => {
   try {
-     const { courseId } = req.query;
+     const { courseId } = req.params;
     if (!courseId || typeof courseId !== "string") {
       throw new AppError("courseId is required", 400);
     }
@@ -176,7 +176,7 @@ export const getSingleAdminCourse = async ( req: Request, res: Response, next: N
       throw new AppError("courseId is is required", 404);
     }
 
-    const data = getASingleCourseForAdminDashboard(courseId);
+    const data = await getASingleCourseForAdminDashboard(courseId);
 
     res.status(200).json({success: true, data})
   } catch (error) {

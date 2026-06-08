@@ -67,7 +67,10 @@ export const edit = async (req: Request, res: Response, next: NextFunction) => {
     } = req.body;
 
 
-    const id = req.params as any 
+    const id = req.params.id;
+    if (!id || typeof id !== "string") {
+      throw new Error("Workshop id is required");
+    }
 
     const authRequest = req as WorkShopAuthRequest;
     const userId = authRequest.user?.id;

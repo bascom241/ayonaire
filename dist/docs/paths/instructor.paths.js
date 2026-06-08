@@ -1,5 +1,5 @@
 export default {
-    "/api/v1/instructor/apply": {
+    "/api/v1/instructor-management/apply": {
         post: {
             tags: ["Instructor"],
             summary: "Apply to become instructor",
@@ -46,7 +46,7 @@ export default {
             }
         }
     },
-    "/api/v1/instructor/approve": {
+    "/api/v1/instructor-management/approve": {
         post: {
             tags: ["Admin"],
             summary: "Approve instructor application",
@@ -58,9 +58,9 @@ export default {
                     "application/json": {
                         schema: {
                             type: "object",
-                            required: ["applicationId"],
+                            required: ["userId"],
                             properties: {
-                                applicationId: { type: "string" }
+                                userId: { type: "string", description: "User ID for the instructor application" }
                             }
                         }
                     }
@@ -89,7 +89,7 @@ export default {
             }
         }
     },
-    "/api/v1/instructor/reject": {
+    "/api/v1/instructor-management/reject": {
         post: {
             tags: ["Admin"],
             summary: "Reject instructor application",
@@ -101,9 +101,9 @@ export default {
                     "application/json": {
                         schema: {
                             type: "object",
-                            required: ["applicationId"],
+                            required: ["userId"],
                             properties: {
-                                applicationId: { type: "string" },
+                                userId: { type: "string", description: "User ID for the instructor application" },
                                 reason: { type: "string" }
                             }
                         }
@@ -132,21 +132,26 @@ export default {
             }
         }
     },
-    "/api/v1/instructor/profile": {
+    "/api/v1/instructor-management/profile": {
         get: {
             tags: ["Admin"],
             summary: "Get instructor profile",
             description: "Retrieves a specific instructor profile (Admin only)",
             security: [{ bearerAuth: [] }],
-            parameters: [
-                {
-                    in: "query",
-                    name: "instructorId",
-                    required: true,
-                    schema: { type: "string" },
-                    description: "Instructor ID"
+            requestBody: {
+                required: true,
+                content: {
+                    "application/json": {
+                        schema: {
+                            type: "object",
+                            required: ["userId"],
+                            properties: {
+                                userId: { type: "string", description: "Instructor user ID" }
+                            }
+                        }
+                    }
                 }
-            ],
+            },
             responses: {
                 200: {
                     description: "Profile retrieved successfully",
@@ -168,7 +173,7 @@ export default {
             }
         }
     },
-    "/api/v1/instructor/profiles": {
+    "/api/v1/instructor-management/profiles": {
         get: {
             tags: ["Admin"],
             summary: "Get all instructor profiles",

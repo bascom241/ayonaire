@@ -14,6 +14,8 @@ import modulePaths from "./paths/module.paths.js";
 import feedPaths from "./paths/feed.paths.js";
 import announcementPaths from "./paths/announcement.paths.js";
 import workshopPaths from "./paths/workshop.paths.js";
+import messagePaths from "./paths/message.paths.js";
+import roomPaths from "./paths/room.paths.js";
 // Import schemas
 import userSchemas from "./schemas/user.schema.js";
 import courseSchemas from "./schemas/course.schema.js";
@@ -98,6 +100,8 @@ const options = {
             ...feedPaths,
             ...announcementPaths,
             ...workshopPaths,
+            ...messagePaths,
+            ...roomPaths,
         },
     },
     apis: [],

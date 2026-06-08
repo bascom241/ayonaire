@@ -1,7 +1,11 @@
 export default [
   {
+    name: "Auth",
+    description: "Authentication, token refresh, logout, and invite acceptance"
+  },
+  {
     name: "Users",
-    description: "User registration, login, and profile management"
+    description: "User profile and account management"
   },
   {
     name: "Admin",
@@ -29,7 +33,7 @@ export default [
   },
   {
     name: "Instructor",
-    description: "Instructor applications and management"
+    description: "Instructor applications and instructor profile management"
   },
   {
     name: "Enrollment",
@@ -42,6 +46,14 @@ export default [
   {
     name:"Invites",
     description:"Invites Management for students "
+  },
+  {
+    name: "Messages",
+    description: "Room messages and real-time chat payloads"
+  },
+  {
+    name: "Rooms",
+    description: "Chat room creation and room profile management"
   },
   {
     name: "Feeds",
