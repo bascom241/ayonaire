@@ -99,8 +99,11 @@ const sendUserVerificationEmail = async (user: {
   name: string;
   verificationToken: string;
 }) => {
-  const token = createOtp()
-  await sendVerificationEmail(user.email, user.name, token);
+  await sendVerificationEmail(
+    user.email,
+    user.name,
+    user.verificationToken 
+  );
 };
 
 const ensureUserCanAuthenticate = (user: { status: UserStatus }) => {
