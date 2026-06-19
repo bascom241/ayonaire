@@ -68,10 +68,12 @@ const getAuthUrl = () =>
   process.env.CLIENT_URL ||
   "https://wwww.ayonaire.com";
 
-const createPlainToken = () => crypto.randomBytes(32).toString("hex");
+const createOtp = () => {
+  return Math.floor(100000 + Math.random() * 900000).toString();
+};
 
 const createEmailVerificationToken = () => {
-  const token = createPlainToken();
+  const token = createOtp();
   const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24);
 
   return {
@@ -82,7 +84,7 @@ const createEmailVerificationToken = () => {
 };
 
 const createPasswordResetToken = () => {
-  const token = createPlainToken();
+  const token = createOtp();
   const expiresAt = new Date(Date.now() + 1000 * 60 * 60);
 
   return {
@@ -97,8 +99,8 @@ const sendUserVerificationEmail = async (user: {
   name: string;
   verificationToken: string;
 }) => {
-  const verificationLink = `${getAuthUrl()}/verify-email?token=${user.verificationToken}`;
-  await sendVerificationEmail(user.email, user.name, verificationLink);
+  const token = createOtp()
+  await sendVerificationEmail(user.email, user.name, token);
 };
 
 const ensureUserCanAuthenticate = (user: { status: UserStatus }) => {

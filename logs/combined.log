@@ -434,3 +434,8 @@
 2026-06-08T14:54:25.082Z [[32minfo[39m]: GET /api-docs/swagger-ui-init.js [32m200[39m 2ms
 2026-06-08T14:54:25.100Z [[32minfo[39m]: GET /api-docs/swagger-ui-standalone-preset.js [36m304[39m 23ms
 2026-06-08T14:54:26.383Z [[32minfo[39m]: GET /api-docs/favicon-32x32.png [36m304[39m 1ms
+2026-06-19T07:35:17.934Z [[32minfo[39m]: OPTIONS /api/v1/auth/register [32m204[39m 11ms
+2026-06-19T07:38:01.703Z [[32minfo[39m]: OPTIONS /api/v1/auth/register [32m204[39m 3ms
+2026-06-19T07:38:06.900Z [[32minfo[39m]: OPTIONS /api/v1/auth/register [32m204[39m 0ms
+2026-06-19T07:40:37.101Z [[32minfo[39m]: OPTIONS /api/v1/auth/register [32m204[39m 3ms
+2026-06-19T07:40:39.454Z [[32minfo[39m]: POST /api/v1/auth/register [32m201[39m 2242ms

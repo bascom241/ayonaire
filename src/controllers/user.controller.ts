@@ -43,6 +43,7 @@ export const registerUser = async (
     const user = await createUser(req.body);
     res.status(201).json({ success: true, data: user });
   } catch (error) {
+    console.log(error)
     next(error);
   }
 };

@@ -37,13 +37,13 @@ const sendTransactionalEmail = async (
 export const sendVerificationEmail = async (
   to: string,
   name: string,
-  verificationLink: string,
+  verificationToken: string,
 ) => {
   try {
     return await sendTransactionalEmail(
       to,
       "Verify your Ayonaire account",
-      getEmailVerificationHTML(name, verificationLink),
+      getEmailVerificationHTML(name, verificationToken),
     );
   } catch (error) {
     console.error("Error sending verification email:", error);

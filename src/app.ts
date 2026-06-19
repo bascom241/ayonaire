@@ -27,7 +27,8 @@ app.use(requestLogger);
 app.use(cors({
     origin:[
         "https://ayonaire.com",
-        "http://localhost:3000"
+        "http://localhost:3000",
+        "https://ayonaire.onrender.com"
     ]
 }))
 
