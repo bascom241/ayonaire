@@ -30,7 +30,7 @@ export interface Course {
   description: string;
   category: Types.ObjectId;
   thumbnail: Thumbnail;
-  introVideo: IntroVideo;
+  introVideo?: IntroVideo;
   instructor: Types.ObjectId;
   price: number;
   status: CourseStatus;
@@ -60,7 +60,7 @@ export interface CreateCourseRequest {
   description: string;
   category: string;
   thumbnail: thumbnailData;
-  introVideo: introVideoData;
+  introVideo?: introVideoData;
   instructor?: string;
   price: number;
   status: string;
@@ -85,7 +85,7 @@ export interface CreateCourseResponse {
   modules?: string[];
   cohorts?: string[];
   enrollments: string[];
-  introVideo: {
+  introVideo?: {
     url: string;
     publicId: string;
     duration: number;

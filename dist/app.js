@@ -15,10 +15,18 @@ import feedRouter from "./routes/feed.route.js";
 import workShopRouter from "./routes/workshop.route.js";
 import messageRouter from "./routes/message.route.js";
 import roomRouter from "./routes/room.route.js";
+import cors from "cors";
 import { setupSwagger } from "./docs/index.js";
 const app = express();
 app.use(express.json());
 app.use(requestLogger);
+app.use(cors({
+    origin: [
+        "https://ayonaire.com",
+        "http://localhost:3000",
+        "https://ayonaire.onrender.com"
+    ]
+}));
 app.use("/api/v1/auth", userRouter);
 app.use("/api/v1/course", courseRouter);
 app.use("/api/v1/instructor-management", instructorManagementRouter);

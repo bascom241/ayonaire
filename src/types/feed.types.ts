@@ -14,9 +14,7 @@ export interface CreateFeedRequest {
 
 
 export interface CreateFeedResponse {
-    tag: {
-      titles: string[]
-    }
+    tag?: string[]
     content: string,
     media?:{
      url: string;
@@ -47,6 +45,10 @@ export interface FeedResponse {
   user: {
     id: string;
     name: string;
+    profile?: {
+      url: string;
+      publicId: string;
+    } | null;
   };
   likes: string[];
   comments: {

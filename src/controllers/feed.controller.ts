@@ -24,10 +24,11 @@ export const uploadTags = async (req:Request, res: Response, next: NextFunction)
 
 export const create = async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
-        const {content} = req.body
+        const {content, tag} = req.body
         const userId = req.user?.id;
         const dataToSend : CreateFeedRequest = {
             content,
+            tag,
             media: req.file
         }
         const data = await createFeed(dataToSend, userId);

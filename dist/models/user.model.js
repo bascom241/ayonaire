@@ -37,6 +37,27 @@ const userSchema = new Schema({
             publicId: { type: String, required: true },
         },
     },
+    bio: {
+        type: String,
+        trim: true,
+        maxlength: 500,
+    },
+    linkedin: {
+        type: String,
+        trim: true,
+    },
+    website: {
+        type: String,
+        trim: true,
+    },
+    company: {
+        type: String,
+        trim: true,
+    },
+    instagram: {
+        type: String,
+        trim: true,
+    },
     role: {
         type: String,
         enum: Object.values(UserRole),

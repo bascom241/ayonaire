@@ -9,25 +9,18 @@ import {
 import instructorProfileModel from "../models/instructorProfile.model.js";
 import { AppError } from "../errors/AppError.js";
 import courseModel from "../models/course.model.js";
-import { Mongoose } from "mongoose";
 import userModel from "../models/user.model.js";
 
 export const createCohort = async (
   data: CreateCohortRequest,
 ): Promise<CreateCohortResponse> => {
-  const isInstructor = await instructorProfileModel.findOne({
-    instructorId: data.creator,
-  });
-
-
-
   const course = await courseModel.findById(data.course);
 
   if (!course) {
     throw new AppError("course is needed to create a cohort", 400);
   }
 
-  if (data.creator) {
+  if (data.creator && course.instructor) {
     const isCourseBelongToCohotCreator =
       course.instructor.toString() === data.creator;
     if (!isCourseBelongToCohotCreator) {
@@ -35,7 +28,7 @@ export const createCohort = async (
     }
   }
 
-  if (!course.instructor) {
+  if (data.creator && !course.instructor) {
     throw new AppError("Only admins can create cohort for this course", 403);
   }
 
@@ -87,7 +80,7 @@ export const assignInstructorToCohort = async (
 ) => {
   const instructor = await instructorProfileModel
     .findOne({ instructorId: data.instructorId })
-    .populate("instrutorId", "name");
+    .populate("instructorId", "name");
 
   if (!instructor) {
     throw new AppError("instructor does not exist", 404);

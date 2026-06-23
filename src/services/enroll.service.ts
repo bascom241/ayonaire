@@ -130,7 +130,29 @@ export const getStudentCourseProgress = async (
   };
 };
 
-// Student Completed ouser end point  ##Todo
+export const viewCompletedCourses = async (
+  userId: string,
+): Promise<StudentEnrolledCourses[]> => {
+  const user = await userModel.findById(userId);
+  if (!user) {
+    throw new AppError("Student not found", 404);
+  }
+
+  const completedCourses = await enrollmentModel
+    .find({ student: userId, completed: true })
+    .populate({
+      path: "course",
+      select: "title description thumbnail instructor",
+      populate: {
+        path: "instructor",
+        select: "instructorId",
+        populate: { path: "instructorId", select: "name" },
+      },
+    })
+    .sort({ updatedAt: -1 });
+
+  return completedCourses as unknown as StudentEnrolledCourses[];
+};
 
 // Student to view Enrolled Courses
 

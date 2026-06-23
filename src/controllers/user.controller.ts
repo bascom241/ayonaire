@@ -31,6 +31,7 @@ import {
   addUser,
   inviteUser,
   acceptInvite,
+  fetchLeaderboard,
 } from "../services/user.service.js";
 import { AppError } from "../errors/AppError.js";
 import { Express } from "express";
@@ -307,7 +308,7 @@ export const uploadImage = async (
 };
 
 interface EditProfileReq extends Request {
-  body: EditProfileRequest["name"];
+  body: Partial<EditProfileRequest>;
   user?: { id: string };
   file?: Express.Multer.File;
 }
@@ -323,13 +324,13 @@ export const edit = async (
       throw new AppError("Unauthorized", 401);
     }
 
-    console.log("req.file:", req.file);
-
-    if (!req.file) {
-      throw new AppError("Thumbnail is required", 400);
-    }
     const dataToSend: EditProfileRequest = {
       name: req.body.name,
+      bio: req.body.bio,
+      linkedin: req.body.linkedin,
+      website: req.body.website,
+      company: req.body.company,
+      instagram: req.body.instagram,
       profile: req.file,
     };
 
@@ -337,6 +338,21 @@ export const edit = async (
     res.status(200).json({ success: true, data });
   } catch (error) {
     console.log("Updat Error: ", error);
+    next(error);
+  }
+};
+
+export const getLeaderboard = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const period = (req.query.period as any) || "all-time";
+    const limit = req.query.limit ? Number(req.query.limit) : 10;
+    const data = await fetchLeaderboard(period, limit);
+    res.status(200).json({ success: true, data });
+  } catch (error) {
     next(error);
   }
 };

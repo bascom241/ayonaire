@@ -1,4 +1,5 @@
 import { NextFunction, Request, Response } from "express";
+import { Express } from "express";
 import {
   createCourseCategory,
   createCourse,
@@ -8,7 +9,7 @@ import {
   getAllCoursesForAdminDashboard,
   getASingleCourseForAdminDashboard
 } from "../services/course.service.js";
-import { AllAdminCourse, CreateCourseRequest } from "../types/course.types.js";
+import { CreateCourseRequest } from "../types/course.types.js";
 import { AppError } from "../errors/AppError.js";
 import redisClient from "../config/redis.js";
 
@@ -32,8 +33,6 @@ export const create = async (
   next: NextFunction,
 ) => {
   try {
-    console.log("req.file:", req.file);
-
     if (!req.file) {
       return res.status(400).json({ message: "Thumbnail is required" });
     }
@@ -46,8 +45,7 @@ export const create = async (
       status: req.body.status,
       instructor: req.body.instructorId,
       thumbnail: req.file,
-      introVideo: req.file,
-      courseLevel: req.body,
+      courseLevel: req.body.courseLevel,
     };
 
     const data = await createCourse(dataToSend);
@@ -70,11 +68,6 @@ export const edit = async (req: Request, res: Response, next: NextFunction) => {
       throw new AppError("courseId is required", 400);
     }
 
-    console.log(courseId);
-    if (!courseId) {
-      throw new AppError("courseId is is required", 404);
-    }
-
     const dataToSend: Partial<CreateCourseRequest> = {
       title: req.body.title,
       description: req.body.description,
@@ -83,9 +76,8 @@ export const edit = async (req: Request, res: Response, next: NextFunction) => {
       status: req.body.status,
       instructor: req.body.instructorId,
       thumbnail: req.file,
+      courseLevel: req.body.courseLevel,
     };
-
-    console.log(dataToSend);
 
     const data = await updateCourse(courseId, dataToSend);
 
@@ -127,9 +119,13 @@ export const saveToDraft = async (
   next: NextFunction,
 ) => {
   try {
-    console.log("req.file:", req.file);
+    const files = req.files as
+      | { [fieldname: string]: Express.Multer.File[] }
+      | undefined;
+    const thumbnail = files?.thumbnail?.[0];
+    const introVideo = files?.introVideo?.[0];
 
-    if (!req.file) {
+    if (!thumbnail) {
       return res.status(400).json({ message: "Thumbnail is required" });
     }
     const dataToSend: CreateCourseRequest = {
@@ -139,9 +135,9 @@ export const saveToDraft = async (
       price: req.body.price,
       status: req.body.status,
       instructor: req.body.instructorId,
-      thumbnail: req.file,
-      introVideo: req.file,
-      courseLevel: req.body,
+      thumbnail,
+      introVideo,
+      courseLevel: req.body.courseLevel,
     };
 
     const data = await saveCourseAsDraft(dataToSend);
@@ -169,11 +165,6 @@ export const getSingleAdminCourse = async ( req: Request, res: Response, next: N
      const { courseId } = req.params;
     if (!courseId || typeof courseId !== "string") {
       throw new AppError("courseId is required", 400);
-    }
-
-    console.log(courseId);
-    if (!courseId) {
-      throw new AppError("courseId is is required", 404);
     }
 
     const data = await getASingleCourseForAdminDashboard(courseId);

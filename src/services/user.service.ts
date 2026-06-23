@@ -26,6 +26,8 @@ import {
   AcceptInviteRequest,
   AcceptInviteRequestBody,
   CsvRequestBody,
+  LeaderboardEntry,
+  LeaderboardPeriod,
 } from "../types/user.types.js";
 import { AppError } from "../errors/AppError.js";
 import bcrypt from "bcryptjs";
@@ -70,6 +72,39 @@ const getAuthUrl = () =>
 
 const createOtp = () => {
   return Math.floor(100000 + Math.random() * 900000).toString();
+};
+
+const getProfilePayload = (user: {
+  profile?: { url: string; publicId: string } | null;
+}) =>
+  user.profile
+    ? {
+        url: user.profile.url,
+        publicId: user.profile.publicId,
+      }
+    : null;
+
+const getLeaderboardStartDate = (period: LeaderboardPeriod) => {
+  const startDate = new Date();
+
+  if (period === "week") {
+    startDate.setDate(startDate.getDate() - 7);
+    return startDate;
+  }
+
+  if (period === "month") {
+    startDate.setMonth(startDate.getMonth() - 1);
+    return startDate;
+  }
+
+  return null;
+};
+
+const getLeaderboardBadge = (rank: number) => {
+  if (rank === 1) return "gold";
+  if (rank === 2) return "silver";
+  if (rank === 3) return "bronze";
+  return null;
 };
 
 const createEmailVerificationToken = () => {
@@ -592,12 +627,12 @@ export const viewProfile = async (userId: string): Promise<UserResponse> => {
     name: user?.name,
     status: user?.status,
     createdAt: user?.createdAt,
-    profile: user.profile
-      ? {
-          url: user.profile.url,
-          publicId: user.profile.publicId,
-        }
-      : null,
+    bio: user.bio,
+    linkedin: user.linkedin,
+    website: user.website,
+    company: user.company,
+    instagram: user.instagram,
+    profile: getProfilePayload(user),
   };
 };
 
@@ -623,10 +658,7 @@ export const addProfileImage = async (
   };
   const uploadedData = await user.save();
   return {
-    profile: {
-      url: uploadedData.profile.url,
-      publicId: uploadedData.profile.publicId,
-    },
+    profile: getProfilePayload(uploadedData),
   };
 };
 
@@ -641,27 +673,127 @@ export const editProfile = async (
     throw new AppError("user not found", 400);
   }
 
-  if (user.profile?.publicId) {
+  if (data.profile && user.profile?.publicId) {
     await deleteImage(user.profile.publicId);
   }
 
-  const uploadedResult = await uploadMedia(data.profile.buffer, "image");
+  if (data.profile) {
+    const uploadedResult = await uploadMedia(data.profile.buffer, "image");
 
-  user.profile = {
-    url: uploadedResult.secure_url,
-    publicId: uploadedResult.public_id,
-  };
+    user.profile = {
+      url: uploadedResult.secure_url,
+      publicId: uploadedResult.public_id,
+    };
+  }
 
   if (data.name !== undefined) user.name = data.name;
+  if (data.bio !== undefined) user.bio = data.bio;
+  if (data.linkedin !== undefined) user.linkedin = data.linkedin;
+  if (data.website !== undefined) user.website = data.website;
+  if (data.company !== undefined) user.company = data.company;
+  if (data.instagram !== undefined) user.instagram = data.instagram;
   const editedProfileData = await user.save();
 
   return {
     name: editedProfileData.name,
-    profile: {
-      url: editedProfileData.profile.url,
-      publicId: editedProfileData.profile.publicId,
-    },
+    bio: editedProfileData.bio,
+    linkedin: editedProfileData.linkedin,
+    website: editedProfileData.website,
+    company: editedProfileData.company,
+    instagram: editedProfileData.instagram,
+    profile: getProfilePayload(editedProfileData),
   };
+};
+
+export const fetchLeaderboard = async (
+  period: LeaderboardPeriod = "all-time",
+  limit = 10,
+): Promise<LeaderboardEntry[]> => {
+  const allowedPeriods: LeaderboardPeriod[] = ["all-time", "month", "week"];
+  if (!allowedPeriods.includes(period)) {
+    throw new AppError("period must be one of all-time, month, or week", 400);
+  }
+
+  const safeLimit = Math.min(Math.max(limit, 1), 100);
+  const startDate = getLeaderboardStartDate(period);
+  const matchStage = startDate ? [{ $match: { createdAt: { $gte: startDate } } }] : [];
+
+  const leaderboard = await enrollmentModel.aggregate([
+    ...matchStage,
+    {
+      $group: {
+        _id: "$student",
+        totalProgress: { $sum: { $ifNull: ["$progress", 0] } },
+        completedCourses: {
+          $sum: {
+            $cond: [{ $eq: ["$completed", true] }, 1, 0],
+          },
+        },
+        completedLessons: {
+          $sum: {
+            $size: { $ifNull: ["$comletedLessons", []] },
+          },
+        },
+        courses: { $addToSet: "$course" },
+        latestEnrollment: { $max: "$createdAt" },
+      },
+    },
+    {
+      $lookup: {
+        from: "users",
+        localField: "_id",
+        foreignField: "_id",
+        as: "user",
+      },
+    },
+    { $unwind: "$user" },
+    {
+      $lookup: {
+        from: "courses",
+        localField: "courses",
+        foreignField: "_id",
+        as: "courses",
+      },
+    },
+    {
+      $project: {
+        _id: 0,
+        user: {
+          id: { $toString: "$user._id" },
+          name: "$user.name",
+          email: "$user.email",
+          profile: "$user.profile",
+        },
+        points: {
+          $round: [
+            {
+              $add: [
+                "$totalProgress",
+                { $multiply: ["$completedLessons", 10] },
+                { $multiply: ["$completedCourses", 100] },
+              ],
+            },
+            0,
+          ],
+        },
+        services: "$courses.title",
+        latestEnrollment: 1,
+      },
+    },
+    { $sort: { points: -1, latestEnrollment: -1 } },
+    { $limit: safeLimit },
+  ]);
+
+  return leaderboard.map((entry: any, index: number) => ({
+    rank: index + 1,
+    user: {
+      ...entry.user,
+      profile: getProfilePayload(entry.user),
+    },
+    badge: getLeaderboardBadge(index + 1),
+    points: entry.points,
+    services: entry.services || [],
+  }));
 };
 
 // ** for admin to add student manually instead of registeration by students
@@ -712,7 +844,7 @@ export const addUser = async (data: AddUserDto): Promise<UserResponse> => {
     }
 
     await cohortModel.findByIdAndUpdate(data.cohortId, {
-      $push: { student: user._id },
+      $addToSet: { students: user._id },
     });
   }
 
@@ -857,7 +989,7 @@ export const acceptInvite = async (data: AcceptInviteRequest):Promise<UserRespon
     }
 
     await cohortModel.findByIdAndUpdate(invite.cohortId, {
-      $push: { student: user._id },
+      $addToSet: { students: user._id },
     });
   }
 

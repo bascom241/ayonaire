@@ -1,6 +1,6 @@
 import csvParser from "csv-parser";
 import { Readable } from "node:stream";
-import { createUser, fetchNonAdminUsers, forgotUserPassword, loginUser, refreshAuthToken, logoutUser, resendUserVerificationEmail, resetUserPassword, verifyUserEmail, editUser, loginHistory, userActivity, assignRole, deactivateUser, suspendUser, viewProfile, addProfileImage, editProfile, addUser, inviteUser, acceptInvite, } from "../services/user.service.js";
+import { createUser, fetchNonAdminUsers, forgotUserPassword, loginUser, refreshAuthToken, logoutUser, resendUserVerificationEmail, resetUserPassword, verifyUserEmail, editUser, loginHistory, userActivity, assignRole, deactivateUser, suspendUser, viewProfile, addProfileImage, editProfile, addUser, inviteUser, acceptInvite, fetchLeaderboard, } from "../services/user.service.js";
 import { AppError } from "../errors/AppError.js";
 export const registerUser = async (req, res, next) => {
     try {
@@ -8,6 +8,7 @@ export const registerUser = async (req, res, next) => {
         res.status(201).json({ success: true, data: user });
     }
     catch (error) {
+        console.log(error);
         next(error);
     }
 };
@@ -189,12 +190,13 @@ export const edit = async (req, res, next) => {
         if (!id) {
             throw new AppError("Unauthorized", 401);
         }
-        console.log("req.file:", req.file);
-        if (!req.file) {
-            throw new AppError("Thumbnail is required", 400);
-        }
         const dataToSend = {
             name: req.body.name,
+            bio: req.body.bio,
+            linkedin: req.body.linkedin,
+            website: req.body.website,
+            company: req.body.company,
+            instagram: req.body.instagram,
             profile: req.file,
         };
         const data = await editProfile(id, dataToSend);
@@ -202,6 +204,17 @@ export const edit = async (req, res, next) => {
     }
     catch (error) {
         console.log("Updat Error: ", error);
+        next(error);
+    }
+};
+export const getLeaderboard = async (req, res, next) => {
+    try {
+        const period = req.query.period || "all-time";
+        const limit = req.query.limit ? Number(req.query.limit) : 10;
+        const data = await fetchLeaderboard(period, limit);
+        res.status(200).json({ success: true, data });
+    }
+    catch (error) {
         next(error);
     }
 };

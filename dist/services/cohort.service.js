@@ -4,20 +4,17 @@ import { AppError } from "../errors/AppError.js";
 import courseModel from "../models/course.model.js";
 import userModel from "../models/user.model.js";
 export const createCohort = async (data) => {
-    const isInstructor = await instructorProfileModel.findOne({
-        instructorId: data.creator,
-    });
     const course = await courseModel.findById(data.course);
     if (!course) {
         throw new AppError("course is needed to create a cohort", 400);
     }
-    if (data.creator) {
+    if (data.creator && course.instructor) {
         const isCourseBelongToCohotCreator = course.instructor.toString() === data.creator;
         if (!isCourseBelongToCohotCreator) {
             throw new AppError("You are not the instructor of this course", 403);
         }
     }
-    if (!course.instructor) {
+    if (data.creator && !course.instructor) {
         throw new AppError("Only admins can create cohort for this course", 403);
     }
     const cohort = await cohortModel.create({
@@ -57,7 +54,7 @@ export const assignStudentToCohort = async (data) => {
 export const assignInstructorToCohort = async (data) => {
     const instructor = await instructorProfileModel
         .findOne({ instructorId: data.instructorId })
-        .populate("instrutorId", "name");
+        .populate("instructorId", "name");
     if (!instructor) {
         throw new AppError("instructor does not exist", 404);
     }

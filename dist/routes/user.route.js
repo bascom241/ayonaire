@@ -1,5 +1,5 @@
 import express from "express";
-import { registerUser, login, verifyEmail, resendVerificationEmail, forgotPassword, resetPassword, refreshToken, logout, getNonAdminUsers, updateUser, getUserLoginHistory, getUserActivityHistory, assignRoleToUser, deactivateToUser, suspendToUser, viewMyProfile, uploadImage, edit, add, invite, accept, inviteUserCsv } from "../controllers/user.controller.js";
+import { registerUser, login, verifyEmail, resendVerificationEmail, forgotPassword, resetPassword, refreshToken, logout, getNonAdminUsers, updateUser, getUserLoginHistory, getUserActivityHistory, assignRoleToUser, deactivateToUser, suspendToUser, viewMyProfile, uploadImage, edit, add, invite, accept, inviteUserCsv, getLeaderboard } from "../controllers/user.controller.js";
 const router = express.Router();
 import { restrictTo, authorize } from "../middlewares/auth.middleware.js";
 import { upload } from "../middlewares/multer.js";
@@ -23,6 +23,7 @@ router.put("/user/:id/suspend-user", authorize, restrictTo("admin"), suspendToUs
 router.post("/get-profile", authorize, viewMyProfile);
 router.post("/add-profile", authorize, upload.single("profile"), uploadImage);
 router.put("/edit-profile", authorize, upload.single("profile"), edit);
+router.get("/leaderboard", authorize, getLeaderboard);
 router.post("/add", authorize, restrictTo("admin"), add);
 router.post("/invite", authorize, restrictTo("admin"), invite);
 router.post("/accept-invite/:token", accept);

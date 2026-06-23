@@ -20,9 +20,9 @@ const sendTransactionalEmail = async (to, subject, htmlContent) => {
     const response = await apiInstance.sendTransacEmail(sendSmtpEmail);
     return { success: true, data: response };
 };
-export const sendVerificationEmail = async (to, name, verificationLink) => {
+export const sendVerificationEmail = async (to, name, verificationToken) => {
     try {
-        return await sendTransactionalEmail(to, "Verify your Ayonaire account", getEmailVerificationHTML(name, verificationLink));
+        return await sendTransactionalEmail(to, "Verify your Ayonaire account", getEmailVerificationHTML(name, verificationToken));
     }
     catch (error) {
         console.error("Error sending verification email:", error);

@@ -31,10 +31,6 @@ export const createCourse = async (
   data: CreateCourseRequest,
 ): Promise<CreateCourseResponse> => {
   const uploadResult = await uploadMedia(data.thumbnail.buffer, "image");
-  const uploadIntroVidResult = await uploadMedia(
-    data.introVideo.buffer,
-    "video",
-  );
 
   const courseData: any = {
     title: data.title,
@@ -47,12 +43,20 @@ export const createCourse = async (
       url: uploadResult.secure_url,
       publicId: uploadResult.public_id,
     },
-    introVideo: {
+  };
+
+  if (data.introVideo) {
+    const uploadIntroVidResult = await uploadMedia(
+      data.introVideo.buffer,
+      "video",
+    );
+
+    courseData.introVideo = {
       url: uploadIntroVidResult.secure_url,
       publicId: uploadIntroVidResult.public_id,
-      duration: uploadIntroVidResult.duration | 0,
-    },
-  };
+      duration: uploadIntroVidResult.duration || 0,
+    };
+  }
 
   if (data.instructor) {
     courseData.instructor = new mongoose.Types.ObjectId(data.instructor);
@@ -73,11 +77,13 @@ export const createCourse = async (
       url: course.thumbnail.url,
       publicId: course.thumbnail.publicId,
     },
-    introVideo: {
-      url: course.introVideo.url,
-      publicId: course.introVideo.publicId,
-      duration: course.introVideo.duration,
-    },
+    introVideo: course.introVideo
+      ? {
+          url: course.introVideo.url,
+          publicId: course.introVideo.publicId,
+          duration: course.introVideo.duration,
+        }
+      : undefined,
     students: course.students?.map((id) => id.toString()),
     modules: course.modules?.map((id) => id.toString()),
     enrollments: course.enrollments?.map((id) => id.toString()),
@@ -139,7 +145,7 @@ export const updateCourse = async (
     title: updatedCourse.title,
     description: updatedCourse.description,
     category: updatedCourse.category.toString(),
-    instructor: updatedCourse.instructor.toString(),
+    instructor: updatedCourse.instructor?.toString(),
     price: updatedCourse.price,
     status: updatedCourse.status,
     courseLevel: updatedCourse.courseLevel,
@@ -153,11 +159,13 @@ export const updateCourse = async (
     enrollments: updatedCourse.enrollments.map((id) => id.toString()),
     completionCount: updatedCourse.completionCount,
     completionCertificate: updatedCourse.completionCertificate,
-    introVideo: {
-      url: course.introVideo.url,
-      publicId: course.introVideo.publicId,
-      duration: course.introVideo.duration,
-    },
+    introVideo: updatedCourse.introVideo
+      ? {
+          url: updatedCourse.introVideo.url,
+          publicId: updatedCourse.introVideo.publicId,
+          duration: updatedCourse.introVideo.duration,
+        }
+      : undefined,
   };
 };
 
@@ -195,10 +203,6 @@ export const saveCourseAsDraft = async (
   data: CreateCourseRequest,
 ): Promise<CreateCourseResponse> => {
   const uploadResult = await uploadMedia(data.thumbnail.buffer, "image");
-  const uploadIntroVidResult = await uploadMedia(
-    data.introVideo.buffer,
-    "video",
-  );
   const courseData: any = {
     title: data.title,
     description: data.description,
@@ -210,12 +214,20 @@ export const saveCourseAsDraft = async (
       url: uploadResult.secure_url,
       publicId: uploadResult.public_id,
     },
-    introVideo: {
+  };
+
+  if (data.introVideo) {
+    const uploadIntroVidResult = await uploadMedia(
+      data.introVideo.buffer,
+      "video",
+    );
+
+    courseData.introVideo = {
       url: uploadIntroVidResult.secure_url,
       publicId: uploadIntroVidResult.public_id,
-      duration: uploadIntroVidResult.duration | 0,
-    },
-  };
+      duration: uploadIntroVidResult.duration || 0,
+    };
+  }
 
   if (data.instructor) {
     courseData.instructor = new mongoose.Types.ObjectId(data.instructor);
@@ -236,11 +248,13 @@ export const saveCourseAsDraft = async (
       url: course.thumbnail.url,
       publicId: course.thumbnail.publicId,
     },
-    introVideo: {
-      url: course.introVideo.url,
-      publicId: course.introVideo.publicId,
-      duration: course.introVideo.duration,
-    },
+    introVideo: course.introVideo
+      ? {
+          url: course.introVideo.url,
+          publicId: course.introVideo.publicId,
+          duration: course.introVideo.duration,
+        }
+      : undefined,
     students: course.students?.map((id) => id.toString()),
     modules: course.modules?.map((id) => id.toString()),
     enrollments: course.enrollments?.map((id) => id.toString()),

@@ -13,7 +13,6 @@ export const createCourseCat = async (req, res, next) => {
 };
 export const create = async (req, res, next) => {
     try {
-        console.log("req.file:", req.file);
         if (!req.file) {
             return res.status(400).json({ message: "Thumbnail is required" });
         }
@@ -25,8 +24,7 @@ export const create = async (req, res, next) => {
             status: req.body.status,
             instructor: req.body.instructorId,
             thumbnail: req.file,
-            introVideo: req.file,
-            courseLevel: req.body,
+            courseLevel: req.body.courseLevel,
         };
         const data = await createCourse(dataToSend);
         await redisClient.del("cache:/course");
@@ -46,10 +44,6 @@ export const edit = async (req, res, next) => {
         if (!courseId || typeof courseId !== "string") {
             throw new AppError("courseId is required", 400);
         }
-        console.log(courseId);
-        if (!courseId) {
-            throw new AppError("courseId is is required", 404);
-        }
         const dataToSend = {
             title: req.body.title,
             description: req.body.description,
@@ -58,8 +52,8 @@ export const edit = async (req, res, next) => {
             status: req.body.status,
             instructor: req.body.instructorId,
             thumbnail: req.file,
+            courseLevel: req.body.courseLevel,
         };
-        console.log(dataToSend);
         const data = await updateCourse(courseId, dataToSend);
         res.status(200).json({
             success: true,
@@ -90,8 +84,10 @@ export const assign = async (req, res, next) => {
 };
 export const saveToDraft = async (req, res, next) => {
     try {
-        console.log("req.file:", req.file);
-        if (!req.file) {
+        const files = req.files;
+        const thumbnail = files?.thumbnail?.[0];
+        const introVideo = files?.introVideo?.[0];
+        if (!thumbnail) {
             return res.status(400).json({ message: "Thumbnail is required" });
         }
         const dataToSend = {
@@ -101,9 +97,9 @@ export const saveToDraft = async (req, res, next) => {
             price: req.body.price,
             status: req.body.status,
             instructor: req.body.instructorId,
-            thumbnail: req.file,
-            introVideo: req.file,
-            courseLevel: req.body,
+            thumbnail,
+            introVideo,
+            courseLevel: req.body.courseLevel,
         };
         const data = await saveCourseAsDraft(dataToSend);
         res.status(200).json({ success: true, data });
@@ -127,10 +123,6 @@ export const getSingleAdminCourse = async (req, res, next) => {
         const { courseId } = req.params;
         if (!courseId || typeof courseId !== "string") {
             throw new AppError("courseId is required", 400);
-        }
-        console.log(courseId);
-        if (!courseId) {
-            throw new AppError("courseId is is required", 404);
         }
         const data = await getASingleCourseForAdminDashboard(courseId);
         res.status(200).json({ success: true, data });

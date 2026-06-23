@@ -2,6 +2,7 @@ import { AppError } from "../errors/AppError.js";
 import enrollmentModel from "../models/enrollment.model.js";
 import lessonModel from "../models/lesson.model.js";
 import moduleModel from "../models/module.model.js";
+import courseModel from "../models/course.model.js";
 import mongoose, { PipelineStage, Types } from "mongoose"
 import {
   UploadLessonRequest,
@@ -30,8 +31,8 @@ export const uploadLesson = async (
   if (!isModule) {
     throw new AppError("module Id is required", 400);
   }
-  const isCourse = await moduleModel.findById(lessonData.course);
-  if (isCourse) {
+  const isCourse = await courseModel.findById(lessonData.course);
+  if (!isCourse) {
     throw new AppError("course Id is required", 400);
   }
 
@@ -102,7 +103,7 @@ export const markLessonAsCompleted = async (data: MarkLessonCompleted): Promise<
   if(!enrollment){
     throw new AppError("enrollment not fount", 404)
   }
-  if(!enrollment.comletedLessons.includes(data.lessonId)){
+  if (!enrollment.comletedLessons.some((id) => id.toString() === data.lessonId.toString())) {
     enrollment.comletedLessons.push(new mongoose.Types.ObjectId(data.lessonId))
   }
 
@@ -111,16 +112,19 @@ export const markLessonAsCompleted = async (data: MarkLessonCompleted): Promise<
     isPublished: true
   });
 
-  enrollment.progress = (enrollment.comletedLessons.length / totalLessons) * 100
+  enrollment.progress =
+    totalLessons > 0
+      ? (enrollment.comletedLessons.length / totalLessons) * 100
+      : 0;
 
-  if(enrollment.progress === 100){
+  if(enrollment.progress >= 100){
     enrollment.completed = true
   }
   await enrollment.save();
 
   return {
     course: enrollment.course.toString(),
-    student: enrollment.course.toString(),
+    student: enrollment.student?.toString() || data.studentId.toString(),
     status: enrollment.status,
     completedLessons: enrollment.comletedLessons.map((id) =>id.toString()),
     progress: enrollment.progress,
@@ -141,7 +145,8 @@ export const updateLastLesson = async (data: UpdateLastLesson):Promise<UpdateLas
 
   const updatedEnrollmentLastLesson = await enrollmentModel.findOneAndUpdate(
      { student: data.studentId, course: data.courseId },
-    { lastLesson: data.lessonId }
+    { lastLesson: data.lessonId },
+    { new: true }
   );
 
 
@@ -150,8 +155,8 @@ export const updateLastLesson = async (data: UpdateLastLesson):Promise<UpdateLas
   }
 
   return {
-      course: updatedEnrollmentLastLesson.course.toString(),
-    student: updatedEnrollmentLastLesson.course.toString(),
+    course: updatedEnrollmentLastLesson.course.toString(),
+    student: updatedEnrollmentLastLesson.student?.toString() || data.studentId.toString(),
     status: updatedEnrollmentLastLesson.status,
     completedLessons: updatedEnrollmentLastLesson.comletedLessons.map((id) =>id.toString()),
     progress: updatedEnrollmentLastLesson.progress,

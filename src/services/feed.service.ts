@@ -19,6 +19,14 @@ import { deleteImage } from "../utils/uploadToCloudinary.js";
 import { CreateTagRequest , CreateTagResponse} from "../types/feed.types.js";
 import feedTagModel from "../models/feedTag.model.js";
 
+const getUserProfilePayload = (user: any) =>
+  user?.profile
+    ? {
+        url: user.profile.url,
+        publicId: user.profile.publicId,
+      }
+    : null;
+
 export const createTags = async (data: CreateTagRequest):Promise<CreateTagResponse> => {
   const { titles } = data;
   if (titles.length === 0) {
@@ -43,13 +51,14 @@ export const createFeed = async (
   userId: string | undefined,
 ): Promise<CreateFeedResponse> => {
   const { content, media, tag  } = data;
-  console.log(data.media);
   const user = await userModel.findById(userId);
   if (!user) {
     throw new AppError("user does not exits", 400);
   }
+  validateRequestBodyWithValues<CreateFeedRequest>(data, ["content"]);
 
   const normalizedContent = content.trim().toLowerCase();
+  const postContent = content.trim();
 
   const recentPost = await feedModel.findOne({
     userId,
@@ -75,13 +84,19 @@ export const createFeed = async (
 
   const feedData: any = {
     userId: new mongoose.Types.ObjectId(userId),
-    tag: new mongoose.Types.ObjectId(tag),
-    content: normalizedContent,
-    media: {
+    content: postContent,
+  };
+
+  if (tag) {
+    feedData.tag = new mongoose.Types.ObjectId(tag);
+  }
+
+  if (uploadResult) {
+    feedData.media = {
       url: uploadResult.secure_url,
       publicId: uploadResult.public_id,
-    },
-  };
+    };
+  }
 
   const createdFeed = await feedModel.create(feedData);
   const newData = await feedModel.findById(createdFeed._id).populate("tag", "titles");
@@ -171,7 +186,7 @@ export const deleteFeed = async (
 export const viewFeeds = async (): Promise<FeedResponse[]> => {
   const feeds = await feedModel
     .find()
-    .populate("userId", "name")
+    .populate("userId", "name profile")
     .populate("comments.userId", "name")
     .sort({ createdAt: -1 })
     .limit(20);
@@ -187,6 +202,7 @@ export const viewFeeds = async (): Promise<FeedResponse[]> => {
     user: {
       id: feed.userId._id.toString(),
       name: (feed.userId as any).name,
+      profile: getUserProfilePayload(feed.userId),
     },
     likes: feed.likes.map((id: any) => id.toString()),
     comments: feed.comments.map((c: any) => ({
@@ -250,19 +266,20 @@ export const commentOnAPost = async (
 
   const feedToComment = await feedModel
     .findById(feedId)
-    .populate("userId", "name")
+    .populate("userId", "name profile")
     .populate("comments.userId", "name");
   if (!feedToComment) {
     throw new AppError("Feed does not exists");
   }
 
-  const feed = await feedToComment.updateOne(
-    { _id: feedId },
-    {
-      $push: { comments: { convertedUserId }, text },
-      $inc: { commentCounts: 1 },
-    },
-  );
+  feedToComment.comments.push({
+    userId: convertedUserId,
+    text,
+    createdAt: new Date(),
+  } as any);
+  feedToComment.commentCounts += 1;
+  const feed = await feedToComment.save();
+  await feed.populate("comments.userId", "name");
 
   return {
     id: feed._id.toString(),
@@ -276,6 +293,7 @@ export const commentOnAPost = async (
     user: {
       id: feed.userId._id.toString(),
       name: (feed.userId as any).name,
+      profile: getUserProfilePayload(feed.userId),
     },
     likes: feed.likes.map((id: any) => id.toString()),
     comments: feed.comments.map((c: any) => ({
@@ -310,7 +328,8 @@ export const deleteComment = async (
 
   const feedToDeleteItsComment = await feedModel.findOne({
     _id: feedId,
-    convertedUserId,
+    "comments._id": commentId,
+    "comments.userId": convertedUserId,
   });
 
   if (!feedToDeleteItsComment) {

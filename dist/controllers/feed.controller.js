@@ -14,10 +14,11 @@ export const uploadTags = async (req, res, next) => {
 };
 export const create = async (req, res, next) => {
     try {
-        const { content } = req.body;
+        const { content, tag } = req.body;
         const userId = req.user?.id;
         const dataToSend = {
             content,
+            tag,
             media: req.file
         };
         const data = await createFeed(dataToSend, userId);

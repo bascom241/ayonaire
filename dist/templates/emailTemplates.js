@@ -136,7 +136,7 @@ export const getAnnouncementEmailHTML = (title, summary) => `
 </body>
 </html>
 `;
-export const getEmailVerificationHTML = (name, verificationLink) => `
+export const getEmailVerificationHTML = (name, verificationToken) => `
 <!DOCTYPE html>
 <html lang="en">
 <body style="margin:0; padding:0; background:#f4f7fb; font-family:Arial,sans-serif;">
@@ -147,12 +147,31 @@ export const getEmailVerificationHTML = (name, verificationLink) => `
           <tr>
             <td>
               <h2 style="margin:0 0 12px; color:#222;">Verify your email</h2>
-              <p style="font-size:14px; color:#555;">Hi ${name}, please verify your email address to activate your account.</p>
-              <p style="text-align:center; padding:20px 0;">
-                <a href="${verificationLink}" style="background:#1a73e8; color:#fff; text-decoration:none; padding:13px 24px; border-radius:8px; display:inline-block;">Verify Email</a>
+
+              <p style="font-size:14px; color:#555;">
+                Hi ${name}, please use the verification code below to activate your account.
               </p>
-              <p style="font-size:13px; color:#777;">This link expires in 24 hours.</p>
-              <p style="font-size:12px; color:#999;">If you did not create this account, you can ignore this email.</p>
+
+              <div style="
+                text-align:center;
+                font-size:28px;
+                font-weight:bold;
+                letter-spacing:6px;
+                padding:20px;
+                background:#f1f3f5;
+                border-radius:8px;
+                margin:20px 0;
+              ">
+                ${verificationToken}
+              </div>
+
+              <p style="font-size:13px; color:#777;">
+                This code expires in 24 hours.
+              </p>
+
+              <p style="font-size:12px; color:#999;">
+                If you did not create this account, you can ignore this email.
+              </p>
             </td>
           </tr>
         </table>

@@ -48,7 +48,7 @@ export const markLesson = async (req, res, next) => {
     try {
         const { studentId, courseId, lessonId } = req.body;
         const dataToSend = {
-            studentId,
+            studentId: req.user?.role === "admin" && studentId ? studentId : req.user?.id,
             courseId,
             lessonId,
         };
@@ -65,7 +65,7 @@ export const update = async (req, res, next) => {
         const dataToSend = {
             courseId,
             lessonId,
-            studentId,
+            studentId: req.user?.role === "admin" && studentId ? studentId : req.user?.id,
         };
         const data = await updateLastLesson(dataToSend);
         res
@@ -78,10 +78,10 @@ export const update = async (req, res, next) => {
 };
 export const resume = async (req, res, next) => {
     try {
-        const { courseId, studentId } = req.body;
+        const { courseId, studentId } = { ...req.query, ...req.body };
         const dataToSend = {
             courseId,
-            studentId,
+            studentId: req.user?.role === "admin" && studentId ? studentId : req.user?.id,
         };
         const data = await getResumeLesson(dataToSend);
         res
@@ -94,10 +94,10 @@ export const resume = async (req, res, next) => {
 };
 export const view = async (req, res, next) => {
     try {
-        const { courseId, studentId } = req.body;
+        const { courseId, studentId } = { ...req.query, ...req.body };
         const dataToSend = {
             courseId,
-            studentId,
+            studentId: req.user?.role === "admin" && studentId ? studentId : req.user?.id,
         };
         const data = await viewLessonContent(dataToSend);
         res.status(200).json({ success: true, data });

@@ -39,8 +39,12 @@ export interface User {
   name: string;
   email: string;
   password: string;
- 
-  profile: Profile 
+  profile?: Profile | null;
+  bio?: string;
+  linkedin?: string;
+  website?: string;
+  company?: string;
+  instagram?: string;
   role: UserRole;
   status: UserStatus;
   isEmailVerified: boolean;
@@ -129,6 +133,11 @@ export interface UserResponse {
     url: string;
     publicId: string;
   } | undefined | null
+  bio?: string;
+  linkedin?: string;
+  website?: string;
+  company?: string;
+  instagram?: string;
   status: UserStatus;
   createdAt: Date;
 }
@@ -181,16 +190,44 @@ export interface ProfileImageResponse {
 
 
 export interface EditProfileRequest {
-  name: any
-  profile: ProfileData
+  name?: string
+  bio?: string
+  linkedin?: string
+  website?: string
+  company?: string
+  instagram?: string
+  profile?: ProfileData
 }
 
 export interface EditProfileResponse {
   name: string 
+  bio?: string;
+  linkedin?: string;
+  website?: string;
+  company?: string;
+  instagram?: string;
    profile?: {
     url: string;
     publicId: string;
   } | undefined | null
+}
+
+export type LeaderboardPeriod = "all-time" | "month" | "week";
+
+export interface LeaderboardEntry {
+  rank: number;
+  user: {
+    id: string;
+    name: string;
+    email: string;
+    profile?: {
+      url: string;
+      publicId: string;
+    } | null;
+  };
+  badge: string | null;
+  points: number;
+  services: string[];
 }
 
 export interface InviteRequest{

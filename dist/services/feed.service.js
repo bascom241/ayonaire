@@ -7,6 +7,12 @@ import mongoose from "mongoose";
 import { validateRequestBodyWithValues } from "../utils/validateRequestBody.js";
 import { deleteImage } from "../utils/uploadToCloudinary.js";
 import feedTagModel from "../models/feedTag.model.js";
+const getUserProfilePayload = (user) => user?.profile
+    ? {
+        url: user.profile.url,
+        publicId: user.profile.publicId,
+    }
+    : null;
 export const createTags = async (data) => {
     const { titles } = data;
     if (titles.length === 0) {
@@ -28,12 +34,13 @@ export const createTags = async (data) => {
 };
 export const createFeed = async (data, userId) => {
     const { content, media, tag } = data;
-    console.log(data.media);
     const user = await userModel.findById(userId);
     if (!user) {
         throw new AppError("user does not exits", 400);
     }
+    validateRequestBodyWithValues(data, ["content"]);
     const normalizedContent = content.trim().toLowerCase();
+    const postContent = content.trim();
     const recentPost = await feedModel.findOne({
         userId,
         content: normalizedContent,
@@ -56,13 +63,17 @@ export const createFeed = async (data, userId) => {
     }
     const feedData = {
         userId: new mongoose.Types.ObjectId(userId),
-        tag: new mongoose.Types.ObjectId(tag),
-        content: normalizedContent,
-        media: {
+        content: postContent,
+    };
+    if (tag) {
+        feedData.tag = new mongoose.Types.ObjectId(tag);
+    }
+    if (uploadResult) {
+        feedData.media = {
             url: uploadResult.secure_url,
             publicId: uploadResult.public_id,
-        },
-    };
+        };
+    }
     const createdFeed = await feedModel.create(feedData);
     const newData = await feedModel.findById(createdFeed._id).populate("tag", "titles");
     if (!newData) {
@@ -136,7 +147,7 @@ export const deleteFeed = async (data, userId) => {
 export const viewFeeds = async () => {
     const feeds = await feedModel
         .find()
-        .populate("userId", "name")
+        .populate("userId", "name profile")
         .populate("comments.userId", "name")
         .sort({ createdAt: -1 })
         .limit(20);
@@ -152,6 +163,7 @@ export const viewFeeds = async () => {
         user: {
             id: feed.userId._id.toString(),
             name: feed.userId.name,
+            profile: getUserProfilePayload(feed.userId),
         },
         likes: feed.likes.map((id) => id.toString()),
         comments: feed.comments.map((c) => ({
@@ -196,15 +208,19 @@ export const commentOnAPost = async (data, userId) => {
     const convertedUserId = new mongoose.Types.ObjectId(userId);
     const feedToComment = await feedModel
         .findById(feedId)
-        .populate("userId", "name")
+        .populate("userId", "name profile")
         .populate("comments.userId", "name");
     if (!feedToComment) {
         throw new AppError("Feed does not exists");
     }
-    const feed = await feedToComment.updateOne({ _id: feedId }, {
-        $push: { comments: { convertedUserId }, text },
-        $inc: { commentCounts: 1 },
+    feedToComment.comments.push({
+        userId: convertedUserId,
+        text,
+        createdAt: new Date(),
     });
+    feedToComment.commentCounts += 1;
+    const feed = await feedToComment.save();
+    await feed.populate("comments.userId", "name");
     return {
         id: feed._id.toString(),
         content: feed.content,
@@ -217,6 +233,7 @@ export const commentOnAPost = async (data, userId) => {
         user: {
             id: feed.userId._id.toString(),
             name: feed.userId.name,
+            profile: getUserProfilePayload(feed.userId),
         },
         likes: feed.likes.map((id) => id.toString()),
         comments: feed.comments.map((c) => ({
@@ -244,7 +261,8 @@ export const deleteComment = async (data, userId) => {
     }
     const feedToDeleteItsComment = await feedModel.findOne({
         _id: feedId,
-        convertedUserId,
+        "comments._id": commentId,
+        "comments.userId": convertedUserId,
     });
     if (!feedToDeleteItsComment) {
         throw new AppError("feed not found", 400);
