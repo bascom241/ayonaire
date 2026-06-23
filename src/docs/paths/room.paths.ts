@@ -14,7 +14,10 @@ export default {
               required: ["name", "description"],
               properties: {
                 name: { type: "string", example: "Frontend Cohort Room" },
-                description: { type: "string", example: "Room for cohort announcements and discussions" },
+                description: {
+                  type: "string",
+                  example: "Room for cohort announcements and discussions",
+                },
                 profile: { type: "string", format: "binary" },
               },
             },

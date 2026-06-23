@@ -12,7 +12,6 @@ import { getPagination } from "../utils/getPagination.js";
 
 import { AppError } from "../errors/AppError.js";
 
-
 export const createWorkShop = async (
   data: CreateWorkShopRequest,
   userId: string | undefined,
@@ -110,7 +109,7 @@ export const editWorkShop = async (
       },
       {
         content: `New Workshop: ${title}`,
-      }
+      },
     );
   }
   if (description !== undefined) workshop.description = description;

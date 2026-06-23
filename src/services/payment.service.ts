@@ -175,7 +175,7 @@ export const payHistory = async (data: PaymentHistoryRequest) => {
 
   const skip = (page - 1) * limit;
 
-  let pipeline: PipelineStage[] = [];
+  const pipeline: PipelineStage[] = [];
 
   // Pipline for student name
   pipeline.push({
@@ -342,7 +342,9 @@ export const viewSingleOrder = async (
   validateRequestBodyWithValues<ViewSingleOrderRequest>(data, ["orderId"]);
 
   const { orderId } = data;
-  const order = await paymentModel.findById(orderId).populate("student", "name");
+  const order = await paymentModel
+    .findById(orderId)
+    .populate("student", "name");
   if (!order) {
     throw new AppError("order not found", 400);
   }

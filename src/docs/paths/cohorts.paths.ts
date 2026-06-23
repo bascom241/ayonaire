@@ -17,11 +17,11 @@ const cohortPaths = {
                 course: { type: "string", description: "Course ID" },
                 creator: { type: "string", description: "Instructor ID" },
                 description: { type: "string" },
-                isActive: { type: "boolean", default: true }
-              }
-            }
-          }
-        }
+                isActive: { type: "boolean", default: true },
+              },
+            },
+          },
+        },
       },
       responses: {
         201: {
@@ -32,18 +32,21 @@ const cohortPaths = {
                 type: "object",
                 properties: {
                   success: { type: "boolean", example: true },
-                  message: { type: "string", example: "Cohort created successfully" },
-                  cohort: { $ref: "#/components/schemas/Cohort" }
-                }
-              }
-            }
-          }
+                  message: {
+                    type: "string",
+                    example: "Cohort created successfully",
+                  },
+                  cohort: { $ref: "#/components/schemas/Cohort" },
+                },
+              },
+            },
+          },
         },
         400: { $ref: "#/components/responses/ValidationError" },
         401: { $ref: "#/components/responses/UnauthorizedError" },
-        403: { $ref: "#/components/responses/ForbiddenError" }
-      }
-    }
+        403: { $ref: "#/components/responses/ForbiddenError" },
+      },
+    },
   },
 
   "/api/v1/cohort/assign-student": {
@@ -61,11 +64,11 @@ const cohortPaths = {
               required: ["cohortId", "studentId"],
               properties: {
                 cohortId: { type: "string" },
-                studentId: { type: "string" }
-              }
-            }
-          }
-        }
+                studentId: { type: "string" },
+              },
+            },
+          },
+        },
       },
       responses: {
         200: {
@@ -76,19 +79,22 @@ const cohortPaths = {
                 type: "object",
                 properties: {
                   success: { type: "boolean", example: true },
-                  message: { type: "string", example: "Student assigned successfully" },
-                  cohort: { $ref: "#/components/schemas/Cohort" }
-                }
-              }
-            }
-          }
+                  message: {
+                    type: "string",
+                    example: "Student assigned successfully",
+                  },
+                  cohort: { $ref: "#/components/schemas/Cohort" },
+                },
+              },
+            },
+          },
         },
         400: { $ref: "#/components/responses/ValidationError" },
         401: { $ref: "#/components/responses/UnauthorizedError" },
         403: { $ref: "#/components/responses/ForbiddenError" },
-        404: { $ref: "#/components/responses/NotFoundError" }
-      }
-    }
+        404: { $ref: "#/components/responses/NotFoundError" },
+      },
+    },
   },
 
   "/api/v1/cohort/assign-instrutor": {
@@ -106,11 +112,11 @@ const cohortPaths = {
               required: ["cohortId", "instructorId"],
               properties: {
                 cohortId: { type: "string" },
-                instructorId: { type: "string" }
-              }
-            }
-          }
-        }
+                instructorId: { type: "string" },
+              },
+            },
+          },
+        },
       },
       responses: {
         200: {
@@ -121,21 +127,23 @@ const cohortPaths = {
                 type: "object",
                 properties: {
                   success: { type: "boolean", example: true },
-                  message: { type: "string", example: "Instructor assigned successfully" },
-                  cohort: { $ref: "#/components/schemas/Cohort" }
-                }
-              }
-            }
-          }
+                  message: {
+                    type: "string",
+                    example: "Instructor assigned successfully",
+                  },
+                  cohort: { $ref: "#/components/schemas/Cohort" },
+                },
+              },
+            },
+          },
         },
         400: { $ref: "#/components/responses/ValidationError" },
         401: { $ref: "#/components/responses/UnauthorizedError" },
         403: { $ref: "#/components/responses/ForbiddenError" },
-        404: { $ref: "#/components/responses/NotFoundError" }
-      }
-    }
-  }
+        404: { $ref: "#/components/responses/NotFoundError" },
+      },
+    },
+  },
 };
-
 
 export default cohortPaths;

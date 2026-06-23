@@ -44,7 +44,7 @@ export const registerUser = async (
     const user = await createUser(req.body);
     res.status(201).json({ success: true, data: user });
   } catch (error) {
-    console.log(error)
+    console.log(error);
     next(error);
   }
 };
@@ -406,7 +406,7 @@ export const accept = async (
     const { token } = req.params;
 
     if (typeof token !== "string") {
-      throw new AppError("Invalid token format",400);
+      throw new AppError("Invalid token format", 400);
     }
     const dataToSend: AcceptInviteRequest = {
       token,
@@ -421,36 +421,40 @@ export const accept = async (
   }
 };
 
-
-export const inviteUserCsv = async (req: Request, res: Response, next: NextFunction) => {
+export const inviteUserCsv = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
   try {
-      if(!req.file){
-        throw new AppError("csv file is required", 400);
-      }
-      const emails: string[] = [];
+    if (!req.file) {
+      throw new AppError("csv file is required", 400);
+    }
+    const emails: string[] = [];
 
-      const stream = Readable.from(req.file.buffer);
-      await new Promise((resolve, reject) => {
-        stream.pipe(csvParser())
-        .on("data", (row)=> {
-          if(row.email){
-            emails.push(row.email.trim())
+    const stream = Readable.from(req.file.buffer);
+    await new Promise((resolve, reject) => {
+      stream
+        .pipe(csvParser())
+        .on("data", (row) => {
+          if (row.email) {
+            emails.push(row.email.trim());
           }
         })
         .on("end", resolve)
         .on("error", reject);
-      });
+    });
 
-      const uniqueEmails = [...new Set(emails)];
+    const uniqueEmails = [...new Set(emails)];
 
-      const data = await inviteUser({
-        emails: uniqueEmails,
-        courseId: req.body.courseId,
+    const data = await inviteUser({
+      emails: uniqueEmails,
+      courseId: req.body.courseId,
       cohortId: req.body.cohortId,
-      });
+    });
 
-      res.status(200).json({success: true, data})
+    res.status(200).json({ success: true, data });
   } catch (error) {
-    next(error)
+    next(error);
   }
-}
+};

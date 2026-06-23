@@ -60,8 +60,9 @@ export const applyAsInstructor = async (
   return instructor;
 };
 
-export const approveInstructorApplicationStatus = async (userId: string): Promise<string> => {
-
+export const approveInstructorApplicationStatus = async (
+  userId: string,
+): Promise<string> => {
   const instructor = await instructorProfileModel
     .findOne({ instructorId: userId })
     .populate("instructorId", "name");
@@ -70,18 +71,14 @@ export const approveInstructorApplicationStatus = async (userId: string): Promis
     throw new AppError("Instructor application not found", 404);
   }
 
- 
   if (instructor.applicationStatus === InstructorApplicationStatus.APPROVED) {
     throw new AppError("Instructor already approved", 403);
   }
 
- 
   instructor.applicationStatus = InstructorApplicationStatus.APPROVED;
   await instructor.save();
 
-  
   await User.findByIdAndUpdate(userId, { role: UserRole.INSTRUCTOR });
-
 
   return `${(instructor.instructorId as any).name} is approved`;
 };
@@ -89,8 +86,7 @@ export const approveInstructorApplicationStatus = async (userId: string): Promis
 export const rejectInstructorApplicationStatus = async (
   userId: string,
 ): Promise<string> => {
-
-   const instructor = await instructorProfileModel
+  const instructor = await instructorProfileModel
     .findOne({ instructorId: userId })
     .populate("instructorId", "name");
 

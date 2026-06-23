@@ -2,26 +2,26 @@ import mongoose, { Schema } from "mongoose";
 const quizAttemptSchema = new Schema({
     quiz: {
         type: Schema.Types.ObjectId,
-        ref: "Quiz"
+        ref: "Quiz",
     },
     user: {
         type: Schema.Types.ObjectId,
-        ref: "User"
+        ref: "User",
     },
     answers: [
         {
             question: {
                 type: Schema.Types.ObjectId,
-                ref: "Question"
+                ref: "Question",
             },
             selectedOptions: [String],
-            isCorrect: Boolean
-        }
+            isCorrect: Boolean,
+        },
     ],
     score: Number,
     completed: {
         type: Boolean,
-        default: false
-    }
+        default: false,
+    },
 }, { timestamps: true });
 export default mongoose.model("QuizAttempt", quizAttemptSchema);

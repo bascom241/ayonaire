@@ -13,7 +13,10 @@ export default {
                             type: "object",
                             required: ["courseId"],
                             properties: {
-                                courseId: { type: "string", example: "661f2a8c9c1234567890abcd" },
+                                courseId: {
+                                    type: "string",
+                                    example: "661f2a8c9c1234567890abcd",
+                                },
                             },
                         },
                     },
@@ -29,7 +32,10 @@ export default {
                                 properties: {
                                     success: { type: "boolean", example: true },
                                     message: { type: "string", example: "Payment initialized" },
-                                    data: { type: "string", description: "Paystack authorization URL" },
+                                    data: {
+                                        type: "string",
+                                        description: "Paystack authorization URL",
+                                    },
                                 },
                             },
                         },
@@ -86,8 +92,16 @@ export default {
                 { in: "query", name: "page", schema: { type: "number", default: 1 } },
                 { in: "query", name: "limit", schema: { type: "number", default: 10 } },
                 { in: "query", name: "search", schema: { type: "string" } },
-                { in: "query", name: "order", schema: { type: "string", enum: ["asc", "desc"], default: "desc" } },
-                { in: "query", name: "sortBy", schema: { type: "string", default: "createdAt" } },
+                {
+                    in: "query",
+                    name: "order",
+                    schema: { type: "string", enum: ["asc", "desc"], default: "desc" },
+                },
+                {
+                    in: "query",
+                    name: "sortBy",
+                    schema: { type: "string", default: "createdAt" },
+                },
             ],
             responses: {
                 200: {

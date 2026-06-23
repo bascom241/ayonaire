@@ -16,7 +16,7 @@ export const enrollStudent = async (
   data: EnrollmentRequest,
 ): Promise<string> => {
   const user = await userModel.findById(data.student);
-  if (!user){
+  if (!user) {
     throw new AppError("user does not exits ", 400);
   }
   const enrollmentExist = await enrollmentModel.findOne({
@@ -190,7 +190,7 @@ export const viewEnrolledCourses = async (
               _id: 1,
               title: 1,
               thumbnail: 1,
-            
+
               status: 1,
               instructor: { name: "$instructor.name" },
             },
@@ -200,8 +200,6 @@ export const viewEnrolledCourses = async (
       },
     },
     { $unwind: "$course" },
-
-    
   ];
 
   const enrolledCourse = await enrollmentModel.aggregate(pipeline);

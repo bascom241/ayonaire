@@ -1,6 +1,6 @@
 import express from "express";
 const router = express.Router();
-import { upload, uploadVid, markLesson, update, resume, view } from "../controllers/lesson.controller.js";
+import { upload, uploadVid, markLesson, update, resume, view, } from "../controllers/lesson.controller.js";
 import { authorize, restrictTo } from "../middlewares/auth.middleware.js";
 import { upload as uploadMulter } from "../middlewares/multer.js";
 router.post("/upload", authorize, restrictTo("admin", "instructor"), upload);

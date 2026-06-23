@@ -44,7 +44,7 @@ export const approve = async (
   next: NextFunction,
 ) => {
   try {
-    const {userId} = req.body;
+    const { userId } = req.body;
     const message = await approveInstructorApplicationStatus(userId);
     res.status(200).json({ success: true, message });
   } catch (error) {
@@ -58,7 +58,7 @@ export const reject = async (
   next: NextFunction,
 ) => {
   try {
-    const {userId} = req.body;
+    const { userId } = req.body;
     const message = await rejectInstructorApplicationStatus(userId);
     res.status(200).json({ success: true, message });
   } catch (error) {
@@ -85,7 +85,7 @@ export const getProfile = async (
   next: NextFunction,
 ) => {
   try {
-    const {userId} = req.body;
+    const { userId } = req.body;
     const data = await getInstructorProfile(userId);
     res.status(200).json({ success: true, data });
   } catch (error) {

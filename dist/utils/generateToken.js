@@ -11,13 +11,15 @@ const getRefreshSecret = () => {
 };
 export const generateToken = (payoad) => {
     const options = {
-        expiresIn: (process.env.JWT_ACCESS_EXPIRES_IN || "15m"),
+        expiresIn: (process.env.JWT_ACCESS_EXPIRES_IN ||
+            "15m"),
     };
     return jwt.sign(payoad, getJwtSecret(), options);
 };
 export const generateRefreshToken = (payoad) => {
     const options = {
-        expiresIn: (process.env.JWT_REFRESH_EXPIRES_IN || "30d"),
+        expiresIn: (process.env.JWT_REFRESH_EXPIRES_IN ||
+            "30d"),
     };
     return jwt.sign(payoad, getRefreshSecret(), options);
 };

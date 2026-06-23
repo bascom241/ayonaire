@@ -20,11 +20,11 @@ export default {
                 duration: { type: "number", example: 600 },
                 isPublished: { type: "boolean", default: false },
                 isFreePreview: { type: "boolean", default: false },
-                isLocked: { type: "boolean", default: true }
-              }
-            }
-          }
-        }
+                isLocked: { type: "boolean", default: true },
+              },
+            },
+          },
+        },
       },
       responses: {
         201: {
@@ -35,25 +35,29 @@ export default {
                 type: "object",
                 properties: {
                   success: { type: "boolean", example: true },
-                  message: { type: "string", example: "Lesson created successfully" },
-                  lesson: { $ref: "#/components/schemas/Lesson" }
-                }
-              }
-            }
-          }
+                  message: {
+                    type: "string",
+                    example: "Lesson created successfully",
+                  },
+                  lesson: { $ref: "#/components/schemas/Lesson" },
+                },
+              },
+            },
+          },
         },
         400: { $ref: "#/components/responses/ValidationError" },
         401: { $ref: "#/components/responses/UnauthorizedError" },
-        403: { $ref: "#/components/responses/ForbiddenError" }
-      }
-    }
+        403: { $ref: "#/components/responses/ForbiddenError" },
+      },
+    },
   },
 
   "/api/v1/lesson/upload-video": {
     post: {
       tags: ["Lessons"],
       summary: "Upload lesson videos",
-      description: "Uploads multiple videos for a lesson (Admin/Instructor only)",
+      description:
+        "Uploads multiple videos for a lesson (Admin/Instructor only)",
       security: [{ bearerAuth: [] }],
       requestBody: {
         required: true,
@@ -68,14 +72,14 @@ export default {
                   type: "array",
                   items: {
                     type: "string",
-                    format: "binary"
+                    format: "binary",
                   },
-                  description: "Video files to upload (max 10)"
-                }
-              }
-            }
-          }
-        }
+                  description: "Video files to upload (max 10)",
+                },
+              },
+            },
+          },
+        },
       },
       responses: {
         200: {
@@ -86,19 +90,22 @@ export default {
                 type: "object",
                 properties: {
                   success: { type: "boolean", example: true },
-                  message: { type: "string", example: "Videos uploaded successfully" },
-                  lesson: { $ref: "#/components/schemas/Lesson" }
-                }
-              }
-            }
-          }
+                  message: {
+                    type: "string",
+                    example: "Videos uploaded successfully",
+                  },
+                  lesson: { $ref: "#/components/schemas/Lesson" },
+                },
+              },
+            },
+          },
         },
         400: { $ref: "#/components/responses/ValidationError" },
         401: { $ref: "#/components/responses/UnauthorizedError" },
         403: { $ref: "#/components/responses/ForbiddenError" },
-        404: { $ref: "#/components/responses/NotFoundError" }
-      }
-    }
+        404: { $ref: "#/components/responses/NotFoundError" },
+      },
+    },
   },
 
   "/api/v1/lesson/mark-lesson-as-completed": {
@@ -115,11 +122,11 @@ export default {
               type: "object",
               required: ["lessonId"],
               properties: {
-                lessonId: { type: "string" }
-              }
-            }
-          }
-        }
+                lessonId: { type: "string" },
+              },
+            },
+          },
+        },
       },
       responses: {
         200: {
@@ -130,17 +137,20 @@ export default {
                 type: "object",
                 properties: {
                   success: { type: "boolean", example: true },
-                  message: { type: "string", example: "Lesson completed successfully" }
-                }
-              }
-            }
-          }
+                  message: {
+                    type: "string",
+                    example: "Lesson completed successfully",
+                  },
+                },
+              },
+            },
+          },
         },
         400: { $ref: "#/components/responses/ValidationError" },
         401: { $ref: "#/components/responses/UnauthorizedError" },
-        404: { $ref: "#/components/responses/NotFoundError" }
-      }
-    }
+        404: { $ref: "#/components/responses/NotFoundError" },
+      },
+    },
   },
 
   "/api/v1/lesson/update-last-lesson": {
@@ -158,11 +168,11 @@ export default {
               required: ["courseId", "lessonId"],
               properties: {
                 courseId: { type: "string" },
-                lessonId: { type: "string" }
-              }
-            }
-          }
-        }
+                lessonId: { type: "string" },
+              },
+            },
+          },
+        },
       },
       responses: {
         200: {
@@ -173,17 +183,20 @@ export default {
                 type: "object",
                 properties: {
                   success: { type: "boolean", example: true },
-                  message: { type: "string", example: "Last lesson updated successfully" },
-                  enrollment: { $ref: "#/components/schemas/Enrollment" }
-                }
-              }
-            }
-          }
+                  message: {
+                    type: "string",
+                    example: "Last lesson updated successfully",
+                  },
+                  enrollment: { $ref: "#/components/schemas/Enrollment" },
+                },
+              },
+            },
+          },
         },
         400: { $ref: "#/components/responses/ValidationError" },
-        401: { $ref: "#/components/responses/UnauthorizedError" }
-      }
-    }
+        401: { $ref: "#/components/responses/UnauthorizedError" },
+      },
+    },
   },
 
   "/api/v1/lesson/resume-last-lesson": {
@@ -198,8 +211,8 @@ export default {
           name: "courseId",
           required: true,
           schema: { type: "string" },
-          description: "Course ID"
-        }
+          description: "Course ID",
+        },
       ],
       responses: {
         200: {
@@ -211,17 +224,17 @@ export default {
                 properties: {
                   success: { type: "boolean", example: true },
                   lesson: { $ref: "#/components/schemas/Lesson" },
-                  enrollment: { $ref: "#/components/schemas/Enrollment" }
-                }
-              }
-            }
-          }
+                  enrollment: { $ref: "#/components/schemas/Enrollment" },
+                },
+              },
+            },
+          },
         },
         400: { $ref: "#/components/responses/ValidationError" },
         401: { $ref: "#/components/responses/UnauthorizedError" },
-        404: { $ref: "#/components/responses/NotFoundError" }
-      }
-    }
+        404: { $ref: "#/components/responses/NotFoundError" },
+      },
+    },
   },
 
   "/api/v1/lesson/view-lesson-content": {
@@ -236,8 +249,8 @@ export default {
           name: "lessonId",
           required: true,
           schema: { type: "string" },
-          description: "Lesson ID"
-        }
+          description: "Lesson ID",
+        },
       ],
       responses: {
         200: {
@@ -248,16 +261,16 @@ export default {
                 type: "object",
                 properties: {
                   success: { type: "boolean", example: true },
-                  lesson: { $ref: "#/components/schemas/Lesson" }
-                }
-              }
-            }
-          }
+                  lesson: { $ref: "#/components/schemas/Lesson" },
+                },
+              },
+            },
+          },
         },
         400: { $ref: "#/components/responses/ValidationError" },
         401: { $ref: "#/components/responses/UnauthorizedError" },
-        404: { $ref: "#/components/responses/NotFoundError" }
-      }
-    }
-  }
+        404: { $ref: "#/components/responses/NotFoundError" },
+      },
+    },
+  },
 };

@@ -8,7 +8,7 @@ export default {
       shortBio: { type: "string", example: "System administrator" },
       department: { type: "string", example: "IT Department" },
       createdAt: { type: "string", format: "date-time" },
-      updatedAt: { type: "string", format: "date-time" }
-    }
-  }
+      updatedAt: { type: "string", format: "date-time" },
+    },
+  },
 };

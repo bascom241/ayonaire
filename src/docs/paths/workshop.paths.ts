@@ -16,15 +16,15 @@ export default {
                 platform: { type: "string" },
                 status: { type: "string" },
                 startDate: { type: "string", format: "date-time" },
-                endDate: { type: "string", format: "date-time" }
-              }
-            }
-          }
-        }
+                endDate: { type: "string", format: "date-time" },
+              },
+            },
+          },
+        },
       },
       responses: {
-        200: { description: "Workshop created successfully" }
-      }
+        200: { description: "Workshop created successfully" },
+      },
     },
     get: {
       tags: ["Workshops"],
@@ -36,20 +36,20 @@ export default {
           in: "query",
           description: "Page number for pagination",
           required: false,
-          schema: { type: "integer", default: 1 }
+          schema: { type: "integer", default: 1 },
         },
         {
           name: "limit",
           in: "query",
           description: "Number of items per page",
           required: false,
-          schema: { type: "integer", default: 10 }
-        }
+          schema: { type: "integer", default: 10 },
+        },
       ],
       responses: {
-        200: { description: "Workshops fetched successfully" }
-      }
-    }
+        200: { description: "Workshops fetched successfully" },
+      },
+    },
   },
   "/api/v1/workshop/{id}": {
     put: {
@@ -63,8 +63,8 @@ export default {
           in: "path",
           required: true,
           schema: { type: "string" },
-          description: "Workshop ID"
-        }
+          description: "Workshop ID",
+        },
       ],
       requestBody: {
         required: true,
@@ -80,24 +80,24 @@ export default {
                   properties: {
                     type: { type: "string" },
                     name: { type: "string" },
-                    link: { type: "string" }
-                  }
+                    link: { type: "string" },
+                  },
                 },
                 status: { type: "string" },
                 startDate: { type: "string", format: "date-time" },
-                endDate: { type: "string", format: "date-time" }
-              }
-            }
-          }
-        }
+                endDate: { type: "string", format: "date-time" },
+              },
+            },
+          },
+        },
       },
       responses: {
         200: { description: "Workshop updated successfully" },
         400: { $ref: "#/components/responses/ValidationError" },
         401: { $ref: "#/components/responses/UnauthorizedError" },
         403: { $ref: "#/components/responses/ForbiddenError" },
-        404: { $ref: "#/components/responses/NotFoundError" }
-      }
-    }
-  }
+        404: { $ref: "#/components/responses/NotFoundError" },
+      },
+    },
+  },
 };

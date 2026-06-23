@@ -16,7 +16,7 @@ import { AppError } from "../errors/AppError.js";
 import mongoose from "mongoose";
 import { validateRequestBodyWithValues } from "../utils/validateRequestBody.js";
 import { deleteImage } from "../utils/uploadToCloudinary.js";
-import { CreateTagRequest , CreateTagResponse} from "../types/feed.types.js";
+import { CreateTagRequest, CreateTagResponse } from "../types/feed.types.js";
 import feedTagModel from "../models/feedTag.model.js";
 
 const getUserProfilePayload = (user: any) =>
@@ -27,30 +27,31 @@ const getUserProfilePayload = (user: any) =>
       }
     : null;
 
-export const createTags = async (data: CreateTagRequest):Promise<CreateTagResponse> => {
+export const createTags = async (
+  data: CreateTagRequest,
+): Promise<CreateTagResponse> => {
   const { titles } = data;
   if (titles.length === 0) {
     throw new AppError("titles can not be empty");
   }
   const allowedTags = Object.values(FeedTag) as FeedTag[];
-  const isValid = titles.every(str => allowedTags.includes(str as FeedTag));
-  if(!isValid){
-    throw new AppError("title tag is a not allowed")
-  };
+  const isValid = titles.every((str) => allowedTags.includes(str as FeedTag));
+  if (!isValid) {
+    throw new AppError("title tag is a not allowed");
+  }
   const newTags = await feedTagModel.create({
-    titles
+    titles,
   });
   return {
     id: newTags._id.toString(),
-    titles: newTags.titles
-  }
-
+    titles: newTags.titles,
+  };
 };
 export const createFeed = async (
   data: CreateFeedRequest,
   userId: string | undefined,
 ): Promise<CreateFeedResponse> => {
-  const { content, media, tag  } = data;
+  const { content, media, tag } = data;
   const user = await userModel.findById(userId);
   if (!user) {
     throw new AppError("user does not exits", 400);
@@ -99,12 +100,14 @@ export const createFeed = async (
   }
 
   const createdFeed = await feedModel.create(feedData);
-  const newData = await feedModel.findById(createdFeed._id).populate("tag", "titles");
+  const newData = await feedModel
+    .findById(createdFeed._id)
+    .populate("tag", "titles");
   if (!newData) {
     throw new AppError("Failed to retrieve created feed", 500);
   }
   return {
-    tag:(newData.tag as any )?.titles,
+    tag: (newData.tag as any)?.titles,
     content: newData.content,
     media: newData.media
       ? {
@@ -147,15 +150,17 @@ export const editFeed = async (
   }
 
   if (content !== undefined) feedToEdit.content = content;
-  if(tag !== undefined ) feedToEdit.tag = new mongoose.Types.ObjectId(tag);
+  if (tag !== undefined) feedToEdit.tag = new mongoose.Types.ObjectId(tag);
 
   const updatedFeed = await feedToEdit.save();
- const newEditedFeed = await feedModel.findById(updatedFeed._id).populate("tag", "titles");
+  const newEditedFeed = await feedModel
+    .findById(updatedFeed._id)
+    .populate("tag", "titles");
   if (!newEditedFeed) {
     throw new AppError("Failed to retrieve created feed", 500);
   }
   return {
-    tag:(newEditedFeed.tag as any )?.titles,
+    tag: (newEditedFeed.tag as any)?.titles,
     content: updatedFeed.content,
     media: updatedFeed.media
       ? {

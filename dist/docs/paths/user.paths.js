@@ -124,7 +124,10 @@ export default {
                                 type: "object",
                                 properties: {
                                     success: { type: "boolean", example: true },
-                                    message: { type: "string", example: "Email verified successfully" },
+                                    message: {
+                                        type: "string",
+                                        example: "Email verified successfully",
+                                    },
                                 },
                             },
                         },
@@ -172,7 +175,11 @@ export default {
                             type: "object",
                             required: ["email"],
                             properties: {
-                                email: { type: "string", format: "email", example: "john@example.com" },
+                                email: {
+                                    type: "string",
+                                    format: "email",
+                                    example: "john@example.com",
+                                },
                             },
                         },
                     },
@@ -214,7 +221,11 @@ export default {
                             type: "object",
                             required: ["email"],
                             properties: {
-                                email: { type: "string", format: "email", example: "john@example.com" },
+                                email: {
+                                    type: "string",
+                                    format: "email",
+                                    example: "john@example.com",
+                                },
                             },
                         },
                     },
@@ -266,7 +277,11 @@ export default {
                             required: ["password"],
                             properties: {
                                 token: { type: "string" },
-                                password: { type: "string", format: "password", example: "NewStrongPassword123" },
+                                password: {
+                                    type: "string",
+                                    format: "password",
+                                    example: "NewStrongPassword123",
+                                },
                             },
                         },
                     },
@@ -281,13 +296,18 @@ export default {
                                 type: "object",
                                 properties: {
                                     success: { type: "boolean", example: true },
-                                    message: { type: "string", example: "Password reset successfully" },
+                                    message: {
+                                        type: "string",
+                                        example: "Password reset successfully",
+                                    },
                                 },
                             },
                         },
                     },
                 },
-                400: { description: "Invalid or expired reset token or validation error" },
+                400: {
+                    description: "Invalid or expired reset token or validation error",
+                },
             },
         },
     },
@@ -353,7 +373,9 @@ export default {
                     },
                 },
                 400: { $ref: "#/components/responses/ValidationError" },
-                401: { description: "Invalid, expired, missing, or revoked refresh token" },
+                401: {
+                    description: "Invalid, expired, missing, or revoked refresh token",
+                },
                 403: { description: "Account suspended or inactive" },
             },
         },
@@ -441,7 +463,11 @@ export default {
                             type: "object",
                             properties: {
                                 name: { type: "string", example: "John Doe" },
-                                email: { type: "string", format: "email", example: "john@example.com" },
+                                email: {
+                                    type: "string",
+                                    format: "email",
+                                    example: "john@example.com",
+                                },
                             },
                         },
                     },
@@ -556,7 +582,10 @@ export default {
                     description: "Role assigned successfully",
                     content: {
                         "application/json": {
-                            schema: authEnvelope({ type: "string", example: "role INSTRUCTOR assinged to John Doe" }),
+                            schema: authEnvelope({
+                                type: "string",
+                                example: "role INSTRUCTOR assinged to John Doe",
+                            }),
                         },
                     },
                 },
@@ -777,12 +806,34 @@ export default {
                             required: ["name", "email", "password"],
                             properties: {
                                 name: { type: "string", example: "Jane Student" },
-                                email: { type: "string", format: "email", example: "jane@example.com" },
-                                password: { type: "string", format: "password", example: "StrongPassword123" },
-                                role: { type: "string", enum: ["user", "instructor", "admin"], example: "user" },
-                                status: { type: "string", enum: ["active", "inactive", "suspended"], example: "active" },
-                                courseId: { type: "string", example: "661f2a8c9c1234567890abcd" },
-                                cohortId: { type: "string", example: "661f2b1d9c1234567890efgh" },
+                                email: {
+                                    type: "string",
+                                    format: "email",
+                                    example: "jane@example.com",
+                                },
+                                password: {
+                                    type: "string",
+                                    format: "password",
+                                    example: "StrongPassword123",
+                                },
+                                role: {
+                                    type: "string",
+                                    enum: ["user", "instructor", "admin"],
+                                    example: "user",
+                                },
+                                status: {
+                                    type: "string",
+                                    enum: ["active", "inactive", "suspended"],
+                                    example: "active",
+                                },
+                                courseId: {
+                                    type: "string",
+                                    example: "661f2a8c9c1234567890abcd",
+                                },
+                                cohortId: {
+                                    type: "string",
+                                    example: "661f2b1d9c1234567890efgh",
+                                },
                             },
                         },
                     },
@@ -822,8 +873,14 @@ export default {
                                     items: { type: "string", format: "email" },
                                     example: ["student@example.com"],
                                 },
-                                courseId: { type: "string", example: "661f2a8c9c1234567890abcd" },
-                                cohortId: { type: "string", example: "661f2b1d9c1234567890efgh" },
+                                courseId: {
+                                    type: "string",
+                                    example: "661f2a8c9c1234567890abcd",
+                                },
+                                cohortId: {
+                                    type: "string",
+                                    example: "661f2b1d9c1234567890efgh",
+                                },
                             },
                         },
                     },
@@ -859,8 +916,14 @@ export default {
                             required: ["file", "courseId", "cohortId"],
                             properties: {
                                 file: { type: "string", format: "binary" },
-                                courseId: { type: "string", example: "661f2a8c9c1234567890abcd" },
-                                cohortId: { type: "string", example: "661f2b1d9c1234567890efgh" },
+                                courseId: {
+                                    type: "string",
+                                    example: "661f2a8c9c1234567890abcd",
+                                },
+                                cohortId: {
+                                    type: "string",
+                                    example: "661f2b1d9c1234567890efgh",
+                                },
                             },
                         },
                     },
@@ -905,7 +968,11 @@ export default {
                             required: ["name", "password"],
                             properties: {
                                 name: { type: "string", example: "John Doe" },
-                                password: { type: "string", format: "password", example: "StrongPassword123" },
+                                password: {
+                                    type: "string",
+                                    format: "password",
+                                    example: "StrongPassword123",
+                                },
                             },
                         },
                     },

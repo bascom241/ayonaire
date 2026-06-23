@@ -16,11 +16,11 @@ export default {
                 title: { type: "string", example: "Chapter 1: Introduction" },
                 description: { type: "string", example: "Basic concepts" },
                 course: { type: "string", description: "Course ID" },
-                order: { type: "number", example: 1 }
-              }
-            }
-          }
-        }
+                order: { type: "number", example: 1 },
+              },
+            },
+          },
+        },
       },
       responses: {
         201: {
@@ -31,17 +31,20 @@ export default {
                 type: "object",
                 properties: {
                   success: { type: "boolean", example: true },
-                  message: { type: "string", example: "Module created successfully" },
-                  module: { $ref: "#/components/schemas/Module" }
-                }
-              }
-            }
-          }
+                  message: {
+                    type: "string",
+                    example: "Module created successfully",
+                  },
+                  module: { $ref: "#/components/schemas/Module" },
+                },
+              },
+            },
+          },
         },
         400: { $ref: "#/components/responses/ValidationError" },
         401: { $ref: "#/components/responses/UnauthorizedError" },
-        403: { $ref: "#/components/responses/ForbiddenError" }
-      }
-    }
-  }
+        403: { $ref: "#/components/responses/ForbiddenError" },
+      },
+    },
+  },
 };

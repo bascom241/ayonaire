@@ -15,14 +15,12 @@ export interface CreateCohortResponse {
   students: string[];
 }
 
-
 export interface AssignStudentRequest {
-    userId:string
-    cohortId: string
+  userId: string;
+  cohortId: string;
 }
 
-
 export interface AssignInstructorRequest {
-    instructorId: string 
-    cohortId: string
+  instructorId: string;
+  cohortId: string;
 }

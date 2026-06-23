@@ -3,7 +3,7 @@ import { FeedType } from "../types/feed.types.js";
 const feedSchema = new Schema({
     tag: {
         type: Schema.Types.ObjectId,
-        ref: "FeedTag"
+        ref: "FeedTag",
     },
     userId: {
         type: Schema.Types.ObjectId,

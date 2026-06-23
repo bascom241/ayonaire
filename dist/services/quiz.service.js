@@ -55,20 +55,20 @@ export const submitQuiz = async (data) => {
     validateRequestBodyWithValues(data, [
         "quizId",
         "userId",
-        "answers"
+        "answers",
     ]);
     const questions = await questionModel.find({
-        quiz: data.quizId
+        quiz: data.quizId,
     });
     let score = 0;
     const gradedAnswers = data.answers.map((answer) => {
-        const question = questions.find(q => q._id.toString() === answer.questionId);
+        const question = questions.find((q) => q._id.toString() === answer.questionId);
         if (!question) {
             throw new Error("Question not found");
         }
         const correctOptions = question.options
-            .filter(opt => opt.isCorrect)
-            .map(opt => opt.text);
+            .filter((opt) => opt.isCorrect)
+            .map((opt) => opt.text);
         const isCorrect = JSON.stringify(correctOptions.sort()) ===
             JSON.stringify(answer.selectedOptions.sort());
         if (isCorrect) {
@@ -77,7 +77,7 @@ export const submitQuiz = async (data) => {
         return {
             question: answer.questionId,
             selectedOptions: answer.selectedOptions,
-            isCorrect
+            isCorrect,
         };
     });
     await quizAttemptModel.create({
@@ -85,10 +85,10 @@ export const submitQuiz = async (data) => {
         user: data.userId,
         answers: gradedAnswers,
         score,
-        completed: true
+        completed: true,
     });
     return {
         score,
-        answers: gradedAnswers
+        answers: gradedAnswers,
     };
 };

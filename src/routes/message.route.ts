@@ -1,11 +1,13 @@
-import express from "express"
+import express from "express";
 const router = express.Router();
 import { authorize } from "../middlewares/auth.middleware.js";
-import { getMessagesForARoom, send } from "../controllers/message.controller.js";
+import {
+  getMessagesForARoom,
+  send,
+} from "../controllers/message.controller.js";
 import { getMaxListeners } from "node:cluster";
 import { upload } from "../middlewares/multer.js";
 
-
 router.post("/send", authorize, upload.single("file"), send);
-router.get("/", authorize, getMessagesForARoom)
-export default router
+router.get("/", authorize, getMessagesForARoom);
+export default router;

@@ -1,4 +1,4 @@
-import { createCourseCategory, createCourse, updateCourse, assignInstuctorToCourse, saveCourseAsDraft, getAllCoursesForAdminDashboard, getASingleCourseForAdminDashboard } from "../services/course.service.js";
+import { createCourseCategory, createCourse, updateCourse, assignInstuctorToCourse, saveCourseAsDraft, getAllCoursesForAdminDashboard, getASingleCourseForAdminDashboard, } from "../services/course.service.js";
 import { AppError } from "../errors/AppError.js";
 import redisClient from "../config/redis.js";
 export const createCourseCat = async (req, res, next) => {

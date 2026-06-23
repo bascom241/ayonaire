@@ -17,15 +17,15 @@ export default {
                                     count: { type: "number" },
                                     enrollments: {
                                         type: "array",
-                                        items: { $ref: "#/components/schemas/Enrollment" }
-                                    }
-                                }
-                            }
-                        }
-                    }
+                                        items: { $ref: "#/components/schemas/Enrollment" },
+                                    },
+                                },
+                            },
+                        },
+                    },
                 },
-                401: { $ref: "#/components/responses/UnauthorizedError" }
-            }
-        }
-    }
+                401: { $ref: "#/components/responses/UnauthorizedError" },
+            },
+        },
+    },
 };

@@ -7,26 +7,26 @@ const platFormSchema = new Schema({
     },
     link: {
         type: String,
-        required: [true, "Platform Link is required"]
+        required: [true, "Platform Link is required"],
     },
     type: {
         type: String,
         enum: Object.values(PlatformName),
-        required: [true, "Platform name is required"]
-    }
+        required: [true, "Platform name is required"],
+    },
 }, { _id: false });
 const workShopSchema = new Schema({
     title: {
         type: String,
-        required: [true, "workshop name is required"]
+        required: [true, "workshop name is required"],
     },
     description: {
         type: String,
-        required: [true, "workshop description is required"]
+        required: [true, "workshop description is required"],
     },
     platform: {
         type: platFormSchema,
-        required: [true, 'Platform information is required']
+        required: [true, "Platform information is required"],
     },
     status: {
         type: String,
@@ -35,11 +35,11 @@ const workShopSchema = new Schema({
     },
     startDate: {
         type: Date,
-        default: Date.now
+        default: Date.now,
     },
     endDate: {
         type: Date,
-        required: [true, "End Date is required"]
-    }
+        required: [true, "End Date is required"],
+    },
 });
 export default mongoose.model("WorkShop", workShopSchema);

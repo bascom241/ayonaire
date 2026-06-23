@@ -5,39 +5,44 @@ import {
 } from "../services/enroll.service.js";
 import { AppError } from "../errors/AppError.js";
 
-
-
 interface AuthRequest extends Request {
-    user ? : {id? : string }
+  user?: { id?: string };
 }
 
-export const enrolledCourses = async (req:AuthRequest , res: Response, next: NextFunction) => {
-    try {
-        const id = req.user?.id
-        if(!id){
-            throw new AppError("unauthorized", 401)
-        };
-
-
-        const data = await viewEnrolledCourses(id);
-
-        res.status(200).json({success: true , data })
-    } catch (error) {
-        next(error)
+export const enrolledCourses = async (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const id = req.user?.id;
+    if (!id) {
+      throw new AppError("unauthorized", 401);
     }
-}
 
-export const completedCourses = async (req:AuthRequest , res: Response, next: NextFunction) => {
-    try {
-        const id = req.user?.id
-        if(!id){
-            throw new AppError("unauthorized", 401)
-        };
+    const data = await viewEnrolledCourses(id);
 
-        const data = await viewCompletedCourses(id);
+    res.status(200).json({ success: true, data });
+  } catch (error) {
+    next(error);
+  }
+};
 
-        res.status(200).json({success: true , data })
-    } catch (error) {
-        next(error)
+export const completedCourses = async (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const id = req.user?.id;
+    if (!id) {
+      throw new AppError("unauthorized", 401);
     }
-}
+
+    const data = await viewCompletedCourses(id);
+
+    res.status(200).json({ success: true, data });
+  } catch (error) {
+    next(error);
+  }
+};

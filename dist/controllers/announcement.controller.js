@@ -1,4 +1,4 @@
-import { createAnnouncement, getAllAnnounceMents } from "../services/announcement.service.js";
+import { createAnnouncement, getAllAnnounceMents, } from "../services/announcement.service.js";
 import { AppError } from "../errors/AppError.js";
 export const create = async (req, res, next) => {
     try {

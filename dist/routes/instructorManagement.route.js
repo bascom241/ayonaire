@@ -1,6 +1,6 @@
 import express from "express";
 import { restrictTo, authorize } from "../middlewares/auth.middleware.js";
-import { getProfile, getProfiles, approve, reject, apply } from "../controllers/instructorManagement.controller.js";
+import { getProfile, getProfiles, approve, reject, apply, } from "../controllers/instructorManagement.controller.js";
 const router = express.Router();
 router.post("/apply", authorize, apply);
 router.post("/approve", authorize, restrictTo("admin"), approve);

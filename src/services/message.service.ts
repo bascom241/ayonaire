@@ -1,7 +1,7 @@
 import { AppError } from "../errors/AppError.js";
 import messageModel from "../models/message.model.js";
 import {
-    GetMessagesResponse,
+  GetMessagesResponse,
   MessageRequestData,
   MessageResponseData,
 } from "../types/message.types.js";
@@ -94,15 +94,14 @@ export const sendMessage = async (
 export const getMessagesForRoom = async (
   data: GetMessagesRoom,
 ): Promise<GetMessagesResponse> => {
-  const { roomId, query} = data;
+  const { roomId, query } = data;
   validateRequestBodyWithValues<GetMessagesRoom>(data, ["roomId"]);
 
   const room = await roomModel.findById(roomId);
-  const {page, limit, skip} = getPagination(query)
+  const { page, limit, skip } = getPagination(query);
   if (!room) {
     throw new AppError("room not found", 400);
   }
-
 
   const [messages, total] = await Promise.all([
     messageModel
@@ -110,9 +109,8 @@ export const getMessagesForRoom = async (
       .skip(skip)
       .limit(limit)
       .populate("senderId", "name"),
-      messageModel.countDocuments()
-
-  ])
+    messageModel.countDocuments(),
+  ]);
 
   const formattedMessages = messages.map((message) => ({
     senderId: {
@@ -137,11 +135,11 @@ export const getMessagesForRoom = async (
 
   return {
     messages: formattedMessages,
-     pagination: {
+    pagination: {
       total,
       page,
       limit,
       totalPages: Math.ceil(total / limit),
     },
-  }
+  };
 };

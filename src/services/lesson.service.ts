@@ -3,7 +3,7 @@ import enrollmentModel from "../models/enrollment.model.js";
 import lessonModel from "../models/lesson.model.js";
 import moduleModel from "../models/module.model.js";
 import courseModel from "../models/course.model.js";
-import mongoose, { PipelineStage, Types } from "mongoose"
+import mongoose, { PipelineStage, Types } from "mongoose";
 import {
   UploadLessonRequest,
   UploadLessonResponse,
@@ -11,9 +11,9 @@ import {
   UploadVideoRequest,
   MarkLessonCompleted,
   ResumeLessonRequest,
- UpdateLastLesson,
- UpdateLastLessonResponse,
- ViewLessonRequest
+  UpdateLastLesson,
+  UpdateLastLessonResponse,
+  ViewLessonRequest,
 } from "../types/lesson.types.js";
 import { uploadMedia } from "../utils/uploadToCloudinary.js";
 import { MarkLessonCompletedEnrollmentResponse } from "../types/enrollment.types.js";
@@ -65,7 +65,7 @@ export const uploadVideo = async (
     throw new AppError("lesson not found", 400);
   }
 
-  let uploadedVideos = [];
+  const uploadedVideos = [];
 
   for (const video of data.videos) {
     if (video.buffer.length > MAX_VIDEO_SIZE) {
@@ -93,23 +93,28 @@ export const uploadVideo = async (
   };
 };
 
-
-export const markLessonAsCompleted = async (data: MarkLessonCompleted): Promise<MarkLessonCompletedEnrollmentResponse> => {
+export const markLessonAsCompleted = async (
+  data: MarkLessonCompleted,
+): Promise<MarkLessonCompletedEnrollmentResponse> => {
   const enrollment = await enrollmentModel.findOne({
     student: data.studentId,
-    course: data.courseId
+    course: data.courseId,
   });
 
-  if(!enrollment){
-    throw new AppError("enrollment not fount", 404)
+  if (!enrollment) {
+    throw new AppError("enrollment not fount", 404);
   }
-  if (!enrollment.comletedLessons.some((id) => id.toString() === data.lessonId.toString())) {
-    enrollment.comletedLessons.push(new mongoose.Types.ObjectId(data.lessonId))
+  if (
+    !enrollment.comletedLessons.some(
+      (id) => id.toString() === data.lessonId.toString(),
+    )
+  ) {
+    enrollment.comletedLessons.push(new mongoose.Types.ObjectId(data.lessonId));
   }
 
   const totalLessons = await lessonModel.countDocuments({
     course: data.courseId,
-    isPublished: true
+    isPublished: true,
   });
 
   enrollment.progress =
@@ -117,8 +122,8 @@ export const markLessonAsCompleted = async (data: MarkLessonCompleted): Promise<
       ? (enrollment.comletedLessons.length / totalLessons) * 100
       : 0;
 
-  if(enrollment.progress >= 100){
-    enrollment.completed = true
+  if (enrollment.progress >= 100) {
+    enrollment.completed = true;
   }
   await enrollment.save();
 
@@ -126,142 +131,141 @@ export const markLessonAsCompleted = async (data: MarkLessonCompleted): Promise<
     course: enrollment.course.toString(),
     student: enrollment.student?.toString() || data.studentId.toString(),
     status: enrollment.status,
-    completedLessons: enrollment.comletedLessons.map((id) =>id.toString()),
+    completedLessons: enrollment.comletedLessons.map((id) => id.toString()),
     progress: enrollment.progress,
-    completed: enrollment.completed
-  }
-}
+    completed: enrollment.completed,
+  };
+};
 
-
-export const updateLastLesson = async (data: UpdateLastLesson):Promise<UpdateLastLessonResponse> => {
-    const enrollment = await enrollmentModel.findOne({
+export const updateLastLesson = async (
+  data: UpdateLastLesson,
+): Promise<UpdateLastLessonResponse> => {
+  const enrollment = await enrollmentModel.findOne({
     student: data.studentId,
-    course: data.courseId
+    course: data.courseId,
   });
 
-  if(!enrollment){
-    throw new AppError("enrollment not fount", 404)
+  if (!enrollment) {
+    throw new AppError("enrollment not fount", 404);
   }
 
   const updatedEnrollmentLastLesson = await enrollmentModel.findOneAndUpdate(
-     { student: data.studentId, course: data.courseId },
+    { student: data.studentId, course: data.courseId },
     { lastLesson: data.lessonId },
-    { new: true }
+    { new: true },
   );
 
-
-  if(!updatedEnrollmentLastLesson){
-    throw new AppError("could not update last lesson", 400)
+  if (!updatedEnrollmentLastLesson) {
+    throw new AppError("could not update last lesson", 400);
   }
 
   return {
     course: updatedEnrollmentLastLesson.course.toString(),
-    student: updatedEnrollmentLastLesson.student?.toString() || data.studentId.toString(),
+    student:
+      updatedEnrollmentLastLesson.student?.toString() ||
+      data.studentId.toString(),
     status: updatedEnrollmentLastLesson.status,
-    completedLessons: updatedEnrollmentLastLesson.comletedLessons.map((id) =>id.toString()),
+    completedLessons: updatedEnrollmentLastLesson.comletedLessons.map((id) =>
+      id.toString(),
+    ),
     progress: updatedEnrollmentLastLesson.progress,
     completed: updatedEnrollmentLastLesson.completed,
-    lastLesson:  updatedEnrollmentLastLesson.lastLesson ?  updatedEnrollmentLastLesson.lastLesson.toString() : null 
-    
-  }
-}
+    lastLesson: updatedEnrollmentLastLesson.lastLesson
+      ? updatedEnrollmentLastLesson.lastLesson.toString()
+      : null,
+  };
+};
 
 export const getResumeLesson = async (data: ResumeLessonRequest) => {
-    const enrollment = await enrollmentModel.findOne({
-      student: data.studentId,
-      course: data.courseId
-    });
-    if(!enrollment){
-      throw new AppError("enrollment not found",  400)
-    }
+  const enrollment = await enrollmentModel.findOne({
+    student: data.studentId,
+    course: data.courseId,
+  });
+  if (!enrollment) {
+    throw new AppError("enrollment not found", 400);
+  }
 
-  
   if (enrollment.lastLesson) {
     return enrollment.lastLesson;
   }
 
   // fallback → return first lesson
-  const firstLesson = await lessonModel.findOne({
-    course: data.courseId,
-    isPublished: true
-  }).sort({ order: 1 });
+  const firstLesson = await lessonModel
+    .findOne({
+      course: data.courseId,
+      isPublished: true,
+    })
+    .sort({ order: 1 });
 
   return firstLesson?._id;
-}
+};
 
-export const viewLessonContent = async (data: ViewLessonRequest) =>{
-    const myEnrollment = await enrollmentModel.findOne({
-      student: data.studentId,
-      course: data.courseId
-    });
+export const viewLessonContent = async (data: ViewLessonRequest) => {
+  const myEnrollment = await enrollmentModel.findOne({
+    student: data.studentId,
+    course: data.courseId,
+  });
 
-    if(!myEnrollment){
-      throw new AppError("you are not enrolled for this course", 401)
-    }
+  if (!myEnrollment) {
+    throw new AppError("you are not enrolled for this course", 401);
+  }
 
-    const pipeline: PipelineStage[] = [
-
-      {
-        $match  : {
-          course: new Types.ObjectId(data.courseId)
-        }
+  const pipeline: PipelineStage[] = [
+    {
+      $match: {
+        course: new Types.ObjectId(data.courseId),
       },
-      {
-        $sort: {order : 1}
+    },
+    {
+      $sort: { order: 1 },
+    },
+    {
+      $lookup: {
+        from: "lessons",
+        localField: "_id",
+        foreignField: "module",
+        as: "lessons",
       },
-      {
-        $lookup: {
-          from :"lessons", 
-          localField: "_id",
-          foreignField: "module",
-          as: "lessons"
-        }
+    },
+
+    {
+      $addFields: {
+        lessons: {
+          $sortArray: {
+            input: "$lessons",
+            sortBy: { order: 1 },
+          },
+        },
       },
+    },
 
-      {
-        $addFields: {
-          lessons: {
-            $sortArray: {
-              input: "$lessons",
-              sortBy: {order: 1 }
-            }
-          }
-        }
+    {
+      $addFields: {
+        lessons: {
+          $map: {
+            input: "$lessons",
+            as: "lesson",
+            in: {
+              $mergeObjects: [
+                "$$lesson",
+
+                {
+                  isCompleted: {
+                    $in: ["$$lesson._id", myEnrollment.comletedLessons],
+                  },
+                },
+              ],
+            },
+          },
+        },
       },
-
-      {
-        $addFields : {
-          lessons : {
-            $map : {
-              input: "$lessons",
-              as: "lesson",
-              in: {
-                $mergeObjects : [
-                  "$$lesson",
-
-                  {
-                    isCompleted: {
-                      $in : [
-                        "$$lesson._id", 
-                        myEnrollment.comletedLessons
-                      ]
-                    }
-                  }
-                ]
-              }
-            }
-          }
-        }
-      }
-    ];
+    },
+  ];
   const modules = await moduleModel.aggregate(pipeline);
 
   return {
     modules,
     progress: myEnrollment.progress,
-    lastLesson: myEnrollment.lastLesson
+    lastLesson: myEnrollment.lastLesson,
   };
-
-  
-
-}
+};

@@ -90,7 +90,7 @@ const options: swaggerJsdoc.Options = {
         ...inviteShema,
         ...feedSchemas,
         ...announcementSchemas,
-        ...workshopSchemas
+        ...workshopSchemas,
       },
       responses,
       parameters,

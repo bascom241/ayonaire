@@ -3,16 +3,18 @@ import path from "path";
 
 const isDev = process.env.NODE_ENV !== "production";
 
-
-const transports: winston.transport[] = [
-  new winston.transports.Console(),
-];
+const transports: winston.transport[] = [new winston.transports.Console()];
 
 if (isDev) {
   const logDir = path.join(process.cwd(), "logs");
   transports.push(
-    new winston.transports.File({ filename: path.join(logDir, "error.log"), level: "error" }),
-    new winston.transports.File({ filename: path.join(logDir, "combined.log") })
+    new winston.transports.File({
+      filename: path.join(logDir, "error.log"),
+      level: "error",
+    }),
+    new winston.transports.File({
+      filename: path.join(logDir, "combined.log"),
+    }),
   );
 }
 
@@ -22,10 +24,10 @@ const logger = winston.createLogger({
     winston.format.timestamp(),
     winston.format.colorize(),
     winston.format.printf(
-      (info) => `${info.timestamp} [${info.level}]: ${info.message}`
-    )
+      (info) => `${info.timestamp} [${info.level}]: ${info.message}`,
+    ),
   ),
-  transports, 
+  transports,
 });
 
 export default logger;

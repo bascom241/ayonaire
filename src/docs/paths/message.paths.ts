@@ -32,7 +32,8 @@ export default {
     post: {
       tags: ["Messages"],
       summary: "Send a room message",
-      description: "Sends a text, media, or file message to a room and broadcasts it over Socket.IO.",
+      description:
+        "Sends a text, media, or file message to a room and broadcasts it over Socket.IO.",
       security: [{ bearerAuth: [] }],
       requestBody: {
         required: true,
@@ -85,7 +86,8 @@ export default {
     get: {
       tags: ["Messages"],
       summary: "Get room messages",
-      description: "Returns paginated messages for a room. Current backend expects roomId in the request body.",
+      description:
+        "Returns paginated messages for a room. Current backend expects roomId in the request body.",
       security: [{ bearerAuth: [] }],
       parameters: [
         { in: "query", name: "page", schema: { type: "number", default: 1 } },

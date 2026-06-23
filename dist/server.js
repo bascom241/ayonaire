@@ -9,8 +9,8 @@ console.log("Starting server...");
 const server = http.createServer(app);
 export const io = new Server(server, {
     cors: {
-        origin: "*"
-    }
+        origin: "*",
+    },
 });
 connectSocket(io);
 const port = Number(process.env.PORT) || 3000;

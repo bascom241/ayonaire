@@ -12,23 +12,23 @@ export default {
                             type: "object",
                             properties: {
                                 content: { type: "string" },
-                                media: { type: "string", format: "binary" }
-                            }
-                        }
-                    }
-                }
+                                media: { type: "string", format: "binary" },
+                            },
+                        },
+                    },
+                },
             },
             responses: {
-                201: { description: "Feed created successfully" }
-            }
+                201: { description: "Feed created successfully" },
+            },
         },
         get: {
             tags: ["Feeds"],
             summary: "Get all feeds",
             security: [{ bearerAuth: [] }],
             responses: {
-                200: { description: "Successful response" }
-            }
+                200: { description: "Successful response" },
+            },
         },
         put: {
             tags: ["Feeds"],
@@ -44,15 +44,15 @@ export default {
                                 feedId: { type: "string" },
                                 content: { type: "string" },
                                 tag: { type: "string" },
-                                media: { type: "string", format: "binary" }
-                            }
-                        }
-                    }
-                }
+                                media: { type: "string", format: "binary" },
+                            },
+                        },
+                    },
+                },
             },
             responses: {
-                200: { description: "Feed updated successfully" }
-            }
+                200: { description: "Feed updated successfully" },
+            },
         },
         delete: {
             tags: ["Feeds"],
@@ -65,16 +65,16 @@ export default {
                         schema: {
                             type: "object",
                             properties: {
-                                feedId: { type: "string" }
-                            }
-                        }
-                    }
-                }
+                                feedId: { type: "string" },
+                            },
+                        },
+                    },
+                },
             },
             responses: {
-                200: { description: "Feed deleted successfully" }
-            }
-        }
+                200: { description: "Feed deleted successfully" },
+            },
+        },
     },
     "/api/v1/feed/like": {
         post: {
@@ -88,16 +88,16 @@ export default {
                         schema: {
                             type: "object",
                             properties: {
-                                feedId: { type: "string" }
-                            }
-                        }
-                    }
-                }
+                                feedId: { type: "string" },
+                            },
+                        },
+                    },
+                },
             },
             responses: {
-                200: { description: "Feed liked successfully" }
-            }
-        }
+                200: { description: "Feed liked successfully" },
+            },
+        },
     },
     "/api/v1/feed/comment": {
         post: {
@@ -112,15 +112,15 @@ export default {
                             type: "object",
                             properties: {
                                 feedId: { type: "string" },
-                                text: { type: "string" }
-                            }
-                        }
-                    }
-                }
+                                text: { type: "string" },
+                            },
+                        },
+                    },
+                },
             },
             responses: {
-                200: { description: "Commented successfully" }
-            }
+                200: { description: "Commented successfully" },
+            },
         },
         delete: {
             tags: ["Feeds"],
@@ -134,16 +134,16 @@ export default {
                             type: "object",
                             properties: {
                                 feedId: { type: "string" },
-                                commentId: { type: "string" }
-                            }
-                        }
-                    }
-                }
+                                commentId: { type: "string" },
+                            },
+                        },
+                    },
+                },
             },
             responses: {
-                200: { description: "Comment deleted successfully" }
-            }
-        }
+                200: { description: "Comment deleted successfully" },
+            },
+        },
     },
     "/api/v1/feed/tag": {
         post: {
@@ -162,18 +162,18 @@ export default {
                                 titles: {
                                     type: "array",
                                     items: { type: "string" },
-                                    example: ["announcement", "learning"]
-                                }
-                            }
-                        }
-                    }
-                }
+                                    example: ["announcement", "learning"],
+                                },
+                            },
+                        },
+                    },
+                },
             },
             responses: {
                 201: { description: "Tags created successfully" },
                 401: { $ref: "#/components/responses/UnauthorizedError" },
-                403: { $ref: "#/components/responses/ForbiddenError" }
-            }
-        }
-    }
+                403: { $ref: "#/components/responses/ForbiddenError" },
+            },
+        },
+    },
 };

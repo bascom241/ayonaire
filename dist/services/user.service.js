@@ -515,7 +515,9 @@ export const fetchLeaderboard = async (period = "all-time", limit = 10) => {
     }
     const safeLimit = Math.min(Math.max(limit, 1), 100);
     const startDate = getLeaderboardStartDate(period);
-    const matchStage = startDate ? [{ $match: { createdAt: { $gte: startDate } } }] : [];
+    const matchStage = startDate
+        ? [{ $match: { createdAt: { $gte: startDate } } }]
+        : [];
     const leaderboard = await enrollmentModel.aggregate([
         ...matchStage,
         {
@@ -643,7 +645,11 @@ export const addUser = async (data) => {
     };
 };
 export const inviteUser = async (data) => {
-    validateRequestBodyWithValues(data, ["emails", "courseId", "cohortId"]);
+    validateRequestBodyWithValues(data, [
+        "emails",
+        "courseId",
+        "cohortId",
+    ]);
     const results = {
         sent: [],
         skipped: [],

@@ -4,23 +4,20 @@ dotenv.config();
 import app from "./app.js";
 import { connecToDB } from "./utils/db.js";
 
-
-import http from "http"
-import {Server} from "socket.io"
+import http from "http";
+import { Server } from "socket.io";
 import connectSocket from "./socket/index.js";
-
 
 console.log("Starting server...");
 const server = http.createServer(app);
 
 export const io = new Server(server, {
   cors: {
-    origin: "*"
-  }
-})
+    origin: "*",
+  },
+});
 
-
-connectSocket(io)
+connectSocket(io);
 
 const port = Number(process.env.PORT) || 3000;
 
@@ -43,7 +40,6 @@ const startServer = async () => {
     server.listen(port, "0.0.0.0", () => {
       console.log(`🚀 Server running on port ${port}`);
     });
-
   } catch (err) {
     console.error("❌ Startup error:", err);
     process.exit(1);

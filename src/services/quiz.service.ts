@@ -8,7 +8,7 @@ import {
   CreateQuestionDto,
   CreateQuestionResponse,
   SubmitQuizDto,
-  SubmitQuizResponse
+  SubmitQuizResponse,
 } from "../types/quiz.types.js";
 import { validateRequestBodyWithValues } from "../utils/validateRequestBody.js";
 export const createQuiz = async (
@@ -70,25 +70,23 @@ export const addQuestion = async (
 };
 
 export const submitQuiz = async (
-  data: SubmitQuizDto
+  data: SubmitQuizDto,
 ): Promise<SubmitQuizResponse> => {
-
   validateRequestBodyWithValues<SubmitQuizDto>(data, [
     "quizId",
     "userId",
-    "answers"
+    "answers",
   ]);
 
   const questions = await questionModel.find({
-    quiz: data.quizId
+    quiz: data.quizId,
   });
 
   let score = 0;
 
   const gradedAnswers = data.answers.map((answer) => {
-
     const question = questions.find(
-      q => q._id.toString() === answer.questionId
+      (q) => q._id.toString() === answer.questionId,
     );
 
     if (!question) {
@@ -96,8 +94,8 @@ export const submitQuiz = async (
     }
 
     const correctOptions = question.options
-      .filter(opt => opt.isCorrect)
-      .map(opt => opt.text);
+      .filter((opt) => opt.isCorrect)
+      .map((opt) => opt.text);
 
     const isCorrect =
       JSON.stringify(correctOptions.sort()) ===
@@ -110,9 +108,8 @@ export const submitQuiz = async (
     return {
       question: answer.questionId,
       selectedOptions: answer.selectedOptions,
-      isCorrect
+      isCorrect,
     };
-
   });
 
   await quizAttemptModel.create({
@@ -120,11 +117,11 @@ export const submitQuiz = async (
     user: data.userId,
     answers: gradedAnswers,
     score,
-    completed: true
+    completed: true,
   });
 
   return {
     score,
-    answers: gradedAnswers
+    answers: gradedAnswers,
   };
 };

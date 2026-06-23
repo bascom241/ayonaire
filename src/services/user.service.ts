@@ -134,11 +134,7 @@ const sendUserVerificationEmail = async (user: {
   name: string;
   verificationToken: string;
 }) => {
-  await sendVerificationEmail(
-    user.email,
-    user.name,
-    user.verificationToken 
-  );
+  await sendVerificationEmail(user.email, user.name, user.verificationToken);
 };
 
 const ensureUserCanAuthenticate = (user: { status: UserStatus }) => {
@@ -266,7 +262,9 @@ export const loginUser = async (
   };
 };
 
-export const verifyUserEmail = async (data: VerifyEmailDto): Promise<string> => {
+export const verifyUserEmail = async (
+  data: VerifyEmailDto,
+): Promise<string> => {
   validateRequestBodyWithValues<VerifyEmailDto>(data, ["token"]);
 
   const user = await User.findOne({
@@ -716,7 +714,9 @@ export const fetchLeaderboard = async (
 
   const safeLimit = Math.min(Math.max(limit, 1), 100);
   const startDate = getLeaderboardStartDate(period);
-  const matchStage = startDate ? [{ $match: { createdAt: { $gte: startDate } } }] : [];
+  const matchStage = startDate
+    ? [{ $match: { createdAt: { $gte: startDate } } }]
+    : [];
 
   const leaderboard = await enrollmentModel.aggregate([
     ...matchStage,
@@ -859,12 +859,16 @@ export const addUser = async (data: AddUserDto): Promise<UserResponse> => {
 
 interface InviteRequestBody {
   emails: string[];
-  courseId:string
-  cohortId: string
+  courseId: string;
+  cohortId: string;
 }
 
 export const inviteUser = async (data: InviteRequest) => {
-  validateRequestBodyWithValues<InviteRequestBody>(data, ["emails", "courseId", "cohortId"]);
+  validateRequestBodyWithValues<InviteRequestBody>(data, [
+    "emails",
+    "courseId",
+    "cohortId",
+  ]);
 
   const results = {
     sent: [] as string[],
@@ -917,7 +921,9 @@ export const inviteUser = async (data: InviteRequest) => {
   };
 };
 
-export const acceptInvite = async (data: AcceptInviteRequest):Promise<UserResponse> => {
+export const acceptInvite = async (
+  data: AcceptInviteRequest,
+): Promise<UserResponse> => {
   const { token } = data;
 
   if (!token) {
@@ -945,7 +951,6 @@ export const acceptInvite = async (data: AcceptInviteRequest):Promise<UserRespon
     "password",
   ]);
 
-  
   const userExist = await userModel.findOne({ email: invite.email });
 
   if (userExist) {
@@ -997,15 +1002,10 @@ export const acceptInvite = async (data: AcceptInviteRequest):Promise<UserRespon
   await invite.save();
 
   return {
-     _id: user._id.toString(),
+    _id: user._id.toString(),
     name: user.name,
     email: user.email,
     status: user.status,
     createdAt: user.createdAt,
-  }
+  };
 };
-
-
-
-
-

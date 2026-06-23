@@ -104,21 +104,19 @@ export interface AllAdminCourse {
     enrollments: number;
   }[];
   pagination: {
-    total: number
-    page: number
-    limit: number
-    totalPages: number
-  }
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  };
 }
 
-
 export interface SingleAdminCourse {
-   _id: string;
-    title: string;
-    category: string;
-    description: string;
-    instructor?: string;
-    price: number;
-    status: string;
-   
+  _id: string;
+  title: string;
+  category: string;
+  description: string;
+  instructor?: string;
+  price: number;
+  status: string;
 }

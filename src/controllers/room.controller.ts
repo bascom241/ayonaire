@@ -16,19 +16,17 @@ export const create = async (
     if (!senderId) {
       return res.status(400).json({ message: "Sender id is required" });
     }
-    const {name, description} = req.body
+    const { name, description } = req.body;
     const dataToSend: CreateRoomRequest = {
-        userId:senderId,
-        description,
-        name,
-        profile: req.file   
-    }
-
+      userId: senderId,
+      description,
+      name,
+      profile: req.file,
+    };
 
     const data = await createRoom(dataToSend);
-    res.status(201).json({success: true, data})
-
+    res.status(201).json({ success: true, data });
   } catch (error) {
-    next(error)
+    next(error);
   }
 };

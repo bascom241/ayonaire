@@ -63,10 +63,13 @@ export const assignStudentToCohort = async (data: AssignStudentRequest) => {
     throw new AppError("cant find cohhort", 404);
   }
 
-  const isStudentExistsInCohort = await cohortModel.exists({_id: data.cohortId, students: {$in: [data.userId]}})
+  const isStudentExistsInCohort = await cohortModel.exists({
+    _id: data.cohortId,
+    students: { $in: [data.userId] },
+  });
 
-  if(isStudentExistsInCohort){
-    throw new AppError("Student already exists in this cohort", 400 )
+  if (isStudentExistsInCohort) {
+    throw new AppError("Student already exists in this cohort", 400);
   }
   await cohortModel.findByIdAndUpdate(data.cohortId, {
     $push: { students: data.userId },
@@ -92,8 +95,8 @@ export const assignInstructorToCohort = async (
   }
 
   await cohortModel.findByIdAndUpdate(data.cohortId, {
-    creator: instructor.instructorId
+    creator: instructor.instructorId,
   });
 
-  return `cohort ${cohort.name} has been assigned to ${(instructor.instructorId as any ).name}`
+  return `cohort ${cohort.name} has been assigned to ${(instructor.instructorId as any).name}`;
 };

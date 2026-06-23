@@ -9,21 +9,23 @@ const questionSchema = new Schema({
         type: String,
         required: [true, "Question is required"],
     },
-    options: [{
+    options: [
+        {
             text: String,
-            isCorrect: Boolean
-        }],
+            isCorrect: Boolean,
+        },
+    ],
     multipleCorrectAnswer: {
         type: Boolean,
-        default: false
+        default: false,
     },
     randomizeChoice: {
         type: Boolean,
-        default: false
+        default: false,
     },
     points: {
         type: Number,
-        default: 1
-    }
+        default: 1,
+    },
 }, { timestamps: true });
 export default mongoose.model("Question", questionSchema);

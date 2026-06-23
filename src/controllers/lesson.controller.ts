@@ -4,7 +4,6 @@ import {
   updateLastLesson,
   uploadLesson,
   viewLessonContent,
-
 } from "../services/lesson.service.js";
 import { NextFunction, Request, Response } from "express";
 import {
@@ -12,7 +11,7 @@ import {
   UploadLessonRequest,
   UpdateLastLesson,
   ResumeLessonRequest,
-  ViewLessonRequest
+  ViewLessonRequest,
 } from "../types/lesson.types.js";
 import { AppError } from "../errors/AppError.js";
 import { uploadVideo } from "../services/lesson.service.js";
@@ -88,7 +87,8 @@ export const markLesson = async (
     const { studentId, courseId, lessonId } = req.body;
 
     const dataToSend: MarkLessonCompleted = {
-      studentId: req.user?.role === "admin" && studentId ? studentId : req.user?.id,
+      studentId:
+        req.user?.role === "admin" && studentId ? studentId : req.user?.id,
       courseId,
       lessonId,
     };
@@ -111,7 +111,8 @@ export const update = async (
     const dataToSend: UpdateLastLesson = {
       courseId,
       lessonId,
-      studentId: req.user?.role === "admin" && studentId ? studentId : req.user?.id,
+      studentId:
+        req.user?.role === "admin" && studentId ? studentId : req.user?.id,
     };
 
     const data = await updateLastLesson(dataToSend);
@@ -133,7 +134,8 @@ export const resume = async (
 
     const dataToSend: ResumeLessonRequest = {
       courseId,
-      studentId: req.user?.role === "admin" && studentId ? studentId : req.user?.id,
+      studentId:
+        req.user?.role === "admin" && studentId ? studentId : req.user?.id,
     };
 
     const data = await getResumeLesson(dataToSend);
@@ -145,18 +147,23 @@ export const resume = async (
   }
 };
 
-export const view = async (req: AuthRequest, res: Response, next: NextFunction) => {
+export const view = async (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction,
+) => {
   try {
     const { courseId, studentId } = { ...req.query, ...req.body };
 
     const dataToSend: ViewLessonRequest = {
       courseId,
-      studentId: req.user?.role === "admin" && studentId ? studentId : req.user?.id,
+      studentId:
+        req.user?.role === "admin" && studentId ? studentId : req.user?.id,
     };
 
     const data = await viewLessonContent(dataToSend);
-    res.status(200).json({success:true, data})
+    res.status(200).json({ success: true, data });
   } catch (error) {
-    next(error)
+    next(error);
   }
 };

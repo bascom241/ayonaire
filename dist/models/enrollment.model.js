@@ -31,7 +31,7 @@ const enrollmentSchema = new Schema({
     },
     lastLesson: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "Lesson"
-    }
+        ref: "Lesson",
+    },
 }, { timestamps: true });
 export default mongoose.model("Enrollment", enrollmentSchema);

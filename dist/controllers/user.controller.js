@@ -278,7 +278,8 @@ export const inviteUserCsv = async (req, res, next) => {
         const emails = [];
         const stream = Readable.from(req.file.buffer);
         await new Promise((resolve, reject) => {
-            stream.pipe(csvParser())
+            stream
+                .pipe(csvParser())
                 .on("data", (row) => {
                 if (row.email) {
                     emails.push(row.email.trim());

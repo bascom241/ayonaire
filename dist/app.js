@@ -24,8 +24,8 @@ app.use(cors({
     origin: [
         "https://ayonaire.com",
         "http://localhost:3000",
-        "https://ayonaire.onrender.com"
-    ]
+        "https://ayonaire.onrender.com",
+    ],
 }));
 app.use("/api/v1/auth", userRouter);
 app.use("/api/v1/course", courseRouter);

@@ -87,7 +87,7 @@ export const getMessagesForRoom = async (data) => {
             .skip(skip)
             .limit(limit)
             .populate("senderId", "name"),
-        messageModel.countDocuments()
+        messageModel.countDocuments(),
     ]);
     const formattedMessages = messages.map((message) => ({
         senderId: {

@@ -14,7 +14,7 @@ export enum UserStatus {
 }
 
 export interface loginHistory {
-  ip: String ;
+  ip: string;
   userAgent: string;
   loggedInAt: {
     type: Date;
@@ -22,16 +22,16 @@ export interface loginHistory {
 }
 
 export interface Activity {
-  ip: String;
-  userAgent: String;
+  ip: string;
+  userAgent: string;
   loggedInAt: {
     type: Date;
   };
 }
 
 export interface Profile {
-  url : string
-  publicId: string
+  url: string;
+  publicId: string;
 }
 
 export interface User {
@@ -48,9 +48,9 @@ export interface User {
   role: UserRole;
   status: UserStatus;
   isEmailVerified: boolean;
-  loginHistory: loginHistory[]
-  cohorts: [Types.ObjectId]
-  activity: Activity[]
+  loginHistory: loginHistory[];
+  cohorts: [Types.ObjectId];
+  activity: Activity[];
   createdAt: Date;
   updatedAt: Date;
   verificationToken: string;
@@ -84,12 +84,12 @@ export interface ResetPasswordDto {
 
 export interface AddUserDto {
   name: string;
-  email: string
-  role: string 
-  status: string 
-  password: string 
-  courseId: string 
-  cohortId: string 
+  email: string;
+  role: string;
+  status: string;
+  password: string;
+  courseId: string;
+  cohortId: string;
 }
 
 export interface LoginUserDto {
@@ -129,10 +129,13 @@ export interface UserResponse {
   _id?: string;
   name: string;
   email: string;
-  profile?: {
-    url: string;
-    publicId: string;
-  } | undefined | null
+  profile?:
+    | {
+        url: string;
+        publicId: string;
+      }
+    | undefined
+    | null;
   bio?: string;
   linkedin?: string;
   website?: string;
@@ -169,8 +172,6 @@ export interface AssignRole {
   role: string;
 }
 
-
-
 export interface ProfileData {
   buffer: Buffer;
   mimetype: string;
@@ -178,38 +179,43 @@ export interface ProfileData {
 }
 
 export interface ProfileImageRequest {
-  profile: ProfileData
+  profile: ProfileData;
 }
 
 export interface ProfileImageResponse {
-  profile?: {
-    url: string;
-    publicId: string;
-  } | undefined | null
+  profile?:
+    | {
+        url: string;
+        publicId: string;
+      }
+    | undefined
+    | null;
 }
-
 
 export interface EditProfileRequest {
-  name?: string
-  bio?: string
-  linkedin?: string
-  website?: string
-  company?: string
-  instagram?: string
-  profile?: ProfileData
-}
-
-export interface EditProfileResponse {
-  name: string 
+  name?: string;
   bio?: string;
   linkedin?: string;
   website?: string;
   company?: string;
   instagram?: string;
-   profile?: {
-    url: string;
-    publicId: string;
-  } | undefined | null
+  profile?: ProfileData;
+}
+
+export interface EditProfileResponse {
+  name: string;
+  bio?: string;
+  linkedin?: string;
+  website?: string;
+  company?: string;
+  instagram?: string;
+  profile?:
+    | {
+        url: string;
+        publicId: string;
+      }
+    | undefined
+    | null;
 }
 
 export type LeaderboardPeriod = "all-time" | "month" | "week";
@@ -230,24 +236,22 @@ export interface LeaderboardEntry {
   services: string[];
 }
 
-export interface InviteRequest{
-  emails: string[]
-  courseId: string,
-  cohortId: string
+export interface InviteRequest {
+  emails: string[];
+  courseId: string;
+  cohortId: string;
 }
 export interface AcceptInviteRequest {
-  token: string
-  name: string
-  password: string
+  token: string;
+  name: string;
+  password: string;
 }
 
 export interface AcceptInviteRequestBody {
-
-  name: string
-  password: string
+  name: string;
+  password: string;
 }
 
-
 export interface CsvRequestBody {
-  file:any
+  file: any;
 }

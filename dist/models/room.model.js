@@ -11,13 +11,13 @@ const roomSchema = new Schema({
     },
     description: {
         type: String,
-        required: [true, "description is required"]
+        required: [true, "description is required"],
     },
     profile: {
         type: {
             url: { type: String, required: true },
             publicId: { type: String, required: true },
-        }
-    }
+        },
+    },
 }, { timestamps: true });
 export default mongoose.model("Room", roomSchema);

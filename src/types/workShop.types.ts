@@ -39,9 +39,6 @@ export enum PlatformName {
   OTHER = "other",
 }
 
-
-
-
 export interface GetAllWorkShopsResponse {
   workshops: CreateWorkShopResponse[];
   pagination: {
@@ -52,10 +49,9 @@ export interface GetAllWorkShopsResponse {
   };
 }
 
-
 export interface EditWorkShopRequest {
-  workShopId: string
-   title: string;
+  workShopId: string;
+  title: string;
   description: string;
   platform: {
     name: string;
@@ -66,4 +62,3 @@ export interface EditWorkShopRequest {
   startDate: string;
   endDate: string;
 }
-

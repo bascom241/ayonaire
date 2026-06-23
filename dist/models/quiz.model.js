@@ -28,8 +28,8 @@ export const quizSchema = new Schema({
     questions: [
         {
             type: Schema.Types.ObjectId,
-            ref: "Question"
-        }
+            ref: "Question",
+        },
     ],
 }, { timestamps: true });
 export default mongoose.model("Quiz", quizSchema);

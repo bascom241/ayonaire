@@ -1,6 +1,9 @@
 import { NextFunction, Request, Response } from "express";
 import { CreateAnnouncement } from "../types/announcement.types.js";
-import { createAnnouncement, getAllAnnounceMents } from "../services/announcement.service.js";
+import {
+  createAnnouncement,
+  getAllAnnounceMents,
+} from "../services/announcement.service.js";
 import { AppError } from "../errors/AppError.js";
 
 export const create = async (
@@ -40,12 +43,16 @@ export const create = async (
   }
 };
 
-export const getAll = async (req: Request, res: Response, next: NextFunction) => {
+export const getAll = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
   try {
     const query = req.query;
     const data = await getAllAnnounceMents(query);
-    res.status(200).json({success: true, data})
+    res.status(200).json({ success: true, data });
   } catch (error) {
-    next(error)
+    next(error);
   }
 };

@@ -17,13 +17,16 @@ export default {
                                 expertise: {
                                     type: "array",
                                     items: { type: "string" },
-                                    example: ["JavaScript", "React", "Node.js"]
+                                    example: ["JavaScript", "React", "Node.js"],
                                 },
-                                instructorCourseCategory: { type: "string", description: "Category ID" }
-                            }
-                        }
-                    }
-                }
+                                instructorCourseCategory: {
+                                    type: "string",
+                                    description: "Category ID",
+                                },
+                            },
+                        },
+                    },
+                },
             },
             responses: {
                 201: {
@@ -34,17 +37,20 @@ export default {
                                 type: "object",
                                 properties: {
                                     success: { type: "boolean", example: true },
-                                    message: { type: "string", example: "Application submitted successfully" },
-                                    application: { $ref: "#/components/schemas/Instructor" }
-                                }
-                            }
-                        }
-                    }
+                                    message: {
+                                        type: "string",
+                                        example: "Application submitted successfully",
+                                    },
+                                    application: { $ref: "#/components/schemas/Instructor" },
+                                },
+                            },
+                        },
+                    },
                 },
                 400: { $ref: "#/components/responses/ValidationError" },
-                401: { $ref: "#/components/responses/UnauthorizedError" }
-            }
-        }
+                401: { $ref: "#/components/responses/UnauthorizedError" },
+            },
+        },
     },
     "/api/v1/instructor-management/approve": {
         post: {
@@ -60,11 +66,14 @@ export default {
                             type: "object",
                             required: ["userId"],
                             properties: {
-                                userId: { type: "string", description: "User ID for the instructor application" }
-                            }
-                        }
-                    }
-                }
+                                userId: {
+                                    type: "string",
+                                    description: "User ID for the instructor application",
+                                },
+                            },
+                        },
+                    },
+                },
             },
             responses: {
                 200: {
@@ -75,19 +84,22 @@ export default {
                                 type: "object",
                                 properties: {
                                     success: { type: "boolean", example: true },
-                                    message: { type: "string", example: "Instructor approved successfully" },
-                                    instructor: { $ref: "#/components/schemas/Instructor" }
-                                }
-                            }
-                        }
-                    }
+                                    message: {
+                                        type: "string",
+                                        example: "Instructor approved successfully",
+                                    },
+                                    instructor: { $ref: "#/components/schemas/Instructor" },
+                                },
+                            },
+                        },
+                    },
                 },
                 400: { $ref: "#/components/responses/ValidationError" },
                 401: { $ref: "#/components/responses/UnauthorizedError" },
                 403: { $ref: "#/components/responses/ForbiddenError" },
-                404: { $ref: "#/components/responses/NotFoundError" }
-            }
-        }
+                404: { $ref: "#/components/responses/NotFoundError" },
+            },
+        },
     },
     "/api/v1/instructor-management/reject": {
         post: {
@@ -103,12 +115,15 @@ export default {
                             type: "object",
                             required: ["userId"],
                             properties: {
-                                userId: { type: "string", description: "User ID for the instructor application" },
-                                reason: { type: "string" }
-                            }
-                        }
-                    }
-                }
+                                userId: {
+                                    type: "string",
+                                    description: "User ID for the instructor application",
+                                },
+                                reason: { type: "string" },
+                            },
+                        },
+                    },
+                },
             },
             responses: {
                 200: {
@@ -119,18 +134,21 @@ export default {
                                 type: "object",
                                 properties: {
                                     success: { type: "boolean", example: true },
-                                    message: { type: "string", example: "Application rejected successfully" }
-                                }
-                            }
-                        }
-                    }
+                                    message: {
+                                        type: "string",
+                                        example: "Application rejected successfully",
+                                    },
+                                },
+                            },
+                        },
+                    },
                 },
                 400: { $ref: "#/components/responses/ValidationError" },
                 401: { $ref: "#/components/responses/UnauthorizedError" },
                 403: { $ref: "#/components/responses/ForbiddenError" },
-                404: { $ref: "#/components/responses/NotFoundError" }
-            }
-        }
+                404: { $ref: "#/components/responses/NotFoundError" },
+            },
+        },
     },
     "/api/v1/instructor-management/profile": {
         get: {
@@ -146,11 +164,11 @@ export default {
                             type: "object",
                             required: ["userId"],
                             properties: {
-                                userId: { type: "string", description: "Instructor user ID" }
-                            }
-                        }
-                    }
-                }
+                                userId: { type: "string", description: "Instructor user ID" },
+                            },
+                        },
+                    },
+                },
             },
             responses: {
                 200: {
@@ -161,17 +179,17 @@ export default {
                                 type: "object",
                                 properties: {
                                     success: { type: "boolean", example: true },
-                                    instructor: { $ref: "#/components/schemas/Instructor" }
-                                }
-                            }
-                        }
-                    }
+                                    instructor: { $ref: "#/components/schemas/Instructor" },
+                                },
+                            },
+                        },
+                    },
                 },
                 401: { $ref: "#/components/responses/UnauthorizedError" },
                 403: { $ref: "#/components/responses/ForbiddenError" },
-                404: { $ref: "#/components/responses/NotFoundError" }
-            }
-        }
+                404: { $ref: "#/components/responses/NotFoundError" },
+            },
+        },
     },
     "/api/v1/instructor-management/profiles": {
         get: {
@@ -191,16 +209,16 @@ export default {
                                     count: { type: "number" },
                                     instructors: {
                                         type: "array",
-                                        items: { $ref: "#/components/schemas/Instructor" }
-                                    }
-                                }
-                            }
-                        }
-                    }
+                                        items: { $ref: "#/components/schemas/Instructor" },
+                                    },
+                                },
+                            },
+                        },
+                    },
                 },
                 401: { $ref: "#/components/responses/UnauthorizedError" },
-                403: { $ref: "#/components/responses/ForbiddenError" }
-            }
-        }
-    }
+                403: { $ref: "#/components/responses/ForbiddenError" },
+            },
+        },
+    },
 };

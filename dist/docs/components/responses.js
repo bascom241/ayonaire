@@ -7,11 +7,11 @@ export const responses = {
                     type: "object",
                     properties: {
                         success: { type: "boolean", example: false },
-                        message: { type: "string", example: "Unauthorized access" }
-                    }
-                }
-            }
-        }
+                        message: { type: "string", example: "Unauthorized access" },
+                    },
+                },
+            },
+        },
     },
     ForbiddenError: {
         description: "Insufficient permissions",
@@ -21,11 +21,14 @@ export const responses = {
                     type: "object",
                     properties: {
                         success: { type: "boolean", example: false },
-                        message: { type: "string", example: "Access forbidden. Admin only." }
-                    }
-                }
-            }
-        }
+                        message: {
+                            type: "string",
+                            example: "Access forbidden. Admin only.",
+                        },
+                    },
+                },
+            },
+        },
     },
     NotFoundError: {
         description: "Resource not found",
@@ -35,11 +38,11 @@ export const responses = {
                     type: "object",
                     properties: {
                         success: { type: "boolean", example: false },
-                        message: { type: "string", example: "Resource not found" }
-                    }
-                }
-            }
-        }
+                        message: { type: "string", example: "Resource not found" },
+                    },
+                },
+            },
+        },
     },
     ValidationError: {
         description: "Validation error",
@@ -50,11 +53,11 @@ export const responses = {
                     properties: {
                         success: { type: "boolean", example: false },
                         message: { type: "string", example: "Validation failed" },
-                        errors: { type: "array", items: { type: "string" } }
-                    }
-                }
-            }
-        }
+                        errors: { type: "array", items: { type: "string" } },
+                    },
+                },
+            },
+        },
     },
     BadRequestError: {
         description: "Bad request",
@@ -64,10 +67,10 @@ export const responses = {
                     type: "object",
                     properties: {
                         success: { type: "boolean", example: false },
-                        message: { type: "string", example: "Invalid request parameters" }
-                    }
-                }
-            }
-        }
-    }
+                        message: { type: "string", example: "Invalid request parameters" },
+                    },
+                },
+            },
+        },
+    },
 };

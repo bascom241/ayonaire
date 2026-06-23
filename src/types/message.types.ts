@@ -4,37 +4,34 @@ export interface mediaData {
   originalname: string;
 }
 
-
-
-
 export interface MessageRequestData {
-    senderId: string
-    roomId: string
-    text?: string
-    media?:mediaData
-    file?: mediaData
+  senderId: string;
+  roomId: string;
+  text?: string;
+  media?: mediaData;
+  file?: mediaData;
 }
 
 export interface MessageResponseData {
   senderId: {
-    id: string
-    name: string
-  }
-  roomId: string
-  text: string
+    id: string;
+    name: string;
+  };
+  roomId: string;
+  text: string;
   media?: {
-    url: string
-    publicId: string
-  }
+    url: string;
+    publicId: string;
+  };
   file?: {
-    url: string
-    publicId: string 
-  }
+    url: string;
+    publicId: string;
+  };
 }
 
 export interface GetMessagesRoom {
-  roomId: string 
-  query: any
+  roomId: string;
+  query: any;
 }
 
 export interface GetMessagesResponse {

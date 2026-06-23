@@ -27,9 +27,7 @@ const roomSocket = (io: Server) => {
 
     socket.on("disconnect", () => {
       console.log("dicsonnected");
-      
     });
-
 
     // socket.on("send_message", (data)=> {
     //     io.to(data.roomId).emit("receive_message", data)

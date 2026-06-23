@@ -8,7 +8,7 @@ export default {
             cohortId: { type: "string" },
             token: { type: "string" },
             used: { type: "boolean" },
-            expiresAt: { type: "string", format: "date-time" }
-        }
-    }
+            expiresAt: { type: "string", format: "date-time" },
+        },
+    },
 };

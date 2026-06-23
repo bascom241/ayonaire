@@ -47,7 +47,7 @@ export const createAnnouncement = async (
     });
 
     return {
-        id: announcment._id.toString(),
+      id: announcment._id.toString(),
       audience: announcment.audience,
       title: announcment.title,
       summary: announcment.summary,

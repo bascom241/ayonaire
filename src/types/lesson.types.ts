@@ -84,47 +84,40 @@ export interface UploadVideoReponse {
   duration: number[];
 }
 
-
 export interface MarkLessonCompleted {
-  studentId: string 
-  courseId: string 
-  lessonId: Types.ObjectId
+  studentId: string;
+  courseId: string;
+  lessonId: Types.ObjectId;
 }
-
 
 export interface UpdateLastLesson {
-   studentId: string 
-  courseId: string 
-  lessonId: Types.ObjectId
+  studentId: string;
+  courseId: string;
+  lessonId: Types.ObjectId;
 }
 
-export interface ResumeLessonRequest{
-   studentId: string 
-  courseId: string 
+export interface ResumeLessonRequest {
+  studentId: string;
+  courseId: string;
 }
 
 export interface UpdateLastLessonResponse {
-    course: string 
-  student: string 
-  status: string 
-  completedLessons : string []
-  progress: number 
-  completed: boolean 
-  lastLesson: string | null 
-
+  course: string;
+  student: string;
+  status: string;
+  completedLessons: string[];
+  progress: number;
+  completed: boolean;
+  lastLesson: string | null;
 }
 
-
-export interface LessonCompletedEnrollment {
-  
-}
+export interface LessonCompletedEnrollment {}
 
 export interface ViewLessonRequest {
-  courseId: string
-  studentId: string 
-  lessonId?: string 
+  courseId: string;
+  studentId: string;
+  lessonId?: string;
 }
-
 
 export interface LessonContentResponse {
   videos?: {

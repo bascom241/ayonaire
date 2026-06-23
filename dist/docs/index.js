@@ -81,7 +81,7 @@ const options = {
                 ...inviteShema,
                 ...feedSchemas,
                 ...announcementSchemas,
-                ...workshopSchemas
+                ...workshopSchemas,
             },
             responses,
             parameters,

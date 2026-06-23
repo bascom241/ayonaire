@@ -1,18 +1,18 @@
-// @ts-ignore
+// @ts-expect-error sib-api-v3-sdk does not ship usable TypeScript declarations.
 import SibApiV3Sdk from "sib-api-v3-sdk";
 import dotenv from "dotenv";
 import { getEmailVerificationHTML, sendInviteEmail, getAnnouncementEmailHTML, getPasswordResetHTML, } from "../templates/emailTemplates.js";
 dotenv.config();
-let defaultClient = SibApiV3Sdk.ApiClient.instance;
-let apiKey = defaultClient.authentications["api-key"];
+const defaultClient = SibApiV3Sdk.ApiClient.instance;
+const apiKey = defaultClient.authentications["api-key"];
 apiKey.apiKey = process.env.BREVO_API_KEY;
 const apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
 const sendTransactionalEmail = async (to, subject, htmlContent) => {
-    let defaultClient = SibApiV3Sdk.ApiClient.instance;
-    let apiKey = defaultClient.authentications["api-key"];
+    const defaultClient = SibApiV3Sdk.ApiClient.instance;
+    const apiKey = defaultClient.authentications["api-key"];
     apiKey.apiKey = process.env.BREVO_API_KEY;
-    let apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
-    let sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail();
+    const apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
+    const sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail();
     sendSmtpEmail.sender = { email: process.env.EMAIL_FROM };
     sendSmtpEmail.to = [{ email: to }];
     sendSmtpEmail.subject = subject;
@@ -40,11 +40,11 @@ export const sendPasswordResetEmail = async (to, name, resetLink) => {
 };
 export const sendEmailInvites = async (to, inviteLink) => {
     try {
-        let defaultClient = SibApiV3Sdk.ApiClient.instance;
-        let apiKey = defaultClient.authentications["api-key"];
+        const defaultClient = SibApiV3Sdk.ApiClient.instance;
+        const apiKey = defaultClient.authentications["api-key"];
         apiKey.apiKey = process.env.BREVO_API_KEY;
-        let apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
-        let sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail();
+        const apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
+        const sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail();
         sendSmtpEmail.sender = { email: process.env.EMAIL_FROM };
         sendSmtpEmail.to = [{ email: to }];
         sendSmtpEmail.subject = "Call for Registeration";
@@ -60,13 +60,13 @@ export const sendEmailInvites = async (to, inviteLink) => {
 };
 export const sendAnnouncementToStudentsInACohort = async (studentEmails, title, summary) => {
     try {
-        let defaultClient = SibApiV3Sdk.ApiClient.instance;
-        let apiKey = defaultClient.authentications["api-key"];
+        const defaultClient = SibApiV3Sdk.ApiClient.instance;
+        const apiKey = defaultClient.authentications["api-key"];
         apiKey.apiKey = process.env.BREVO_API_KEY;
-        let apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
+        const apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
         const emailHtml = getAnnouncementEmailHTML(title, summary);
         const recipients = studentEmails.map((email) => ({ email }));
-        let sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail();
+        const sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail();
         sendSmtpEmail.sender = { email: process.env.EMAIL_FROM };
         sendSmtpEmail.to = recipients;
         sendSmtpEmail.subject = title;
@@ -82,13 +82,13 @@ export const sendAnnouncementToStudentsInACohort = async (studentEmails, title, 
 };
 export const sendAnnouncementToStudentsInACourse = async (studentEmails, title, summary) => {
     try {
-        let defaultClient = SibApiV3Sdk.ApiClient.instance;
-        let apiKey = defaultClient.authentications["api-key"];
+        const defaultClient = SibApiV3Sdk.ApiClient.instance;
+        const apiKey = defaultClient.authentications["api-key"];
         apiKey.apiKey = process.env.BREVO_API_KEY;
-        let apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
+        const apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
         const emailHtml = getAnnouncementEmailHTML(title, summary);
         const recipients = studentEmails.map((email) => ({ email }));
-        let sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail();
+        const sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail();
         sendSmtpEmail.sender = { email: process.env.EMAIL_FROM };
         sendSmtpEmail.to = recipients;
         sendSmtpEmail.subject = title;

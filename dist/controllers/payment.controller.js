@@ -1,4 +1,4 @@
-import { bulkActionForOrder, editOrder, handlePaystackWebhook, initializePayment, payHistory, viewSingleOrder } from "../services/payment.service.js";
+import { bulkActionForOrder, editOrder, handlePaystackWebhook, initializePayment, payHistory, viewSingleOrder, } from "../services/payment.service.js";
 import crypto from "crypto";
 import { AppError } from "../errors/AppError.js";
 export const pay = async (req, res, next) => {
@@ -39,7 +39,7 @@ export const handlePayWebHook = async (req, res, next) => {
                     studentId: req.body.data.metadata.studentId,
                     courseId: req.body.data.metadata.courseId,
                     billingAddress: req.body.data.metadata.billingAddress,
-                    shippingAddress: req.body.data.metadata.shippingAddress
+                    shippingAddress: req.body.data.metadata.shippingAddress,
                 },
             },
         };
@@ -83,7 +83,7 @@ export const bulkEdit = async (req, res, next) => {
             Revoke: req.body.revoke,
             Refund: req.body.refund,
             Delete: req.body.delete,
-            Processing: req.body.processing
+            Processing: req.body.processing,
         };
         const data = await bulkActionForOrder(dataToSend);
         res.status(200).json({ success: true, data });
@@ -98,7 +98,7 @@ export const edit = async (req, res, next) => {
         const dataToSend = {
             orderId: req.body.orderId,
             billingAddress: req.body.billingAddress,
-            shippingAddress: req.body.shippingAddress
+            shippingAddress: req.body.shippingAddress,
         };
         const data = await editOrder(dataToSend, userId);
         res.status(200).json({ success: true, data });
@@ -113,7 +113,6 @@ export const viewSingle = async (req, res, next) => {
         if (!orderId || typeof orderId !== "string") {
             throw new AppError("order id is missing or Invalid format", 400);
         }
-        ;
         const data = await viewSingleOrder({ orderId });
         res.status(200).json({ success: true, data });
     }

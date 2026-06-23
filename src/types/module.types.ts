@@ -7,21 +7,20 @@ export interface Module {
   order: number;
   lessons: [Types.ObjectId];
   quizzes: [Types.ObjectId];
-  assignment: Types.ObjectId
+  assignment: Types.ObjectId;
   createdAt?: Date;
   updatedAt?: Date;
 }
 
-
 export interface CreateModuleRequest {
-   title: string;
+  title: string;
   description: string;
-  courseId: string ;
+  courseId: string;
   order: number;
 }
 
 export interface CreateModuleResponse {
-  _id: string
+  _id: string;
   title: string;
   description: string;
   order: number;

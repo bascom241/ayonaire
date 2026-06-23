@@ -3,7 +3,8 @@ export default {
     post: {
       tags: ["Payments"],
       summary: "Initialize payment",
-      description: "Creates a Paystack payment authorization URL for the authenticated user.",
+      description:
+        "Creates a Paystack payment authorization URL for the authenticated user.",
       security: [{ bearerAuth: [] }],
       requestBody: {
         required: true,
@@ -13,7 +14,10 @@ export default {
               type: "object",
               required: ["courseId"],
               properties: {
-                courseId: { type: "string", example: "661f2a8c9c1234567890abcd" },
+                courseId: {
+                  type: "string",
+                  example: "661f2a8c9c1234567890abcd",
+                },
               },
             },
           },
@@ -29,7 +33,10 @@ export default {
                 properties: {
                   success: { type: "boolean", example: true },
                   message: { type: "string", example: "Payment initialized" },
-                  data: { type: "string", description: "Paystack authorization URL" },
+                  data: {
+                    type: "string",
+                    description: "Paystack authorization URL",
+                  },
                 },
               },
             },
@@ -45,7 +52,8 @@ export default {
     post: {
       tags: ["Payments"],
       summary: "Paystack webhook",
-      description: "Receives Paystack webhook events. Requires x-paystack-signature header.",
+      description:
+        "Receives Paystack webhook events. Requires x-paystack-signature header.",
       security: [],
       parameters: [
         {
@@ -88,8 +96,16 @@ export default {
         { in: "query", name: "page", schema: { type: "number", default: 1 } },
         { in: "query", name: "limit", schema: { type: "number", default: 10 } },
         { in: "query", name: "search", schema: { type: "string" } },
-        { in: "query", name: "order", schema: { type: "string", enum: ["asc", "desc"], default: "desc" } },
-        { in: "query", name: "sortBy", schema: { type: "string", default: "createdAt" } },
+        {
+          in: "query",
+          name: "order",
+          schema: { type: "string", enum: ["asc", "desc"], default: "desc" },
+        },
+        {
+          in: "query",
+          name: "sortBy",
+          schema: { type: "string", default: "createdAt" },
+        },
       ],
       responses: {
         200: {
@@ -148,7 +164,8 @@ export default {
     put: {
       tags: ["Payments"],
       summary: "Edit payment order",
-      description: "Updates billing and shipping details for an order. Admin only.",
+      description:
+        "Updates billing and shipping details for an order. Admin only.",
       security: [{ bearerAuth: [] }],
       requestBody: {
         required: true,

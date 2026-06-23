@@ -16,24 +16,24 @@ export default {
                                 summary: { type: "string" },
                                 cohortId: { type: "string" },
                                 courseId: { type: "string" },
-                                students: { type: "array", items: { type: "string" } }
-                            }
-                        }
-                    }
-                }
+                                students: { type: "array", items: { type: "string" } },
+                            },
+                        },
+                    },
+                },
             },
             responses: {
                 200: { description: "Announcement created successfully" },
-                400: { description: "Bad request" }
-            }
+                400: { description: "Bad request" },
+            },
         },
         get: {
             tags: ["Announcements"],
             summary: "Get all announcements",
             security: [{ bearerAuth: [] }],
             responses: {
-                200: { description: "Successful response" }
-            }
-        }
-    }
+                200: { description: "Successful response" },
+            },
+        },
+    },
 };

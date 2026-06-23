@@ -7,11 +7,22 @@ import {
   assignInstuctorToCourse,
   saveCourseAsDraft,
   getAllCoursesForAdminDashboard,
-  getASingleCourseForAdminDashboard
+  getASingleCourseForAdminDashboard,
 } from "../services/course.service.js";
 import { CreateCourseRequest } from "../types/course.types.js";
 import { AppError } from "../errors/AppError.js";
 import redisClient from "../config/redis.js";
+
+const getCourseUploadFiles = (req: Request) => {
+  const files = req.files as
+    | { [fieldname: string]: Express.Multer.File[] }
+    | undefined;
+
+  return {
+    thumbnail: files?.thumbnail?.[0],
+    introVideo: files?.introVideo?.[0],
+  };
+};
 
 export const createCourseCat = async (
   req: Request,
@@ -33,7 +44,9 @@ export const create = async (
   next: NextFunction,
 ) => {
   try {
-    if (!req.file) {
+    const { thumbnail, introVideo } = getCourseUploadFiles(req);
+
+    if (!thumbnail) {
       return res.status(400).json({ message: "Thumbnail is required" });
     }
 
@@ -44,12 +57,13 @@ export const create = async (
       price: req.body.price,
       status: req.body.status,
       instructor: req.body.instructorId,
-      thumbnail: req.file,
+      thumbnail,
+      introVideo,
       courseLevel: req.body.courseLevel,
     };
 
     const data = await createCourse(dataToSend);
-    await redisClient.del("cache:/course")
+    await redisClient.del("cache:/course");
 
     res.status(201).json({
       success: true,
@@ -67,6 +81,7 @@ export const edit = async (req: Request, res: Response, next: NextFunction) => {
     if (!courseId || typeof courseId !== "string") {
       throw new AppError("courseId is required", 400);
     }
+    const { thumbnail, introVideo } = getCourseUploadFiles(req);
 
     const dataToSend: Partial<CreateCourseRequest> = {
       title: req.body.title,
@@ -75,7 +90,8 @@ export const edit = async (req: Request, res: Response, next: NextFunction) => {
       price: req.body.price,
       status: req.body.status,
       instructor: req.body.instructorId,
-      thumbnail: req.file,
+      thumbnail,
+      introVideo,
       courseLevel: req.body.courseLevel,
     };
 
@@ -119,11 +135,7 @@ export const saveToDraft = async (
   next: NextFunction,
 ) => {
   try {
-    const files = req.files as
-      | { [fieldname: string]: Express.Multer.File[] }
-      | undefined;
-    const thumbnail = files?.thumbnail?.[0];
-    const introVideo = files?.introVideo?.[0];
+    const { thumbnail, introVideo } = getCourseUploadFiles(req);
 
     if (!thumbnail) {
       return res.status(400).json({ message: "Thumbnail is required" });
@@ -147,30 +159,36 @@ export const saveToDraft = async (
   }
 };
 
-
-export const getAdminCourses = async (req: Request, res: Response, next: NextFunction) => {
+export const getAdminCourses = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
   try {
     const query = req.query;
 
     const data = await getAllCoursesForAdminDashboard(query);
-    res.status(200).json({success: true , ...data})
+    res.status(200).json({ success: true, ...data });
   } catch (error) {
-    next(error)
+    next(error);
   }
-}
+};
 
-
-export const getSingleAdminCourse = async ( req: Request, res: Response, next: NextFunction) => {
+export const getSingleAdminCourse = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
   try {
-     const { courseId } = req.params;
+    const { courseId } = req.params;
     if (!courseId || typeof courseId !== "string") {
       throw new AppError("courseId is required", 400);
     }
 
     const data = await getASingleCourseForAdminDashboard(courseId);
 
-    res.status(200).json({success: true, data})
+    res.status(200).json({ success: true, data });
   } catch (error) {
-    next(error)
+    next(error);
   }
-}
+};

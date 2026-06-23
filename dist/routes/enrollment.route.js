@@ -1,6 +1,6 @@
 import express from "express";
 const router = express.Router();
-import { completedCourses, enrolledCourses } from "../controllers/enroll.controller.js";
+import { completedCourses, enrolledCourses, } from "../controllers/enroll.controller.js";
 import { authorize } from "../middlewares/auth.middleware.js";
 router.get("/enrolled-coures", authorize, enrolledCourses);
 router.get("/enrolled-courses", authorize, enrolledCourses);

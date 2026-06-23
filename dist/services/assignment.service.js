@@ -32,7 +32,7 @@ export const createAssignmentForAModule = async (userId, data) => {
         throw new AppError("Assignment already exists for this module", 400);
     }
     // ✅ Upload materials
-    let uploadedMaterials = [];
+    const uploadedMaterials = [];
     for (const material of data.materials) {
         const result = await uploadFile(material.buffer, "raw");
         uploadedMaterials.push({

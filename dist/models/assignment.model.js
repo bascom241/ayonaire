@@ -28,7 +28,7 @@ const assignmentSchema = new Schema({
     module: {
         type: Schema.Types.ObjectId,
         ref: "Module",
-        required: [true, "Module is is required "]
-    }
+        required: [true, "Module is is required "],
+    },
 }, { timestamps: true });
 export default mongoose.model("Assignments", assignmentSchema);

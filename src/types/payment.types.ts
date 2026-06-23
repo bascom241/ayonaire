@@ -1,9 +1,9 @@
 import { Types } from "mongoose";
 
 export enum PaymentStatus {
-    PENDING="pending",
-    SUCCESS="success",
-    FAILED="failed"
+  PENDING = "pending",
+  SUCCESS = "success",
+  FAILED = "failed",
 }
 
 export interface PaymentRequest {
@@ -34,7 +34,6 @@ export interface PaymentRequest {
   };
 }
 
-
 export interface PaystackWebhookEvent {
   event: string;
   data: {
@@ -50,18 +49,17 @@ export interface PaystackWebhookEvent {
 }
 
 export interface PaymentResponse {
-    student: Types.ObjectId
-    course: Types.ObjectId
-    enrollment?: Types.ObjectId | null
-    amount: number 
-    currency: string 
-    reference: string   
-    channel?: string | null 
-    status: string 
-    paidAt?:NativeDate | null
-    orderStatus: string
+  student: Types.ObjectId;
+  course: Types.ObjectId;
+  enrollment?: Types.ObjectId | null;
+  amount: number;
+  currency: string;
+  reference: string;
+  channel?: string | null;
+  status: string;
+  paidAt?: NativeDate | null;
+  orderStatus: string;
 }
-
 
 export interface PaymentHistoryRequest {
   page: number;
@@ -69,25 +67,24 @@ export interface PaymentHistoryRequest {
   search?: string;
   order?: "asc" | "desc";
   sortBy?: string;
-
 }
 
-export enum  OrderStatus {
-  COMPLETED="Completed",
-  PROCESSING="Processing",
-  PENDING_PAYMENT="Pending_Payment",
-  ON_HOLD="On_Hold",
-  CANCELLED="Cancelled"
+export enum OrderStatus {
+  COMPLETED = "Completed",
+  PROCESSING = "Processing",
+  PENDING_PAYMENT = "Pending_Payment",
+  ON_HOLD = "On_Hold",
+  CANCELLED = "Cancelled",
 }
 
 export interface BulkActionData {
-  Completed: string
-  Onhold:string
-  Cancelled: string
-  Revoke:string
-  Refund: string 
-  Delete: string
-  Processing: string
+  Completed: string;
+  Onhold: string;
+  Cancelled: string;
+  Revoke: string;
+  Refund: string;
+  Delete: string;
+  Processing: string;
 }
 
 export interface EditOrderRequest {
@@ -118,7 +115,6 @@ export interface EditOrderRequest {
   };
 }
 
-
 export interface ViewSingleOrderRequest {
-  orderId: string
+  orderId: string;
 }

@@ -12,11 +12,11 @@ export default {
             questions: {
                 type: "array",
                 items: { type: "string" },
-                description: "Array of question IDs"
+                description: "Array of question IDs",
             },
             createdAt: { type: "string", format: "date-time" },
-            updatedAt: { type: "string", format: "date-time" }
-        }
+            updatedAt: { type: "string", format: "date-time" },
+        },
     },
     Question: {
         type: "object",
@@ -30,16 +30,16 @@ export default {
                     type: "object",
                     properties: {
                         text: { type: "string", example: "A programming language" },
-                        isCorrect: { type: "boolean", default: false }
-                    }
-                }
+                        isCorrect: { type: "boolean", default: false },
+                    },
+                },
             },
             multipleCorrectAnswer: { type: "boolean", default: false },
             randomizeChoice: { type: "boolean", default: false },
             points: { type: "number", default: 1 },
             createdAt: { type: "string", format: "date-time" },
-            updatedAt: { type: "string", format: "date-time" }
-        }
+            updatedAt: { type: "string", format: "date-time" },
+        },
     },
     QuizAttempt: {
         type: "object",
@@ -54,14 +54,14 @@ export default {
                     properties: {
                         question: { type: "string" },
                         selectedOptions: { type: "array", items: { type: "string" } },
-                        isCorrect: { type: "boolean" }
-                    }
-                }
+                        isCorrect: { type: "boolean" },
+                    },
+                },
             },
             score: { type: "number" },
             completed: { type: "boolean", default: false },
             createdAt: { type: "string", format: "date-time" },
-            updatedAt: { type: "string", format: "date-time" }
-        }
-    }
+            updatedAt: { type: "string", format: "date-time" },
+        },
+    },
 };

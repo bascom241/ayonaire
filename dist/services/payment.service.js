@@ -129,7 +129,7 @@ export const handlePaystackWebhook = async (event) => {
 export const payHistory = async (data) => {
     const { page, limit, search, order, sortBy } = data;
     const skip = (page - 1) * limit;
-    let pipeline = [];
+    const pipeline = [];
     // Pipline for student name
     pipeline.push({
         $lookup: {
@@ -266,7 +266,9 @@ export const editOrder = async (data, userId) => {
 export const viewSingleOrder = async (data) => {
     validateRequestBodyWithValues(data, ["orderId"]);
     const { orderId } = data;
-    const order = await paymentModel.findById(orderId).populate("student", "name");
+    const order = await paymentModel
+        .findById(orderId)
+        .populate("student", "name");
     if (!order) {
         throw new AppError("order not found", 400);
     }

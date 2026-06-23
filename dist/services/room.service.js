@@ -36,9 +36,11 @@ export const createRoom = async (data) => {
         userId: room.roomCreator.toString(),
         name: room.name,
         description: room.description,
-        profile: room.profile ? {
-            url: room.profile.url,
-            publicId: room.profile.publicId
-        } : undefined
+        profile: room.profile
+            ? {
+                url: room.profile.url,
+                publicId: room.profile.publicId,
+            }
+            : undefined,
     };
 };

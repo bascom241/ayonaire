@@ -11,7 +11,7 @@ export const create = async (req, res, next) => {
             userId: senderId,
             description,
             name,
-            profile: req.file
+            profile: req.file,
         };
         const data = await createRoom(dataToSend);
         res.status(201).json({ success: true, data });

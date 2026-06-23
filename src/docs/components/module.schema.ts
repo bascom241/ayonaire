@@ -10,16 +10,16 @@ export default {
       lessons: {
         type: "array",
         items: { type: "string" },
-        description: "Array of lesson IDs"
+        description: "Array of lesson IDs",
       },
       assignment: { type: "string", description: "Assignment ID" },
       quizzes: {
         type: "array",
         items: { type: "string" },
-        description: "Array of quiz IDs"
+        description: "Array of quiz IDs",
       },
       createdAt: { type: "string", format: "date-time" },
-      updatedAt: { type: "string", format: "date-time" }
-    }
-  }
+      updatedAt: { type: "string", format: "date-time" },
+    },
+  },
 };

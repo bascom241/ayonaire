@@ -56,16 +56,8 @@ export const get = async (req: Request, res: Response, next: NextFunction) => {
 
 export const edit = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const {
-      title,
-      description,
-      platform,
-      status,
-      startDate,
-      endDate,
-   
-    } = req.body;
-
+    const { title, description, platform, status, startDate, endDate } =
+      req.body;
 
     const id = req.params.id;
     if (!id || typeof id !== "string") {
@@ -82,12 +74,12 @@ export const edit = async (req: Request, res: Response, next: NextFunction) => {
       status,
       startDate,
       endDate,
-      workShopId:id,
+      workShopId: id,
     };
 
     const data = await editWorkShop(dataToSend, userId);
-    res.status(200).json({success:true, data})
+    res.status(200).json({ success: true, data });
   } catch (error) {
-    next(error)
+    next(error);
   }
 };

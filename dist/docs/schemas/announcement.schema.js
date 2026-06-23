@@ -8,7 +8,7 @@ export default {
             cohortId: { type: "string" },
             courseId: { type: "string" },
             students: { type: "array", items: { type: "string" } },
-            createdAt: { type: "string", format: "date-time" }
-        }
-    }
+            createdAt: { type: "string", format: "date-time" },
+        },
+    },
 };

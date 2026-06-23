@@ -89,7 +89,7 @@ const paymentSchema = new Schema(
       country: String,
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 export default mongoose.model("Payment", paymentSchema);

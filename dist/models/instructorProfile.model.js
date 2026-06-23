@@ -1,11 +1,11 @@
 import mongoose, { Schema } from "mongoose";
-import { InstructorApplicationStatus } from "../types/instructor.types.js";
+import { InstructorApplicationStatus, } from "../types/instructor.types.js";
 const instructorSchema = new Schema({
     instructorId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",
         required: [true, "Instructor Id is Required"],
-        unique: true
+        unique: true,
     },
     bio: String,
     expertise: [String],
@@ -17,13 +17,13 @@ const instructorSchema = new Schema({
     applicationStatus: {
         type: String,
         enum: Object.values(InstructorApplicationStatus),
-        default: InstructorApplicationStatus.PENDING
+        default: InstructorApplicationStatus.PENDING,
     },
     courses: [
         {
             type: Schema.Types.ObjectId,
-            ref: "Course"
-        }
-    ]
+            ref: "Course",
+        },
+    ],
 }, { timestamps: true });
 export default mongoose.model("Instructor", instructorSchema);

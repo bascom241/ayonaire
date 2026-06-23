@@ -8,18 +8,18 @@ const cohortSchema = new Schema({
     course: {
         type: Schema.Types.ObjectId,
         ref: "Course",
-        required: [true, "Atleast a course is required"]
+        required: [true, "Atleast a course is required"],
     },
     students: [
         {
             type: Schema.Types.ObjectId,
-            ref: "User"
-        }
+            ref: "User",
+        },
     ],
     description: String,
     isActive: {
         type: Boolean,
-        default: true
-    }
+        default: true,
+    },
 }, { timestamps: true });
 export default mongoose.model("Cohort", cohortSchema);

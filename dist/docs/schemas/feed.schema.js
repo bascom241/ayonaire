@@ -8,7 +8,7 @@ export default {
             likes: { type: "array", items: { type: "string" } },
             comments: { type: "array", items: { type: "object" } },
             createdAt: { type: "string", format: "date-time" },
-            updatedAt: { type: "string", format: "date-time" }
-        }
-    }
+            updatedAt: { type: "string", format: "date-time" },
+        },
+    },
 };

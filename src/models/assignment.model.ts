@@ -22,19 +22,18 @@ const assignmentSchema = new Schema(
     },
     materials: [
       {
-   
         title: String,
         url: String,
         publicId: String,
       },
     ],
-    module:{
-        type: Schema.Types.ObjectId,
-        ref:"Module",
-        required:[true, "Module is is required "]
-    }
+    module: {
+      type: Schema.Types.ObjectId,
+      ref: "Module",
+      required: [true, "Module is is required "],
+    },
   },
   { timestamps: true },
 );
 
-export default mongoose.model("Assignments", assignmentSchema)
+export default mongoose.model("Assignments", assignmentSchema);

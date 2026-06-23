@@ -1,4 +1,3 @@
-
 import { AppError } from "../errors/AppError.js";
 import roomModel from "../models/room.model.js";
 import userModel from "../models/user.model.js";
@@ -6,7 +5,9 @@ import { CreateRoomRequest, CreateRoomResponse } from "../types/room.types.js";
 import { uploadMedia } from "../utils/uploadToCloudinary.js";
 import { validateRequestBodyWithValues } from "../utils/validateRequestBody.js";
 
-export const createRoom = async (data: CreateRoomRequest):Promise<CreateRoomResponse>=> {
+export const createRoom = async (
+  data: CreateRoomRequest,
+): Promise<CreateRoomResponse> => {
   validateRequestBodyWithValues<CreateRoomRequest>(data, [
     "userId",
     "name",
@@ -36,19 +37,19 @@ export const createRoom = async (data: CreateRoomRequest):Promise<CreateRoomResp
       : undefined,
   });
 
-
-  if(!room){
-    throw new AppError("Failed to create room", 400)
+  if (!room) {
+    throw new AppError("Failed to create room", 400);
   }
-
 
   return {
     userId: room.roomCreator.toString(),
     name: room.name,
     description: room.description,
-    profile: room.profile ? {
-        url: room.profile.url,
-        publicId: room.profile.publicId
-    }: undefined
-  }
+    profile: room.profile
+      ? {
+          url: room.profile.url,
+          publicId: room.profile.publicId,
+        }
+      : undefined,
+  };
 };

@@ -22,14 +22,14 @@ const messageSchema = new Schema({
     file: {
         type: {
             url: { type: String, required: true },
-            publicId: { type: String, required: true }
-        }
+            publicId: { type: String, required: true },
+        },
     },
     readBy: [
         {
             type: Schema.Types.ObjectId,
-            ref: "User"
-        }
+            ref: "User",
+        },
     ],
 }, { timestamps: true });
 export default mongoose.model("message", messageSchema);

@@ -21,18 +21,18 @@ export default {
                     type: "object",
                     properties: {
                       text: { type: "string" },
-                      isCorrect: { type: "boolean" }
-                    }
+                      isCorrect: { type: "boolean" },
+                    },
                   },
-                  minItems: 2
+                  minItems: 2,
                 },
                 multipleCorrectAnswer: { type: "boolean", default: false },
                 randomizeChoice: { type: "boolean", default: false },
-                points: { type: "number", default: 1 }
-              }
-            }
-          }
-        }
+                points: { type: "number", default: 1 },
+              },
+            },
+          },
+        },
       },
       responses: {
         201: {
@@ -43,18 +43,21 @@ export default {
                 type: "object",
                 properties: {
                   success: { type: "boolean", example: true },
-                  message: { type: "string", example: "Question created successfully" },
-                  question: { $ref: "#/components/schemas/Question" }
-                }
-              }
-            }
-          }
+                  message: {
+                    type: "string",
+                    example: "Question created successfully",
+                  },
+                  question: { $ref: "#/components/schemas/Question" },
+                },
+              },
+            },
+          },
         },
         400: { $ref: "#/components/responses/ValidationError" },
         401: { $ref: "#/components/responses/UnauthorizedError" },
-        403: { $ref: "#/components/responses/ForbiddenError" }
-      }
-    }
+        403: { $ref: "#/components/responses/ForbiddenError" },
+      },
+    },
   },
 
   "/api/v1/quiz/quiz/submit": {
@@ -79,14 +82,17 @@ export default {
                     required: ["question", "selectedOptions"],
                     properties: {
                       question: { type: "string" },
-                      selectedOptions: { type: "array", items: { type: "string" } }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
+                      selectedOptions: {
+                        type: "array",
+                        items: { type: "string" },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
       },
       responses: {
         200: {
@@ -97,16 +103,16 @@ export default {
                 type: "object",
                 properties: {
                   success: { type: "boolean", example: true },
-                  attempt: { $ref: "#/components/schemas/QuizAttempt" }
-                }
-              }
-            }
-          }
+                  attempt: { $ref: "#/components/schemas/QuizAttempt" },
+                },
+              },
+            },
+          },
         },
         400: { $ref: "#/components/responses/ValidationError" },
-        401: { $ref: "#/components/responses/UnauthorizedError" }
-      }
-    }
+        401: { $ref: "#/components/responses/UnauthorizedError" },
+      },
+    },
   },
 
   "/api/v1/quiz/quiz": {
@@ -127,11 +133,11 @@ export default {
                 module: { type: "string", description: "Module ID" },
                 randomizeQuestions: { type: "boolean", default: false },
                 showCorrectAnswers: { type: "boolean", default: false },
-                allowRetakes: { type: "boolean", default: false }
-              }
-            }
-          }
-        }
+                allowRetakes: { type: "boolean", default: false },
+              },
+            },
+          },
+        },
       },
       responses: {
         201: {
@@ -142,17 +148,20 @@ export default {
                 type: "object",
                 properties: {
                   success: { type: "boolean", example: true },
-                  message: { type: "string", example: "Quiz created successfully" },
-                  quiz: { $ref: "#/components/schemas/Quiz" }
-                }
-              }
-            }
-          }
+                  message: {
+                    type: "string",
+                    example: "Quiz created successfully",
+                  },
+                  quiz: { $ref: "#/components/schemas/Quiz" },
+                },
+              },
+            },
+          },
         },
         400: { $ref: "#/components/responses/ValidationError" },
         401: { $ref: "#/components/responses/UnauthorizedError" },
-        403: { $ref: "#/components/responses/ForbiddenError" }
-      }
-    }
-  }
+        403: { $ref: "#/components/responses/ForbiddenError" },
+      },
+    },
+  },
 };

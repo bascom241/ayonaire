@@ -1,10 +1,10 @@
 import { Express } from "express";
-import express from "express"
+import express from "express";
 import fs from "fs";
 import path from "path";
 import swaggerJsdoc from "swagger-jsdoc";
 import swaggerUi from "swagger-ui-express";
-import packageJson from "../../package.json" with  { type: "json" };
+import packageJson from "../../package.json" with { type: "json" };
 
 const options: swaggerJsdoc.Options = {
   definition: {
@@ -27,7 +27,6 @@ const options: swaggerJsdoc.Options = {
 
     security: [{ bearerAuth: [] }],
 
-  
     paths: {
       "/api/v1/user/register": {
         post: {
@@ -96,7 +95,7 @@ const options: swaggerJsdoc.Options = {
     },
   },
 
-  apis: [], 
+  apis: [],
 };
 
 // Generate swagger.json on server start
@@ -104,7 +103,10 @@ const generateSwaggerJSON = () => {
   const swaggerSpec = swaggerJsdoc(options);
   const outputDir = path.join(process.cwd(), "public/swagger");
   fs.mkdirSync(outputDir, { recursive: true });
-  fs.writeFileSync(path.join(outputDir, "swagger.json"), JSON.stringify(swaggerSpec, null, 2));
+  fs.writeFileSync(
+    path.join(outputDir, "swagger.json"),
+    JSON.stringify(swaggerSpec, null, 2),
+  );
   console.log("swagger.json generated ✅");
 };
 

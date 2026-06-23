@@ -3,13 +3,16 @@ import assignmentModel from "../models/assignment.model.js";
 import courseModel from "../models/course.model.js";
 import instructorProfileModel from "../models/instructorProfile.model.js";
 import moduleModel from "../models/module.model.js";
-import { AssignmentMaterialDataResponse, CreateAssignmentRequest, CreateAssignmentResponse } from "../types/assignment.types.js";
+import {
+  AssignmentMaterialDataResponse,
+  CreateAssignmentRequest,
+  CreateAssignmentResponse,
+} from "../types/assignment.types.js";
 import { uploadFile } from "../utils/uploadToCloudinary.js";
 export const createAssignmentForAModule = async (
   userId: string,
-  data: CreateAssignmentRequest
+  data: CreateAssignmentRequest,
 ): Promise<CreateAssignmentResponse> => {
-
   const instructor = await instructorProfileModel.findOne({
     instructorId: userId,
   });
@@ -27,7 +30,6 @@ export const createAssignmentForAModule = async (
     throw new AppError("Course for this instructor not found", 404);
   }
 
-
   const moduleExistsInCourse = courseToUpdate.modules
     .map((id) => id.toString())
     .includes(data.module);
@@ -42,14 +44,11 @@ export const createAssignmentForAModule = async (
   });
 
   if (isModuleExistForAssignment) {
-    throw new AppError(
-      "Assignment already exists for this module",
-      400
-    );
+    throw new AppError("Assignment already exists for this module", 400);
   }
 
   // ✅ Upload materials
-  let uploadedMaterials: {
+  const uploadedMaterials: {
     title: string;
     url: string;
     publicId: string;
@@ -65,7 +64,6 @@ export const createAssignmentForAModule = async (
     });
   }
 
-  
   const newAssignment = await assignmentModel.create({
     instructor: userId,
     course: data.course,
@@ -75,13 +73,11 @@ export const createAssignmentForAModule = async (
     materials: uploadedMaterials,
   });
 
-  
   await moduleModel.findByIdAndUpdate(
     data.module,
     { assignment: newAssignment._id },
-    { new: true }
+    { new: true },
   );
-
 
   return {
     assignmentId: newAssignment._id.toString(),
@@ -89,10 +85,10 @@ export const createAssignmentForAModule = async (
     module: newAssignment.module?.toString(),
     course: newAssignment.course.toString(),
     description: newAssignment.description,
-   materials: newAssignment.materials.map((material) => ({
-    title: material.title ?? "",
-    url: material.url ?? "",
-    publicId: material.publicId ?? "",
-  })),
+    materials: newAssignment.materials.map((material) => ({
+      title: material.title ?? "",
+      url: material.url ?? "",
+      publicId: material.publicId ?? "",
+    })),
   };
 };

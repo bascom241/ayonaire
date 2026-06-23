@@ -13,12 +13,12 @@ export default {
       status: {
         type: "string",
         enum: ["pending", "successful", "failed"],
-        default: "pending"
+        default: "pending",
       },
       paidAt: { type: "string", format: "date-time" },
       createdAt: { type: "string", format: "date-time" },
-      updatedAt: { type: "string", format: "date-time" }
-    }
+      updatedAt: { type: "string", format: "date-time" },
+    },
   },
   PaymentInitialize: {
     type: "object",
@@ -26,7 +26,7 @@ export default {
     properties: {
       courseId: { type: "string" },
       amount: { type: "number" },
-      currency: { type: "string", default: "NGN" }
-    }
-  }
+      currency: { type: "string", default: "NGN" },
+    },
+  },
 };

@@ -20,9 +20,9 @@ export default {
             title: { type: "string", example: "Introduction Video" },
             url: { type: "string", example: "https://example.com/video.mp4" },
             publicId: { type: "string", example: "lessons/vid123" },
-            duration: { type: "number", example: 300 }
-          }
-        }
+            duration: { type: "number", example: 300 },
+          },
+        },
       },
       materials: {
         type: "array",
@@ -31,12 +31,12 @@ export default {
           properties: {
             name: { type: "string", example: "Slides.pdf" },
             url: { type: "string", example: "https://example.com/slides.pdf" },
-            publicId: { type: "string", example: "materials/pdf123" }
-          }
-        }
+            publicId: { type: "string", example: "materials/pdf123" },
+          },
+        },
       },
       createdAt: { type: "string", format: "date-time" },
-      updatedAt: { type: "string", format: "date-time" }
-    }
-  }
+      updatedAt: { type: "string", format: "date-time" },
+    },
+  },
 };

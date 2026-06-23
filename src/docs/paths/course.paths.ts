@@ -13,14 +13,25 @@ export default {
               type: "object",
               required: ["title"],
               properties: {
-                title: { 
+                title: {
                   type: "string",
-                  enum: ["programming", "design", "business", "marketing", "music", "photography", "health", "fitness", "language", "other"]
-                }
-              }
-            }
-          }
-        }
+                  enum: [
+                    "programming",
+                    "design",
+                    "business",
+                    "marketing",
+                    "music",
+                    "photography",
+                    "health",
+                    "fitness",
+                    "language",
+                    "other",
+                  ],
+                },
+              },
+            },
+          },
+        },
       },
       responses: {
         201: {
@@ -31,16 +42,16 @@ export default {
                 type: "object",
                 properties: {
                   success: { type: "boolean", example: true },
-                  category: { $ref: "#/components/schemas/CourseCategory" }
-                }
-              }
-            }
-          }
+                  category: { $ref: "#/components/schemas/CourseCategory" },
+                },
+              },
+            },
+          },
         },
         401: { $ref: "#/components/responses/UnauthorizedError" },
-        403: { $ref: "#/components/responses/ForbiddenError" }
-      }
-    }
+        403: { $ref: "#/components/responses/ForbiddenError" },
+      },
+    },
   },
 
   "/api/v1/course/create": {
@@ -57,24 +68,35 @@ export default {
               type: "object",
               required: ["title", "thumbnail", "category"],
               properties: {
-                title: { type: "string", example: "Introduction to Programming" },
-                description: { type: "string", example: "Learn programming basics" },
+                title: {
+                  type: "string",
+                  example: "Introduction to Programming",
+                },
+                description: {
+                  type: "string",
+                  example: "Learn programming basics",
+                },
                 category: { type: "string", description: "Category ID" },
                 price: { type: "number", example: 99.99 },
-                courseLevel: { 
-                  type: "string", 
+                courseLevel: {
+                  type: "string",
                   enum: ["beginner", "intermediate", "advanced"],
-                  default: "beginner"
+                  default: "beginner",
                 },
                 thumbnail: {
                   type: "string",
                   format: "binary",
-                  description: "Course thumbnail image"
-                }
-              }
-            }
-          }
-        }
+                  description: "Course thumbnail image",
+                },
+                introVideo: {
+                  type: "string",
+                  format: "binary",
+                  description: "Optional course intro video",
+                },
+              },
+            },
+          },
+        },
       },
       responses: {
         201: {
@@ -85,18 +107,21 @@ export default {
                 type: "object",
                 properties: {
                   success: { type: "boolean", example: true },
-                  message: { type: "string", example: "Course created successfully" },
-                  course: { $ref: "#/components/schemas/Course" }
-                }
-              }
-            }
-          }
+                  message: {
+                    type: "string",
+                    example: "Course created successfully",
+                  },
+                  course: { $ref: "#/components/schemas/Course" },
+                },
+              },
+            },
+          },
         },
         400: { $ref: "#/components/responses/ValidationError" },
         401: { $ref: "#/components/responses/UnauthorizedError" },
-        403: { $ref: "#/components/responses/ForbiddenError" }
-      }
-    }
+        403: { $ref: "#/components/responses/ForbiddenError" },
+      },
+    },
   },
 
   "/api/v1/course/edit": {
@@ -111,8 +136,8 @@ export default {
           name: "courseId",
           required: true,
           schema: { type: "string" },
-          description: "Course ID to update"
-        }
+          description: "Course ID to update",
+        },
       ],
       requestBody: {
         content: {
@@ -124,23 +149,28 @@ export default {
                 description: { type: "string" },
                 category: { type: "string" },
                 price: { type: "number" },
-                courseLevel: { 
-                  type: "string", 
-                  enum: ["beginner", "intermediate", "advanced"]
+                courseLevel: {
+                  type: "string",
+                  enum: ["beginner", "intermediate", "advanced"],
                 },
                 status: {
                   type: "string",
-                  enum: ["draft", "published", "archived"]
+                  enum: ["draft", "published", "archived"],
                 },
                 thumbnail: {
                   type: "string",
                   format: "binary",
-                  description: "New course thumbnail image"
-                }
-              }
-            }
-          }
-        }
+                  description: "New course thumbnail image",
+                },
+                introVideo: {
+                  type: "string",
+                  format: "binary",
+                  description: "New optional course intro video",
+                },
+              },
+            },
+          },
+        },
       },
       responses: {
         200: {
@@ -151,19 +181,22 @@ export default {
                 type: "object",
                 properties: {
                   success: { type: "boolean", example: true },
-                  message: { type: "string", example: "Course updated successfully" },
-                  course: { $ref: "#/components/schemas/Course" }
-                }
-              }
-            }
-          }
+                  message: {
+                    type: "string",
+                    example: "Course updated successfully",
+                  },
+                  course: { $ref: "#/components/schemas/Course" },
+                },
+              },
+            },
+          },
         },
         400: { $ref: "#/components/responses/ValidationError" },
         401: { $ref: "#/components/responses/UnauthorizedError" },
         403: { $ref: "#/components/responses/ForbiddenError" },
-        404: { $ref: "#/components/responses/NotFoundError" }
-      }
-    }
+        404: { $ref: "#/components/responses/NotFoundError" },
+      },
+    },
   },
 
   "/api/v1/course/assign": {
@@ -178,15 +211,15 @@ export default {
           name: "courseId",
           required: true,
           schema: { type: "string" },
-          description: "Course ID"
+          description: "Course ID",
         },
         {
           in: "query",
           name: "instructorId",
           required: true,
           schema: { type: "string" },
-          description: "Instructor user ID"
-        }
+          description: "Instructor user ID",
+        },
       ],
       responses: {
         200: {
@@ -197,26 +230,30 @@ export default {
                 type: "object",
                 properties: {
                   success: { type: "boolean", example: true },
-                  message: { type: "string", example: "Instructor assigned successfully" },
-                  course: { $ref: "#/components/schemas/Course" }
-                }
-              }
-            }
-          }
+                  message: {
+                    type: "string",
+                    example: "Instructor assigned successfully",
+                  },
+                  course: { $ref: "#/components/schemas/Course" },
+                },
+              },
+            },
+          },
         },
         400: { $ref: "#/components/responses/ValidationError" },
         401: { $ref: "#/components/responses/UnauthorizedError" },
         403: { $ref: "#/components/responses/ForbiddenError" },
-        404: { $ref: "#/components/responses/NotFoundError" }
-      }
-    }
+        404: { $ref: "#/components/responses/NotFoundError" },
+      },
+    },
   },
 
   "/api/v1/course/save-to-draft": {
     put: {
       tags: ["Courses"],
       summary: "Save course as draft",
-      description: "Creates a draft course with thumbnail and intro video using the uploaded file. Admin only.",
+      description:
+        "Creates a draft course. Thumbnail is required and introVideo is optional. Admin only.",
       security: [{ bearerAuth: [] }],
       requestBody: {
         required: true,
@@ -226,42 +263,51 @@ export default {
               type: "object",
               required: ["title", "thumbnail", "category"],
               properties: {
-                title: { type: "string", example: "Introduction to Programming" },
+                title: {
+                  type: "string",
+                  example: "Introduction to Programming",
+                },
                 description: { type: "string" },
                 category: { type: "string", description: "Category ID" },
                 price: { type: "number", example: 99.99 },
                 instructorId: { type: "string" },
-                thumbnail: { type: "string", format: "binary" }
-              }
-            }
-          }
-        }
+                courseLevel: {
+                  type: "string",
+                  enum: ["Beginner", "Intermediate", "Advanced"],
+                },
+                thumbnail: { type: "string", format: "binary" },
+                introVideo: { type: "string", format: "binary" },
+              },
+            },
+          },
+        },
       },
       responses: {
         200: { description: "Course saved as draft" },
         400: { $ref: "#/components/responses/ValidationError" },
         401: { $ref: "#/components/responses/UnauthorizedError" },
-        403: { $ref: "#/components/responses/ForbiddenError" }
-      }
-    }
+        403: { $ref: "#/components/responses/ForbiddenError" },
+      },
+    },
   },
 
   "/api/v1/course": {
     get: {
       tags: ["Courses"],
       summary: "Get admin courses",
-      description: "Returns paginated courses for the admin dashboard. Admin only.",
+      description:
+        "Returns paginated courses for the admin dashboard. Admin only.",
       security: [{ bearerAuth: [] }],
       parameters: [
         { in: "query", name: "page", schema: { type: "number", default: 1 } },
-        { in: "query", name: "limit", schema: { type: "number", default: 10 } }
+        { in: "query", name: "limit", schema: { type: "number", default: 10 } },
       ],
       responses: {
         200: { description: "Courses retrieved successfully" },
         401: { $ref: "#/components/responses/UnauthorizedError" },
-        403: { $ref: "#/components/responses/ForbiddenError" }
-      }
-    }
+        403: { $ref: "#/components/responses/ForbiddenError" },
+      },
+    },
   },
 
   "/api/v1/course/{courseId}": {
@@ -276,16 +322,16 @@ export default {
           name: "courseId",
           required: true,
           schema: { type: "string" },
-          description: "Course ID"
-        }
+          description: "Course ID",
+        },
       ],
       responses: {
         200: { description: "Course retrieved successfully" },
         400: { $ref: "#/components/responses/ValidationError" },
         401: { $ref: "#/components/responses/UnauthorizedError" },
         403: { $ref: "#/components/responses/ForbiddenError" },
-        404: { $ref: "#/components/responses/NotFoundError" }
-      }
-    }
-  }
+        404: { $ref: "#/components/responses/NotFoundError" },
+      },
+    },
+  },
 };

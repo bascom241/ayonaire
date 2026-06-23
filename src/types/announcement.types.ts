@@ -9,7 +9,7 @@ export interface CreateAnnouncement {
 }
 
 export interface CreateAnnouncementResponse {
-    id: string
+  id: string;
   audience: string;
   title: string;
   summary: string;
@@ -17,7 +17,7 @@ export interface CreateAnnouncementResponse {
 
 export interface AnnouncementResponse {
   announcement: {
-    id: string
+    id: string;
     audience: string;
     title: string;
     summary: string;

@@ -7,32 +7,29 @@ export interface MediaData {
 }
 
 export interface CreateFeedRequest {
-    content: string
-    tag?: string
-    media?:MediaData
+  content: string;
+  tag?: string;
+  media?: MediaData;
 }
-
 
 export interface CreateFeedResponse {
-    tag?: string[]
-    content: string,
-    media?:{
-     url: string;
+  tag?: string[];
+  content: string;
+  media?: {
+    url: string;
     publicId: string;
-    }
+  };
 }
-
 
 export interface EditFeedRequest {
-    tag: string
-    feedId: string
-    content: string
-    media? :MediaData
+  tag: string;
+  feedId: string;
+  content: string;
+  media?: MediaData;
 }
 
-
 export interface DeleteFeedRequest {
-    feedId: string
+  feedId: string;
 }
 
 export interface FeedResponse {
@@ -64,41 +61,35 @@ export interface FeedResponse {
 }
 
 export interface LikeFeedRequest {
-
-  feedId: string | undefined
+  feedId: string | undefined;
 }
 
 export interface CommentFeedRequest {
-
-  feedId:string | undefined
-  text: string
+  feedId: string | undefined;
+  text: string;
 }
 
-
-export interface DeleteCommentRequest { 
-  feedId: Types.ObjectId
-  commentId: Types.ObjectId
+export interface DeleteCommentRequest {
+  feedId: Types.ObjectId;
+  commentId: Types.ObjectId;
 }
-
 
 export enum FeedType {
-  FEED="feed",
-  WORKSHOP="workshop"
+  FEED = "feed",
+  WORKSHOP = "workshop",
 }
-
 
 export enum FeedTag {
-  CYBER_SECURITY="cyberSecurity",
-  AI_ENGINEERING="ai-engineering",
-  DATA_SCIENCE="data_science"
+  CYBER_SECURITY = "cyberSecurity",
+  AI_ENGINEERING = "ai-engineering",
+  DATA_SCIENCE = "data_science",
 }
 
-
 export interface CreateTagRequest {
-  titles:string[]
+  titles: string[];
 }
 
 export interface CreateTagResponse {
-  id: string
-  titles:string[]
+  id: string;
+  titles: string[];
 }

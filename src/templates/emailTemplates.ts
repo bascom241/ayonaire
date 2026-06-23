@@ -81,7 +81,6 @@ export const sendInviteEmail = (email: string, inviteLink: string) => `
 </html>
 `;
 
-
 export const getAnnouncementEmailHTML = (title: string, summary: string) => `
 <!DOCTYPE html>
 <html lang="en">
@@ -141,7 +140,7 @@ export const getAnnouncementEmailHTML = (title: string, summary: string) => `
 
 export const getEmailVerificationHTML = (
   name: string,
-  verificationToken: string
+  verificationToken: string,
 ) => `
 <!DOCTYPE html>
 <html lang="en">

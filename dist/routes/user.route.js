@@ -1,5 +1,5 @@
 import express from "express";
-import { registerUser, login, verifyEmail, resendVerificationEmail, forgotPassword, resetPassword, refreshToken, logout, getNonAdminUsers, updateUser, getUserLoginHistory, getUserActivityHistory, assignRoleToUser, deactivateToUser, suspendToUser, viewMyProfile, uploadImage, edit, add, invite, accept, inviteUserCsv, getLeaderboard } from "../controllers/user.controller.js";
+import { registerUser, login, verifyEmail, resendVerificationEmail, forgotPassword, resetPassword, refreshToken, logout, getNonAdminUsers, updateUser, getUserLoginHistory, getUserActivityHistory, assignRoleToUser, deactivateToUser, suspendToUser, viewMyProfile, uploadImage, edit, add, invite, accept, inviteUserCsv, getLeaderboard, } from "../controllers/user.controller.js";
 const router = express.Router();
 import { restrictTo, authorize } from "../middlewares/auth.middleware.js";
 import { upload } from "../middlewares/multer.js";

@@ -6,7 +6,6 @@ export const enrolledCourses = async (req, res, next) => {
         if (!id) {
             throw new AppError("unauthorized", 401);
         }
-        ;
         const data = await viewEnrolledCourses(id);
         res.status(200).json({ success: true, data });
     }
@@ -20,7 +19,6 @@ export const completedCourses = async (req, res, next) => {
         if (!id) {
             throw new AppError("unauthorized", 401);
         }
-        ;
         const data = await viewCompletedCourses(id);
         res.status(200).json({ success: true, data });
     }

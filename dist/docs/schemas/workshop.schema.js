@@ -9,7 +9,7 @@ export default {
             status: { type: "string" },
             startDate: { type: "string", format: "date-time" },
             endDate: { type: "string", format: "date-time" },
-            createdAt: { type: "string", format: "date-time" }
-        }
-    }
+            createdAt: { type: "string", format: "date-time" },
+        },
+    },
 };

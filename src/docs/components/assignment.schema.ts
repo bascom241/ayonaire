@@ -13,14 +13,17 @@ export default {
           type: "object",
           properties: {
             title: { type: "string", example: "Project Guidelines.pdf" },
-            url: { type: "string", example: "https://example.com/guidelines.pdf" },
-            publicId: { type: "string", example: "assignments/guide123" }
-          }
-        }
+            url: {
+              type: "string",
+              example: "https://example.com/guidelines.pdf",
+            },
+            publicId: { type: "string", example: "assignments/guide123" },
+          },
+        },
       },
       module: { type: "string", description: "Module ID" },
       createdAt: { type: "string", format: "date-time" },
-      updatedAt: { type: "string", format: "date-time" }
-    }
-  }
+      updatedAt: { type: "string", format: "date-time" },
+    },
+  },
 };

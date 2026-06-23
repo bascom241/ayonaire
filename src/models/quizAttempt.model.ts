@@ -1,38 +1,38 @@
-import mongoose, {Schema} from "mongoose"
+import mongoose, { Schema } from "mongoose";
 
+const quizAttemptSchema = new Schema(
+  {
+    quiz: {
+      type: Schema.Types.ObjectId,
+      ref: "Quiz",
+    },
 
-const quizAttemptSchema = new Schema({
+    user: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+    },
 
-  quiz: {
-    type: Schema.Types.ObjectId,
-    ref: "Quiz"
-  },
+    answers: [
+      {
+        question: {
+          type: Schema.Types.ObjectId,
+          ref: "Question",
+        },
 
-  user: {
-    type: Schema.Types.ObjectId,
-    ref: "User"
-  },
+        selectedOptions: [String],
 
-  answers: [
-    {
-      question: {
-        type: Schema.Types.ObjectId,
-        ref: "Question"
+        isCorrect: Boolean,
       },
+    ],
 
-      selectedOptions: [String],
+    score: Number,
 
-      isCorrect: Boolean
-    }
-  ],
-
-  score: Number,
-
-  completed: {
-    type: Boolean,
-    default: false
-  }
-
-}, { timestamps: true });
+    completed: {
+      type: Boolean,
+      default: false,
+    },
+  },
+  { timestamps: true },
+);
 
 export default mongoose.model("QuizAttempt", quizAttemptSchema);

@@ -1,4 +1,4 @@
-import { getMessagesForRoom, sendMessage } from "../services/message.service.js";
+import { getMessagesForRoom, sendMessage, } from "../services/message.service.js";
 export const send = async (req, res, next) => {
     try {
         const authRequest = req;
@@ -13,7 +13,7 @@ export const send = async (req, res, next) => {
             roomId,
             media: req.file,
             file: req.file,
-            text
+            text,
         };
         const data = await sendMessage(dataToSend);
         res.status(200).json({ success: true, data });
@@ -28,7 +28,7 @@ export const getMessagesForARoom = async (req, res, next) => {
         const { roomId } = req.body;
         const dataToSend = {
             roomId,
-            query
+            query,
         };
         const data = await getMessagesForRoom(dataToSend);
         res.status(200).json({ success: true, data });

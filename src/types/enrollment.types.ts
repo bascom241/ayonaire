@@ -8,14 +8,13 @@ At this stage the student cannot view the content of the course.
 Active means ---> student has been enrolled but has not yet paid for the course 
 */
 
-
 /* Complted*/
 /*
 This means a student has may or not be enrolled for the course by the instructor .. once the student pays the enrollment status is changed
 to completed --> completed means student has paid fro the course.
 */
 export enum EnrollmentStatus {
-  ACTIVE = "active", 
+  ACTIVE = "active",
   COMPLETED = "completed",
   CANCELLED = "cancelled",
 }
@@ -44,39 +43,36 @@ export interface EnrollmentData {
 }
 
 export interface MarkLessonCompletedEnrollmentResponse {
-  course: string 
-  student: string 
-  status: string 
-  completedLessons : string []
-  progress: number 
-  completed: boolean 
-
+  course: string;
+  student: string;
+  status: string;
+  completedLessons: string[];
+  progress: number;
+  completed: boolean;
 }
 
-export interface StudentProgressPerCourse{
+export interface StudentProgressPerCourse {
   progress: number;
   completedLessons: string[];
   completed: boolean;
 }
 
-
 /// ---- for student enrolled courses ------ ////
 
 export interface AttachedEnrolledCourseInstructor {
-  name: string 
+  name: string;
 }
 
 export interface AttachedEnrolledCourse {
-    title: string 
-    description: string 
-    instructor : AttachedEnrolledCourseInstructor
+  title: string;
+  description: string;
+  instructor: AttachedEnrolledCourseInstructor;
 }
 
 export interface StudentEnrolledCourses {
-  course : AttachedEnrolledCourse
-  status: string 
-  completedLessons:  [Types.ObjectId]
-  progress: number
-  completed: boolean 
-  
+  course: AttachedEnrolledCourse;
+  status: string;
+  completedLessons: [Types.ObjectId];
+  progress: number;
+  completed: boolean;
 }

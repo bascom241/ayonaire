@@ -12,6 +12,19 @@ const userResponse = {
     _id: { type: "string", example: "661f2a8c9c1234567890abcd" },
     name: { type: "string", example: "John Doe" },
     email: { type: "string", format: "email", example: "john@example.com" },
+    bio: { type: "string", example: "AI builder and product designer" },
+    linkedin: { type: "string", example: "https://linkedin.com/in/johndoe" },
+    website: { type: "string", example: "https://johndoe.dev" },
+    company: { type: "string", example: "Ayonaire" },
+    instagram: { type: "string", example: "https://instagram.com/johndoe" },
+    profile: {
+      type: "object",
+      nullable: true,
+      properties: {
+        url: { type: "string" },
+        publicId: { type: "string" },
+      },
+    },
     status: { type: "string", example: "active" },
     createdAt: { type: "string", format: "date-time" },
   },
@@ -46,17 +59,20 @@ const tokenPairResponse = {
     token: {
       type: "string",
       example: "eyJhbGciOiJIUzI1NiIs...",
-      description: "Access JWT kept for backward compatibility. Same value as accessToken.",
+      description:
+        "Access JWT kept for backward compatibility. Same value as accessToken.",
     },
     accessToken: {
       type: "string",
       example: "eyJhbGciOiJIUzI1NiIs...",
-      description: "Short-lived JWT. Send as Authorization: Bearer <accessToken>.",
+      description:
+        "Short-lived JWT. Send as Authorization: Bearer <accessToken>.",
     },
     refreshToken: {
       type: "string",
       example: "eyJhbGciOiJIUzI1NiIs...",
-      description: "Long-lived refresh token. Store securely and send to /refresh-token.",
+      description:
+        "Long-lived refresh token. Store securely and send to /refresh-token.",
     },
     expiresIn: {
       type: "number",
@@ -81,7 +97,8 @@ export default {
     post: {
       tags: ["Users"],
       summary: "Register a new user",
-      description: "Creates a user account. The backend hashes the password before saving it.",
+      description:
+        "Creates a user account. The backend hashes the password before saving it.",
       security: [],
       requestBody: {
         required: true,
@@ -110,7 +127,8 @@ export default {
     get: {
       tags: ["Auth"],
       summary: "Verify email address",
-      description: "Verifies a newly registered user's email address using the token sent by Brevo.",
+      description:
+        "Verifies a newly registered user's email address using the token sent by Brevo.",
       security: [],
       parameters: [
         {
@@ -130,7 +148,10 @@ export default {
                 type: "object",
                 properties: {
                   success: { type: "boolean", example: true },
-                  message: { type: "string", example: "Email verified successfully" },
+                  message: {
+                    type: "string",
+                    example: "Email verified successfully",
+                  },
                 },
               },
             },
@@ -142,7 +163,8 @@ export default {
     post: {
       tags: ["Auth"],
       summary: "Verify email address",
-      description: "Verifies a user's email address using a token in the JSON body.",
+      description:
+        "Verifies a user's email address using a token in the JSON body.",
       security: [],
       requestBody: {
         required: true,
@@ -169,7 +191,8 @@ export default {
     post: {
       tags: ["Auth"],
       summary: "Resend verification email",
-      description: "Sends a new email verification link through Brevo if the account exists and is not verified.",
+      description:
+        "Sends a new email verification link through Brevo if the account exists and is not verified.",
       security: [],
       requestBody: {
         required: true,
@@ -179,7 +202,11 @@ export default {
               type: "object",
               required: ["email"],
               properties: {
-                email: { type: "string", format: "email", example: "john@example.com" },
+                email: {
+                  type: "string",
+                  format: "email",
+                  example: "john@example.com",
+                },
               },
             },
           },
@@ -196,7 +223,8 @@ export default {
                   success: { type: "boolean", example: true },
                   message: {
                     type: "string",
-                    example: "If an account exists, a verification email has been sent",
+                    example:
+                      "If an account exists, a verification email has been sent",
                   },
                 },
               },
@@ -212,7 +240,8 @@ export default {
     post: {
       tags: ["Auth"],
       summary: "Request password reset",
-      description: "Generates a password reset token and sends a reset link through Brevo.",
+      description:
+        "Generates a password reset token and sends a reset link through Brevo.",
       security: [],
       requestBody: {
         required: true,
@@ -222,7 +251,11 @@ export default {
               type: "object",
               required: ["email"],
               properties: {
-                email: { type: "string", format: "email", example: "john@example.com" },
+                email: {
+                  type: "string",
+                  format: "email",
+                  example: "john@example.com",
+                },
               },
             },
           },
@@ -239,7 +272,8 @@ export default {
                   success: { type: "boolean", example: true },
                   message: {
                     type: "string",
-                    example: "If an account exists, a password reset email has been sent",
+                    example:
+                      "If an account exists, a password reset email has been sent",
                   },
                 },
               },
@@ -255,7 +289,8 @@ export default {
     post: {
       tags: ["Auth"],
       summary: "Reset password",
-      description: "Sets a new password using a valid password reset token. Existing refresh sessions are revoked after reset.",
+      description:
+        "Sets a new password using a valid password reset token. Existing refresh sessions are revoked after reset.",
       security: [],
       parameters: [
         {
@@ -263,7 +298,8 @@ export default {
           name: "token",
           required: false,
           schema: { type: "string" },
-          description: "Password reset token. Can also be sent in the JSON body.",
+          description:
+            "Password reset token. Can also be sent in the JSON body.",
         },
       ],
       requestBody: {
@@ -275,7 +311,11 @@ export default {
               required: ["password"],
               properties: {
                 token: { type: "string" },
-                password: { type: "string", format: "password", example: "NewStrongPassword123" },
+                password: {
+                  type: "string",
+                  format: "password",
+                  example: "NewStrongPassword123",
+                },
               },
             },
           },
@@ -290,13 +330,18 @@ export default {
                 type: "object",
                 properties: {
                   success: { type: "boolean", example: true },
-                  message: { type: "string", example: "Password reset successfully" },
+                  message: {
+                    type: "string",
+                    example: "Password reset successfully",
+                  },
                 },
               },
             },
           },
         },
-        400: { description: "Invalid or expired reset token or validation error" },
+        400: {
+          description: "Invalid or expired reset token or validation error",
+        },
       },
     },
   },
@@ -366,7 +411,9 @@ export default {
           },
         },
         400: { $ref: "#/components/responses/ValidationError" },
-        401: { description: "Invalid, expired, missing, or revoked refresh token" },
+        401: {
+          description: "Invalid, expired, missing, or revoked refresh token",
+        },
         403: { description: "Account suspended or inactive" },
       },
     },
@@ -458,7 +505,11 @@ export default {
               type: "object",
               properties: {
                 name: { type: "string", example: "John Doe" },
-                email: { type: "string", format: "email", example: "john@example.com" },
+                email: {
+                  type: "string",
+                  format: "email",
+                  example: "john@example.com",
+                },
               },
             },
           },
@@ -517,7 +568,8 @@ export default {
     get: {
       tags: ["Admin"],
       summary: "Get user activity history",
-      description: "Retrieves activity history for a specific user. Admin only.",
+      description:
+        "Retrieves activity history for a specific user. Admin only.",
       security: [{ bearerAuth: [] }],
       parameters: [userIdParam],
       responses: {
@@ -576,7 +628,10 @@ export default {
           description: "Role assigned successfully",
           content: {
             "application/json": {
-              schema: authEnvelope({ type: "string", example: "role INSTRUCTOR assinged to John Doe" }),
+              schema: authEnvelope({
+                type: "string",
+                example: "role INSTRUCTOR assinged to John Doe",
+              }),
             },
           },
         },
@@ -621,7 +676,8 @@ export default {
     put: {
       tags: ["Admin"],
       summary: "Deactivate user - deprecated legacy route",
-      description: "Legacy misspelled route kept for backward compatibility. Use /api/v1/auth/user/{id}/deactivate-user instead.",
+      description:
+        "Legacy misspelled route kept for backward compatibility. Use /api/v1/auth/user/{id}/deactivate-user instead.",
       deprecated: true,
       security: [{ bearerAuth: [] }],
       parameters: [userIdParam],
@@ -700,7 +756,8 @@ export default {
     post: {
       tags: ["Users"],
       summary: "Upload profile image",
-      description: "Uploads or replaces the profile image for the authenticated user.",
+      description:
+        "Uploads or replaces the profile image for the authenticated user.",
       security: [{ bearerAuth: [] }],
       requestBody: {
         required: true,
@@ -746,7 +803,8 @@ export default {
     put: {
       tags: ["Users"],
       summary: "Edit profile",
-      description: "Updates the authenticated user's name and profile image.",
+      description:
+        "Partially updates the authenticated user's profile. The profile image is optional.",
       security: [{ bearerAuth: [] }],
       requestBody: {
         required: true,
@@ -754,10 +812,23 @@ export default {
           "multipart/form-data": {
             schema: {
               type: "object",
-              required: ["profile"],
               properties: {
                 profile: { type: "string", format: "binary" },
                 name: { type: "string", example: "John Doe" },
+                bio: {
+                  type: "string",
+                  example: "AI builder and product designer",
+                },
+                linkedin: {
+                  type: "string",
+                  example: "https://linkedin.com/in/johndoe",
+                },
+                website: { type: "string", example: "https://johndoe.dev" },
+                company: { type: "string", example: "Ayonaire" },
+                instagram: {
+                  type: "string",
+                  example: "https://instagram.com/johndoe",
+                },
               },
             },
           },
@@ -772,12 +843,75 @@ export default {
                 type: "object",
                 properties: {
                   name: { type: "string", example: "John Doe" },
+                  bio: { type: "string" },
+                  linkedin: { type: "string" },
+                  website: { type: "string" },
+                  company: { type: "string" },
+                  instagram: { type: "string" },
                   profile: {
                     type: "object",
+                    nullable: true,
                     properties: {
                       url: { type: "string" },
                       publicId: { type: "string" },
                     },
+                  },
+                },
+              }),
+            },
+          },
+        },
+        400: { $ref: "#/components/responses/ValidationError" },
+        401: { $ref: "#/components/responses/UnauthorizedError" },
+      },
+    },
+  },
+
+  "/api/v1/auth/leaderboard": {
+    get: {
+      tags: ["Users"],
+      summary: "Get leaderboard",
+      description:
+        "Returns ranked users by learning points. Points are calculated from course progress, completed lessons, and completed courses.",
+      security: [{ bearerAuth: [] }],
+      parameters: [
+        {
+          in: "query",
+          name: "period",
+          schema: {
+            type: "string",
+            enum: ["all-time", "month", "week"],
+            default: "all-time",
+          },
+        },
+        {
+          in: "query",
+          name: "limit",
+          schema: { type: "number", default: 10, minimum: 1, maximum: 100 },
+        },
+      ],
+      responses: {
+        200: {
+          description: "Leaderboard retrieved successfully",
+          content: {
+            "application/json": {
+              schema: authEnvelope({
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    rank: { type: "number", example: 1 },
+                    badge: {
+                      type: "string",
+                      nullable: true,
+                      example: "gold",
+                    },
+                    points: { type: "number", example: 420 },
+                    services: {
+                      type: "array",
+                      items: { type: "string" },
+                    },
+                    user: userResponse,
                   },
                 },
               }),
@@ -805,12 +939,34 @@ export default {
               required: ["name", "email", "password"],
               properties: {
                 name: { type: "string", example: "Jane Student" },
-                email: { type: "string", format: "email", example: "jane@example.com" },
-                password: { type: "string", format: "password", example: "StrongPassword123" },
-                role: { type: "string", enum: ["user", "instructor", "admin"], example: "user" },
-                status: { type: "string", enum: ["active", "inactive", "suspended"], example: "active" },
-                courseId: { type: "string", example: "661f2a8c9c1234567890abcd" },
-                cohortId: { type: "string", example: "661f2b1d9c1234567890efgh" },
+                email: {
+                  type: "string",
+                  format: "email",
+                  example: "jane@example.com",
+                },
+                password: {
+                  type: "string",
+                  format: "password",
+                  example: "StrongPassword123",
+                },
+                role: {
+                  type: "string",
+                  enum: ["user", "instructor", "admin"],
+                  example: "user",
+                },
+                status: {
+                  type: "string",
+                  enum: ["active", "inactive", "suspended"],
+                  example: "active",
+                },
+                courseId: {
+                  type: "string",
+                  example: "661f2a8c9c1234567890abcd",
+                },
+                cohortId: {
+                  type: "string",
+                  example: "661f2b1d9c1234567890efgh",
+                },
               },
             },
           },
@@ -851,8 +1007,14 @@ export default {
                   items: { type: "string", format: "email" },
                   example: ["student@example.com"],
                 },
-                courseId: { type: "string", example: "661f2a8c9c1234567890abcd" },
-                cohortId: { type: "string", example: "661f2b1d9c1234567890efgh" },
+                courseId: {
+                  type: "string",
+                  example: "661f2a8c9c1234567890abcd",
+                },
+                cohortId: {
+                  type: "string",
+                  example: "661f2b1d9c1234567890efgh",
+                },
               },
             },
           },
@@ -878,7 +1040,8 @@ export default {
     post: {
       tags: ["Admin"],
       summary: "Bulk invite users via CSV",
-      description: "Uploads a CSV with an email column and sends invites. Admin only.",
+      description:
+        "Uploads a CSV with an email column and sends invites. Admin only.",
       security: [{ bearerAuth: [] }],
       requestBody: {
         required: true,
@@ -889,8 +1052,14 @@ export default {
               required: ["file", "courseId", "cohortId"],
               properties: {
                 file: { type: "string", format: "binary" },
-                courseId: { type: "string", example: "661f2a8c9c1234567890abcd" },
-                cohortId: { type: "string", example: "661f2b1d9c1234567890efgh" },
+                courseId: {
+                  type: "string",
+                  example: "661f2a8c9c1234567890abcd",
+                },
+                cohortId: {
+                  type: "string",
+                  example: "661f2b1d9c1234567890efgh",
+                },
               },
             },
           },
@@ -936,7 +1105,11 @@ export default {
               required: ["name", "password"],
               properties: {
                 name: { type: "string", example: "John Doe" },
-                password: { type: "string", format: "password", example: "StrongPassword123" },
+                password: {
+                  type: "string",
+                  format: "password",
+                  example: "StrongPassword123",
+                },
               },
             },
           },

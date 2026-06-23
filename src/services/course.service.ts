@@ -263,7 +263,6 @@ export const saveCourseAsDraft = async (
   };
 };
 
-
 export const getAllCoursesForAdminDashboard = async (
   data: any,
 ): Promise<AllAdminCourse> => {
