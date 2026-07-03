@@ -296,3 +296,6 @@ For the Instructor Dashboard, Do the following APIs:
 // 2 apis in coourse route   
 // 3 apis in user route  
 // 2 apis in payment route 
+
+
+i want to build a career accelerator on this code base for student after finich learnin courses .. lets start first i  use can use a modrel token since i dont have currently u can use sample so when i want to include its easy and agsin carreer accelerator is on a distinct from the codebase but the same codebaseso i eant it well sturtured ..  now hepl me build the following apis and documen  1.) Ai Resume Generator 2.) Cover letter 3> ) Ayonaire resume jobs 4.) Likend import 5.) Ai portfolio Builder 6.) Ai Resume Builder 7.) Ai Skill Gap Analyzer  8.) Talent Market Place 9>) Create Freelance Profile 10.) Carerr Roadmap genrator 11.) Ai Interview 12.) Company Based Interview .. build all of these things what the students are going to need and it has to be very seamless

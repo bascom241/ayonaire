@@ -1,0 +1,33 @@
+import express from "express";
+import {
+  createFreelanceProfileApi,
+  generateCareerRoadmapApi,
+  generateCompanyInterviewApi,
+  generateCoverLetterApi,
+  generatePortfolioApi,
+  generateResumeApi,
+  generateAIInterviewApi,
+  getAyonaireJobs,
+  importLinkedIn,
+  analyzeSkillGapApi,
+  buildResumeApi,
+  getTalentMarketplaceApi,
+} from "../controllers/careerAccelerator.controller.js";
+import { authorize } from "../middlewares/auth.middleware.js";
+
+const router = express.Router();
+
+router.post("/resume", authorize, generateResumeApi);
+router.post("/cover-letter", authorize, generateCoverLetterApi);
+router.get("/ayonaire-jobs", authorize, getAyonaireJobs);
+router.post("/linkedin-import", authorize, importLinkedIn);
+router.post("/portfolio", authorize, generatePortfolioApi);
+router.post("/resume-builder", authorize, buildResumeApi);
+router.post("/skill-gap", authorize, analyzeSkillGapApi);
+router.get("/marketplace", authorize, getTalentMarketplaceApi);
+router.post("/freelance-profile", authorize, createFreelanceProfileApi);
+router.post("/career-roadmap", authorize, generateCareerRoadmapApi);
+router.post("/ai-interview", authorize, generateAIInterviewApi);
+router.post("/company-interview", authorize, generateCompanyInterviewApi);
+
+export default router;

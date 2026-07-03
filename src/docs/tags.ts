@@ -67,4 +67,8 @@ export default [
     name: "Workshops",
     description: "Workshops Management",
   },
+  {
+    name: "Career Accelerator",
+    description: "Career planning, AI resume and interview tools for students",
+  },
 ];

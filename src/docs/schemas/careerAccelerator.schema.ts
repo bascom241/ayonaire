@@ -1,0 +1,132 @@
+export default {
+  CareerAIResponse: {
+    type: "object",
+    properties: {
+      generatedText: {
+        type: "string",
+        example: "Your AI-generated resume, cover letter, or roadmap will appear here.",
+      },
+    },
+  },
+  CareerResumeRequest: {
+    type: "object",
+    required: ["name", "targetRole"],
+    properties: {
+      name: { type: "string", example: "Ayo Smith" },
+      targetRole: { type: "string", example: "Junior Product Designer" },
+      experience: { type: "string", example: "2 years building UI prototypes and student-facing dashboards" },
+      education: { type: "string", example: "BSc in Graphic Design" },
+      skills: { type: "array", items: { type: "string" } },
+      accomplishments: { type: "string", example: "Improved course completion rate by 20%" },
+      additionalContext: { type: "string", example: "Strong portfolio in design systems and accessibility." },
+    },
+  },
+  CareerCoverLetterRequest: {
+    type: "object",
+    required: ["name", "targetRole", "company"],
+    properties: {
+      name: { type: "string", example: "Ayo Smith" },
+      targetRole: { type: "string", example: "Growth Marketing Associate" },
+      company: { type: "string", example: "SkillSpark" },
+      recipientName: { type: "string", example: "Hiring Manager" },
+      experience: { type: "string", example: "Built digital campaigns with measurable engagement metrics." },
+      education: { type: "string", example: "Diploma in Marketing Communications" },
+      skills: { type: "array", items: { type: "string" } },
+      accomplishments: { type: "string", example: "Launched a campaign that doubled student signups." },
+      additionalContext: { type: "string", example: "Available to start immediately after graduation." },
+    },
+  },
+  CareerPortfolioRequest: {
+    type: "object",
+    required: ["name", "headline"],
+    properties: {
+      name: { type: "string", example: "Ayo Smith" },
+      headline: { type: "string", example: "Emerging UX Designer" },
+      summary: { type: "string", example: "Designs intuitive learning experiences with a focus on accessibility." },
+      skills: { type: "array", items: { type: "string" } },
+      projects: { type: "array", items: { type: "string" } },
+      targetRole: { type: "string", example: "UX/UI Designer" },
+      industry: { type: "string", example: "Education Tech" },
+      portfolioLinks: { type: "array", items: { type: "string", format: "uri" } },
+    },
+  },
+  CareerResumeBuilderRequest: {
+    type: "object",
+    required: ["name"],
+    properties: {
+      name: { type: "string", example: "Ayo Smith" },
+      title: { type: "string", example: "Junior Frontend Developer" },
+      summary: { type: "string", example: "Creative developer focused on learner-first web products." },
+      skills: { type: "array", items: { type: "string" } },
+      experience: { type: "string", example: "Created interactive course landing pages." },
+      education: { type: "string", example: "BSc in Computer Science" },
+      projects: { type: "array", items: { type: "string" } },
+      targetRole: { type: "string", example: "Frontend Engineer" },
+      additionalContext: { type: "string", example: "Ready to pivot into product development." },
+    },
+  },
+  CareerSkillGapRequest: {
+    type: "object",
+    required: ["targetRole", "currentSkills"],
+    properties: {
+      targetRole: { type: "string", example: "Data Analyst" },
+      currentSkills: { type: "array", items: { type: "string" } },
+      experienceLevel: { type: "string", example: "Beginner" },
+      learningFocus: { type: "string", example: "Data visualization and SQL" },
+    },
+  },
+  TalentMarketplaceQuery: {
+    type: "object",
+    properties: {
+      keywords: { type: "string", example: "remote developer" },
+      location: { type: "string", example: "Remote" },
+      skills: { type: "string", example: "React, Next.js" },
+      role: { type: "string", example: "Frontend Developer" },
+    },
+  },
+  FreelanceProfileRequest: {
+    type: "object",
+    required: ["headline", "summary", "skills"],
+    properties: {
+      headline: { type: "string", example: "Freelance Web Developer" },
+      summary: { type: "string", example: "Builds performance-first landing pages and customer portals." },
+      skills: { type: "array", items: { type: "string" } },
+      portfolioLinks: { type: "array", items: { type: "string", format: "uri" } },
+      hourlyRate: { type: "string", example: "$30/hr" },
+      availability: { type: "string", example: "Full-time" },
+      services: { type: "array", items: { type: "string" } },
+      expertiseAreas: { type: "array", items: { type: "string" } },
+    },
+  },
+  CareerRoadmapRequest: {
+    type: "object",
+    required: ["name", "targetRole"],
+    properties: {
+      name: { type: "string", example: "Ayo Smith" },
+      currentExperience: { type: "string", example: "Student and internship experience in design." },
+      targetRole: { type: "string", example: "Product Designer" },
+      timeline: { type: "string", example: "6 months" },
+      skills: { type: "array", items: { type: "string" } },
+      learningPreferences: { type: "string", example: "Hands-on projects and mentor review" },
+    },
+  },
+  CareerInterviewRequest: {
+    type: "object",
+    required: ["targetRole"],
+    properties: {
+      targetRole: { type: "string", example: "Customer Success Specialist" },
+      experienceLevel: { type: "string", example: "Junior" },
+      focusAreas: { type: "array", items: { type: "string" } },
+    },
+  },
+  CompanyInterviewRequest: {
+    type: "object",
+    required: ["companyName", "role"],
+    properties: {
+      companyName: { type: "string", example: "Ayonaire Labs" },
+      role: { type: "string", example: "Growth Marketer" },
+      experienceLevel: { type: "string", example: "Early career" },
+      focusAreas: { type: "array", items: { type: "string" } },
+    },
+  },
+};

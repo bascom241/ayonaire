@@ -16,6 +16,8 @@ import feedRouter from "./routes/feed.route.js";
 import workShopRouter from "./routes/workshop.route.js";
 import messageRouter from "./routes/message.route.js";
 import roomRouter from "./routes/room.route.js";
+import careerAcceleratorRouter from "./routes/careerAccelerator.route.js"
+
 import cors from "cors";
 import { setupSwagger } from "./docs/index.js";
 const app = express();
@@ -48,6 +50,7 @@ app.use("/api/v1/feed", feedRouter);
 app.use("/api/v1/workshop", workShopRouter);
 app.use("/api/v1/message", messageRouter);
 app.use("/api/v1/room", roomRouter);
+app.use("/api/v1/career", careerAcceleratorRouter);
 
 // Serve Swagger static folder (Vercel-friendly)
 

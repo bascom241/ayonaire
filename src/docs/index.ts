@@ -18,6 +18,7 @@ import announcementPaths from "./paths/announcement.paths.js";
 import workshopPaths from "./paths/workshop.paths.js";
 import messagePaths from "./paths/message.paths.js";
 import roomPaths from "./paths/room.paths.js";
+import careerPaths from "./paths/careerAccelerator.paths.js";
 
 // Import schemas
 import userSchemas from "./schemas/user.schema.js";
@@ -35,6 +36,7 @@ import inviteShema from "./schemas/invite.shema.js";
 import feedSchemas from "./schemas/feed.schema.js";
 import announcementSchemas from "./schemas/announcement.schema.js";
 import workshopSchemas from "./schemas/workshop.schema.js";
+import careerSchemas from "./schemas/careerAccelerator.schema.js";
 
 // Import components
 import { securitySchemes } from "./components/security.js";
@@ -91,6 +93,7 @@ const options: swaggerJsdoc.Options = {
         ...feedSchemas,
         ...announcementSchemas,
         ...workshopSchemas,
+        ...careerSchemas,
       },
       responses,
       parameters,
@@ -113,6 +116,7 @@ const options: swaggerJsdoc.Options = {
       ...workshopPaths,
       ...messagePaths,
       ...roomPaths,
+      ...careerPaths,
     },
   },
 
