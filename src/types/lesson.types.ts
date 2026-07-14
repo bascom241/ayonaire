@@ -132,3 +132,37 @@ export interface LessonContentResponse {
     publicId: string;
   };
 }
+
+export interface ResumeLessonResponse {
+  lessonId: string | null;
+}
+
+export interface LessonWithProgress {
+  _id: string;
+  title: string;
+  module: string;
+  course: string;
+  order: number;
+  duration?: number;
+  isPublished: boolean;
+  isFreePreview: boolean;
+  isLocked: boolean;
+  videos: LessonVideo[];
+  materials: LessonMaterial[];
+  isCompleted: boolean;
+}
+
+export interface ModuleWithLessons {
+  _id: string;
+  title: string;
+  description: string;
+  course: string;
+  order: number;
+  lessons: LessonWithProgress[];
+}
+
+export interface ViewCourseContentResponse {
+  modules: ModuleWithLessons[];
+  progress: number;
+  lastLesson: string | null;
+}

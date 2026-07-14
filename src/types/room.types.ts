@@ -4,19 +4,51 @@ export interface RoomData {
   originalname: string;
 }
 
-export interface CreateRoomRequest {
+export interface CreateGroupRoomRequest {
   userId: string;
-  profile?: RoomData;
+  participantIds: string[];
   name: string;
-  description: string;
+  description?: string;
+  profile?: RoomData;
 }
 
-export interface CreateRoomResponse {
+export interface CreateDMRequest {
   userId: string;
+  otherUserId: string;
+}
+
+export interface RoomParticipant {
+  id: string;
+  name: string;
+  profile?: {
+    url: string;
+    publicId: string;
+  } | null;
+}
+
+export interface RoomLastMessage {
+  text?: string;
+  senderId: string;
+  hasMedia: boolean;
+  hasFile: boolean;
+  createdAt: string;
+}
+
+export interface RoomResponse {
+  id: string;
+  name?: string;
+  description?: string;
+  isGroup: boolean;
   profile?: {
     url: string;
     publicId: string;
   };
-  name: string;
-  description: string;
+  roomCreator: string;
+  participants: RoomParticipant[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface RoomListItem extends RoomResponse {
+  lastMessage: RoomLastMessage | null;
 }

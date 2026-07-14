@@ -12,11 +12,18 @@ export interface MessageRequestData {
   file?: mediaData;
 }
 
+export interface MessageSender {
+  id: string;
+  name: string;
+  profile?: {
+    url: string;
+    publicId: string;
+  } | null;
+}
+
 export interface MessageResponseData {
-  senderId: {
-    id: string;
-    name: string;
-  };
+  id: string;
+  senderId: MessageSender;
   roomId: string;
   text: string;
   media?: {
@@ -27,31 +34,17 @@ export interface MessageResponseData {
     url: string;
     publicId: string;
   };
+  createdAt: string;
 }
 
 export interface GetMessagesRoom {
   roomId: string;
+  requesterId: string;
   query: any;
 }
 
 export interface GetMessagesResponse {
-  messages: {
-    senderId: {
-      id: string;
-      name: string;
-    };
-    roomId: string;
-    text: string;
-    media?: {
-      url: string;
-      publicId: string;
-    };
-    file?: {
-      url: string;
-      publicId: string;
-    };
-  }[];
-
+  messages: MessageResponseData[];
   pagination: {
     total: number;
     page: number;

@@ -2,7 +2,6 @@ import feedModel from "../models/feed.model.js";
 import { uploadMedia } from "../utils/uploadToCloudinary.js";
 import {
   CreateFeedRequest,
-  CreateFeedResponse,
   EditFeedRequest,
   DeleteFeedRequest,
   FeedResponse,
@@ -32,6 +31,47 @@ const getUserProfilePayload = (user: any) =>
       }
     : null;
 
+// Shared shape-builder so REST, and the feed socket layer that broadcasts
+// full records to every connected client, never drift out of sync.
+const toFeedResponse = (feed: any): FeedResponse => ({
+  id: feed._id.toString(),
+  content: feed.content,
+  media: feed.media
+    ? {
+        url: feed.media.url,
+        publicId: feed.media.publicId,
+      }
+    : undefined,
+  tag: (feed.tag as any)?.titles,
+  user: {
+    id: feed.userId._id.toString(),
+    name: (feed.userId as any).name,
+    profile: getUserProfilePayload(feed.userId),
+  },
+  likes: feed.likes.map((id: any) => id.toString()),
+  comments: feed.comments.map((c: any) => ({
+    user: {
+      id: c.userId._id.toString(),
+      name: c.userId.name,
+    },
+    text: c.text,
+    createdAt: c.createdAt.toISOString(),
+  })),
+  shares: feed.shares,
+  createdAt: feed.createdAt.toISOString(),
+});
+
+export const getFeedById = async (
+  feedId: string,
+): Promise<FeedResponse | null> => {
+  const feed = await feedModel
+    .findById(feedId)
+    .populate("userId", "name profile")
+    .populate("comments.userId", "name")
+    .populate("tag", "titles");
+  return feed ? toFeedResponse(feed) : null;
+};
+
 export const createTags = async (
   data: CreateTagRequest,
 ): Promise<CreateTagResponse> => {
@@ -55,7 +95,7 @@ export const createTags = async (
 export const createFeed = async (
   data: CreateFeedRequest,
   userId: string | undefined,
-): Promise<CreateFeedResponse> => {
+): Promise<FeedResponse> => {
   const { content, media, tag } = data;
   const user = await userModel.findById(userId);
   if (!user) {
@@ -105,28 +145,17 @@ export const createFeed = async (
   }
 
   const createdFeed = await feedModel.create(feedData);
-  const newData = await feedModel
-    .findById(createdFeed._id)
-    .populate("tag", "titles");
+  const newData = await getFeedById(createdFeed._id.toString());
   if (!newData) {
     throw new AppError("Failed to retrieve created feed", 500);
   }
-  return {
-    tag: (newData.tag as any)?.titles,
-    content: newData.content,
-    media: newData.media
-      ? {
-          url: newData.media.url,
-          publicId: newData.media.publicId,
-        }
-      : undefined,
-  };
+  return newData;
 };
 
 export const editFeed = async (
   data: EditFeedRequest,
   userId: string | undefined,
-) => {
+): Promise<FeedResponse> => {
   validateRequestBodyWithValues<EditFeedRequest>(data, ["feedId"]);
 
   const { feedId, content, media, tag } = data;
@@ -158,22 +187,11 @@ export const editFeed = async (
   if (tag !== undefined) feedToEdit.tag = new mongoose.Types.ObjectId(tag);
 
   const updatedFeed = await feedToEdit.save();
-  const newEditedFeed = await feedModel
-    .findById(updatedFeed._id)
-    .populate("tag", "titles");
+  const newEditedFeed = await getFeedById(updatedFeed._id.toString());
   if (!newEditedFeed) {
     throw new AppError("Failed to retrieve created feed", 500);
   }
-  return {
-    tag: (newEditedFeed.tag as any)?.titles,
-    content: updatedFeed.content,
-    media: updatedFeed.media
-      ? {
-          url: updatedFeed.media.url,
-          publicId: updatedFeed.media.publicId,
-        }
-      : undefined,
-  };
+  return newEditedFeed;
 };
 
 export const deleteFeed = async (
@@ -217,39 +235,13 @@ export const viewFeeds = async (
     .skip(skip)
     .limit(limit);
 
-  return feeds.map((feed) => ({
-    id: feed._id.toString(),
-    content: feed.content,
-    media: feed.media
-      ? {
-          url: feed.media.url,
-          publicId: feed.media.publicId,
-        }
-      : undefined,
-    tag: (feed.tag as any)?.titles,
-    user: {
-      id: feed.userId._id.toString(),
-      name: (feed.userId as any).name,
-      profile: getUserProfilePayload(feed.userId),
-    },
-    likes: feed.likes.map((id: any) => id.toString()),
-    comments: feed.comments.map((c: any) => ({
-      user: {
-        id: c.userId._id.toString(),
-        name: c.userId.name,
-      },
-      text: c.text,
-      createdAt: c.createdAt.toISOString(),
-    })),
-    shares: feed.shares,
-    createdAt: feed.createdAt.toISOString(),
-  }));
+  return feeds.map(toFeedResponse);
 };
 
 export const likePost = async (
   data: LikeFeedRequest,
   userId: string | undefined,
-) => {
+): Promise<FeedResponse> => {
   validateRequestBodyWithValues<LikeFeedRequest>(data, ["feedId"]);
 
   const { feedId } = data;
@@ -267,16 +259,22 @@ export const likePost = async (
   const hasLiked = feedToLike.likes.includes(convertedUserId);
 
   if (hasLiked) {
-    return await feedModel.updateOne(
+    await feedModel.updateOne(
       { _id: feedId },
       { $pull: { likes: convertedUserId }, $inc: { likesCount: -1 } },
     );
   } else {
-    return await feedModel.updateOne(
+    await feedModel.updateOne(
       { _id: feedId },
       { $addToSet: { likes: convertedUserId }, $inc: { likesCount: 1 } },
     );
   }
+
+  const updatedFeed = await getFeedById(feedToLike._id.toString());
+  if (!updatedFeed) {
+    throw new AppError("Feed does not exists");
+  }
+  return updatedFeed;
 };
 
 export const commentOnAPost = async (
@@ -308,33 +306,9 @@ export const commentOnAPost = async (
   feedToComment.commentCounts += 1;
   const feed = await feedToComment.save();
   await feed.populate("comments.userId", "name");
+  await feed.populate("tag", "titles");
 
-  return {
-    id: feed._id.toString(),
-    content: feed.content,
-    media: feed.media
-      ? {
-          url: feed.media.url,
-          publicId: feed.media.publicId,
-        }
-      : undefined,
-    user: {
-      id: feed.userId._id.toString(),
-      name: (feed.userId as any).name,
-      profile: getUserProfilePayload(feed.userId),
-    },
-    likes: feed.likes.map((id: any) => id.toString()),
-    comments: feed.comments.map((c: any) => ({
-      user: {
-        id: c.userId._id.toString(),
-        name: c.userId.name,
-      },
-      text: c.text,
-      createdAt: c.createdAt.toISOString(),
-    })),
-    shares: feed.shares,
-    createdAt: feed.createdAt.toISOString(),
-  };
+  return toFeedResponse(feed);
 };
 
 export const deleteComment = async (

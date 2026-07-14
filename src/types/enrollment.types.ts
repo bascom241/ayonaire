@@ -76,3 +76,26 @@ export interface StudentEnrolledCourses {
   progress: number;
   completed: boolean;
 }
+
+export interface StudentCourseDetail {
+  _id: string;
+  title: string;
+  description?: string;
+  thumbnail?: {
+    url: string;
+    publicId: string;
+  };
+  category?: string;
+  instructor?: {
+    id: string;
+    name: string;
+  } | null;
+  price: number;
+  courseLevel: string;
+  status: string;
+  progress: number;
+  completed: boolean;
+  completedLessons: string[];
+  lastLesson: string | null;
+  enrolledAt: Date;
+}

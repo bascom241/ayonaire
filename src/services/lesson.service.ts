@@ -11,9 +11,11 @@ import {
   UploadVideoRequest,
   MarkLessonCompleted,
   ResumeLessonRequest,
+  ResumeLessonResponse,
   UpdateLastLesson,
   UpdateLastLessonResponse,
   ViewLessonRequest,
+  ViewCourseContentResponse,
 } from "../types/lesson.types.js";
 import { uploadMedia } from "../utils/uploadToCloudinary.js";
 import { MarkLessonCompletedEnrollmentResponse } from "../types/enrollment.types.js";
@@ -176,7 +178,9 @@ export const updateLastLesson = async (
   };
 };
 
-export const getResumeLesson = async (data: ResumeLessonRequest) => {
+export const getResumeLesson = async (
+  data: ResumeLessonRequest,
+): Promise<ResumeLessonResponse> => {
   const enrollment = await enrollmentModel.findOne({
     student: data.studentId,
     course: data.courseId,
@@ -186,7 +190,7 @@ export const getResumeLesson = async (data: ResumeLessonRequest) => {
   }
 
   if (enrollment.lastLesson) {
-    return enrollment.lastLesson;
+    return { lessonId: enrollment.lastLesson.toString() };
   }
 
   // fallback → return first lesson
@@ -197,10 +201,12 @@ export const getResumeLesson = async (data: ResumeLessonRequest) => {
     })
     .sort({ order: 1 });
 
-  return firstLesson?._id;
+  return { lessonId: firstLesson ? firstLesson._id.toString() : null };
 };
 
-export const viewLessonContent = async (data: ViewLessonRequest) => {
+export const viewLessonContent = async (
+  data: ViewLessonRequest,
+): Promise<ViewCourseContentResponse> => {
   const myEnrollment = await enrollmentModel.findOne({
     student: data.studentId,
     course: data.courseId,
@@ -266,6 +272,8 @@ export const viewLessonContent = async (data: ViewLessonRequest) => {
   return {
     modules,
     progress: myEnrollment.progress,
-    lastLesson: myEnrollment.lastLesson,
+    lastLesson: myEnrollment.lastLesson
+      ? myEnrollment.lastLesson.toString()
+      : null,
   };
 };

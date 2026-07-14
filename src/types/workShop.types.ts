@@ -27,8 +27,14 @@ export interface CreateWorkShopResponse {
     type: string;
   };
   status: string;
+  createdBy?: {
+    id: string;
+    name: string;
+  } | null;
   startDate: string;
   endDate: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export enum PlatformName {
@@ -61,4 +67,8 @@ export interface EditWorkShopRequest {
   status: string;
   startDate: string;
   endDate: string;
+}
+
+export interface DeleteWorkShopRequest {
+  workShopId: string;
 }

@@ -9,6 +9,7 @@ import {
   EnrollmentData,
   StudentProgressPerCourse,
   StudentEnrolledCourses,
+  StudentCourseDetail,
 } from "../types/enrollment.types.js";
 import { pipeline } from "node:stream";
 
@@ -205,4 +206,58 @@ export const viewEnrolledCourses = async (
   const enrolledCourse = await enrollmentModel.aggregate(pipeline);
 
   return enrolledCourse as StudentEnrolledCourses[];
+};
+
+// Student to view full detail of a single course they are enrolled in
+// (title/description/thumbnail/instructor plus their own progress).
+// course.instructor stores a raw User _id (see assignInstuctorToCourse) even
+// though the schema ref says "Instructor", so it's resolved directly against
+// userModel here rather than via .populate(), matching the same approach
+// already used in viewEnrolledCourses' aggregation above.
+export const getEnrolledCourseDetail = async (
+  studentId: string,
+  courseId: string,
+): Promise<StudentCourseDetail> => {
+  const enrollment = await enrollmentModel.findOne({
+    student: studentId,
+    course: courseId,
+  });
+
+  if (!enrollment) {
+    throw new AppError("You are not enrolled in this course", 403);
+  }
+
+  const course = await courseModel.findById(courseId);
+  if (!course) {
+    throw new AppError("course not found", 404);
+  }
+
+  let instructor: { id: string; name: string } | null = null;
+  if (course.instructor) {
+    const instructorUser = await userModel.findById(course.instructor, "name");
+    instructor = instructorUser
+      ? { id: instructorUser._id.toString(), name: instructorUser.name }
+      : null;
+  }
+
+  return {
+    _id: course._id.toString(),
+    title: course.title,
+    description: course.description,
+    thumbnail: course.thumbnail
+      ? { url: course.thumbnail.url, publicId: course.thumbnail.publicId }
+      : undefined,
+    category: course.category?.toString(),
+    instructor,
+    price: course.price,
+    courseLevel: course.courseLevel,
+    status: course.status,
+    progress: enrollment.progress,
+    completed: enrollment.completed,
+    completedLessons: enrollment.comletedLessons.map((id) => id.toString()),
+    lastLesson: enrollment.lastLesson
+      ? enrollment.lastLesson.toString()
+      : null,
+    enrolledAt: enrollment.createdAt,
+  };
 };

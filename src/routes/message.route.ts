@@ -5,9 +5,8 @@ import {
   getMessagesForARoom,
   send,
 } from "../controllers/message.controller.js";
-import { getMaxListeners } from "node:cluster";
 import { upload } from "../middlewares/multer.js";
 
 router.post("/send", authorize, upload.single("file"), send);
-router.get("/", authorize, getMessagesForARoom);
+router.get("/:roomId", authorize, getMessagesForARoom);
 export default router;
