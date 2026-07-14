@@ -7,6 +7,8 @@ import {
   commentOnAPost,
   deleteComment,
   createTags,
+  sharePost,
+  reportPost,
 } from "../services/feed.service.js";
 import { Response, Request, NextFunction } from "express";
 import {
@@ -17,6 +19,8 @@ import {
   DeleteFeedRequest,
   EditFeedRequest,
   LikeFeedRequest,
+  ShareFeedRequest,
+  ReportFeedRequest,
 } from "../types/feed.types.js";
 import mongoose from "mongoose";
 
@@ -106,7 +110,12 @@ export const deleteF = async (
 
 export const view = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const data = await viewFeeds();
+    const { tag, page, limit } = req.query;
+    const data = await viewFeeds({
+      tag: tag as string | undefined,
+      page: page ? Number(page) : undefined,
+      limit: limit ? Number(limit) : undefined,
+    });
     res.status(200).json({ success: true, data });
   } catch (err) {
     next(err);
@@ -166,6 +175,43 @@ export const deleteC = async (
       commentId,
     };
     const data = await deleteComment(dataToSend, userId);
+    res.status(200).json({ success: true, message: data });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const shareFeed = async (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const { feedId } = req.body;
+    const userId = req.user?.id;
+    const dataToSend: ShareFeedRequest = {
+      feedId,
+    };
+    const data = await sharePost(dataToSend, userId);
+    res.status(200).json({ success: true, message: "Feed shared", data });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const reportFeed = async (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const { feedId, reason } = req.body;
+    const userId = req.user?.id;
+    const dataToSend: ReportFeedRequest = {
+      feedId,
+      reason,
+    };
+    const data = await reportPost(dataToSend, userId);
     res.status(200).json({ success: true, message: data });
   } catch (error) {
     next(error);

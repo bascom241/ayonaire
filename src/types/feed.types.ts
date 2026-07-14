@@ -39,6 +39,7 @@ export interface FeedResponse {
     url: string;
     publicId: string;
   };
+  tag?: string[];
   user: {
     id: string;
     name: string;
@@ -92,4 +93,24 @@ export interface CreateTagRequest {
 export interface CreateTagResponse {
   id: string;
   titles: string[];
+}
+
+export interface ShareFeedRequest {
+  feedId: string | undefined;
+}
+
+export interface ShareFeedResponse {
+  feedId: string;
+  shares: number;
+}
+
+export interface ReportFeedRequest {
+  feedId: string | undefined;
+  reason: string;
+}
+
+export interface ViewFeedsQuery {
+  tag?: string;
+  page?: number;
+  limit?: number;
 }

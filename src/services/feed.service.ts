@@ -10,6 +10,10 @@ import {
   CommentFeedRequest,
   DeleteCommentRequest,
   FeedTag,
+  ShareFeedRequest,
+  ShareFeedResponse,
+  ReportFeedRequest,
+  ViewFeedsQuery,
 } from "../types/feed.types.js";
 import userModel from "../models/user.model.js";
 import { AppError } from "../errors/AppError.js";
@@ -18,6 +22,7 @@ import { validateRequestBodyWithValues } from "../utils/validateRequestBody.js";
 import { deleteImage } from "../utils/uploadToCloudinary.js";
 import { CreateTagRequest, CreateTagResponse } from "../types/feed.types.js";
 import feedTagModel from "../models/feedTag.model.js";
+import { getPagination } from "../utils/getPagination.js";
 
 const getUserProfilePayload = (user: any) =>
   user?.profile
@@ -188,13 +193,30 @@ export const deleteFeed = async (
   return "Feed Deleted successfully";
 };
 
-export const viewFeeds = async (): Promise<FeedResponse[]> => {
+export const viewFeeds = async (
+  query: ViewFeedsQuery = {},
+): Promise<FeedResponse[]> => {
+  const { tag } = query;
+  const { limit, skip } = getPagination({
+    page: query.page,
+    limit: query.limit || 20,
+  });
+
+  const filter: Record<string, any> = {};
+  if (tag) {
+    const matchingTags = await feedTagModel.find({ titles: tag }, "_id");
+    filter.tag = { $in: matchingTags.map((t) => t._id) };
+  }
+
   const feeds = await feedModel
-    .find()
+    .find(filter)
     .populate("userId", "name profile")
     .populate("comments.userId", "name")
+    .populate("tag", "titles")
     .sort({ createdAt: -1 })
-    .limit(20);
+    .skip(skip)
+    .limit(limit);
+
   return feeds.map((feed) => ({
     id: feed._id.toString(),
     content: feed.content,
@@ -204,6 +226,7 @@ export const viewFeeds = async (): Promise<FeedResponse[]> => {
           publicId: feed.media.publicId,
         }
       : undefined,
+    tag: (feed.tag as any)?.titles,
     user: {
       id: feed.userId._id.toString(),
       name: (feed.userId as any).name,
@@ -347,4 +370,69 @@ export const deleteComment = async (
   );
 
   return "Comment Deleted successfully";
+};
+
+export const sharePost = async (
+  data: ShareFeedRequest,
+  userId: string | undefined,
+): Promise<ShareFeedResponse> => {
+  validateRequestBodyWithValues<ShareFeedRequest>(data, ["feedId"]);
+  const { feedId } = data;
+
+  const user = await userModel.findById(userId);
+  if (!user) {
+    throw new AppError("user not found", 400);
+  }
+
+  const sharedFeed = await feedModel.findByIdAndUpdate(
+    feedId,
+    { $inc: { shares: 1 } },
+    { new: true },
+  );
+
+  if (!sharedFeed) {
+    throw new AppError("Feed does not exists", 400);
+  }
+
+  return {
+    feedId: sharedFeed._id.toString(),
+    shares: sharedFeed.shares,
+  };
+};
+
+export const reportPost = async (
+  data: ReportFeedRequest,
+  userId: string | undefined,
+): Promise<string> => {
+  validateRequestBodyWithValues<ReportFeedRequest>(data, [
+    "feedId",
+    "reason",
+  ]);
+  const { feedId, reason } = data;
+
+  const user = await userModel.findById(userId);
+  if (!user) {
+    throw new AppError("user not found", 400);
+  }
+
+  const convertedUserId = new mongoose.Types.ObjectId(userId);
+
+  const feedToReport = await feedModel.findById(feedId);
+  if (!feedToReport) {
+    throw new AppError("Feed does not exists", 400);
+  }
+
+  const alreadyReported = feedToReport.reports.some((report: any) =>
+    report.userId?.equals(convertedUserId),
+  );
+  if (alreadyReported) {
+    throw new AppError("You have already reported this post", 400);
+  }
+
+  await feedModel.updateOne(
+    { _id: feedId },
+    { $push: { reports: { userId: convertedUserId, reason } } },
+  );
+
+  return "Post reported successfully";
 };
