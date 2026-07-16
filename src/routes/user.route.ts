@@ -15,6 +15,8 @@ import {
   assignRoleToUser,
   deactivateToUser,
   suspendToUser,
+  activateToUser,
+  removeUser,
   viewMyProfile,
   uploadImage,
   edit,
@@ -80,6 +82,13 @@ router.put(
   restrictTo("admin"),
   suspendToUser,
 );
+router.put(
+  "/user/:id/activate-user",
+  authorize,
+  restrictTo("admin"),
+  activateToUser,
+);
+router.delete("/user/:id", authorize, restrictTo("admin"), removeUser);
 router.post("/get-profile", authorize, viewMyProfile);
 router.post("/add-profile", authorize, upload.single("profile"), uploadImage);
 router.put("/edit-profile", authorize, upload.single("profile"), edit);

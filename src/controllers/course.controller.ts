@@ -8,10 +8,18 @@ import {
   saveCourseAsDraft,
   getAllCoursesForAdminDashboard,
   getASingleCourseForAdminDashboard,
+  getAllCourses,
+  getCourseById,
+  deleteCourse,
+  toggleCoursePublishStatus,
 } from "../services/course.service.js";
 import { CreateCourseRequest } from "../types/course.types.js";
 import { AppError } from "../errors/AppError.js";
 import redisClient from "../config/redis.js";
+
+interface AuthRequest extends Request {
+  user?: { id: string; role?: string };
+}
 
 const getCourseUploadFiles = (req: Request) => {
   const files = req.files as
@@ -180,13 +188,80 @@ export const getSingleAdminCourse = async (
   next: NextFunction,
 ) => {
   try {
-    const { courseId } = req.params;
+    const courseId = req.params.courseId as string;
     if (!courseId || typeof courseId !== "string") {
       throw new AppError("courseId is required", 400);
     }
 
     const data = await getASingleCourseForAdminDashboard(courseId);
 
+    res.status(200).json({ success: true, data });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getAll = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const data = await getAllCourses(req.query);
+    res.status(200).json({ success: true, ...data });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getSingle = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const courseId = req.params.courseId as string;
+    const data = await getCourseById(courseId);
+    res.status(200).json({ success: true, data });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const remove = async (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) throw new AppError("Unauthorized", 401);
+
+    const courseId = req.params.courseId as string;
+    await deleteCourse(courseId, userId, req.user?.role);
+    await redisClient.del("cache:/course");
+    res.status(200).json({ success: true, message: "Course deleted" });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const togglePublish = async (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) throw new AppError("Unauthorized", 401);
+
+    const courseId = req.params.courseId as string;
+    const data = await toggleCoursePublishStatus(
+      courseId,
+      userId,
+      req.user?.role,
+    );
+    await redisClient.del("cache:/course");
     res.status(200).json({ success: true, data });
   } catch (error) {
     next(error);

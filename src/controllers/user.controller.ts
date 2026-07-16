@@ -25,6 +25,8 @@ import {
   assignRole,
   deactivateUser,
   suspendUser,
+  activateUser,
+  deleteUser,
   viewProfile,
   addProfileImage,
   editProfile,
@@ -186,6 +188,34 @@ export const suspendToUser = async (
     const { id } = req.params as unknown as UserParams;
     await suspendUser(id);
     res.status(200).json({ success: true, message: "user suspended" });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const removeUser = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const { id } = req.params as unknown as UserParams;
+    await deleteUser(id);
+    res.status(200).json({ success: true, message: "user deleted" });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const activateToUser = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const { id } = req.params as unknown as UserParams;
+    await activateUser(id);
+    res.status(200).json({ success: true, message: "user activated" });
   } catch (error) {
     next(error);
   }

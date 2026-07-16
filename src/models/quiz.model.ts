@@ -1,4 +1,5 @@
 import mongoose, { Schema } from "mongoose";
+import { QuizStatus } from "../types/quiz.types.js";
 
 export const quizSchema = new Schema(
   {
@@ -10,6 +11,10 @@ export const quizSchema = new Schema(
       type: Schema.Types.ObjectId,
       ref: "Module",
       required: true,
+    },
+    createdBy: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
     },
     randomizeQuestions: {
       type: Boolean,
@@ -26,6 +31,14 @@ export const quizSchema = new Schema(
     totalPoints: {
       type: Number,
       default: 0,
+    },
+    status: {
+      type: String,
+      enum: Object.values(QuizStatus),
+      default: QuizStatus.ACTIVE,
+    },
+    dueDate: {
+      type: Date,
     },
     questions: [
       {

@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from "express";
-import { createModule } from "../services/module.service.js";
+import { createModule, getModulesForCourse } from "../services/module.service.js";
 import { CreateModuleRequest } from "../types/module.types.js";
 import { AppError } from "../errors/AppError.js";
 
@@ -24,6 +24,23 @@ export const create = async (
     res
       .status(201)
       .json({ success: true, data, message: "module created successfully" });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getAll = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const { courseId } = req.query;
+    if (!courseId || typeof courseId !== "string") {
+      throw new AppError("courseId query param is required", 400);
+    }
+    const data = await getModulesForCourse(courseId);
+    res.status(200).json({ success: true, data });
   } catch (error) {
     next(error);
   }

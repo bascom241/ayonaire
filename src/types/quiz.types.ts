@@ -1,4 +1,23 @@
+export enum QuizStatus {
+  DRAFT = "draft",
+  ACTIVE = "active",
+  CLOSED = "closed",
+  ARCHIVED = "archived",
+}
+
 export interface CreateQuizDto {
+  title: string;
+  moduleId: string;
+  createdBy?: string;
+  randomizeQuestions: boolean;
+  showCorrectAnswers: boolean;
+  allowRetakes: boolean;
+  status?: string;
+  dueDate?: string;
+}
+
+export interface CreateQuizResponseDto {
+  _id: string;
   title: string;
   moduleId: string;
   randomizeQuestions: boolean;
@@ -6,12 +25,38 @@ export interface CreateQuizDto {
   allowRetakes: boolean;
 }
 
-export interface CreateQuizResponseDto {
+export interface UpdateQuizDto {
+  title?: string;
+  randomizeQuestions?: boolean;
+  showCorrectAnswers?: boolean;
+  allowRetakes?: boolean;
+  status?: string;
+  dueDate?: string;
+}
+
+export interface QuizListItem {
+  _id: string;
   title: string;
-  moduleId: string;
-  randomizeQuestions: boolean;
-  showCorrectAnswers: boolean;
-  allowRetakes: boolean;
+  status: string;
+  dueDate?: Date | null;
+  createdBy?: { _id: string; name: string } | null;
+  course?: { _id: string; title: string } | null;
+  module: string;
+  questionsCount: number;
+  totalPoints: number;
+  attemptsCount: number;
+  avgScore: number | null;
+  createdAt: Date;
+}
+
+export interface QuizResultAttempt {
+  attemptId: string;
+  student: { _id: string; name: string; email: string };
+  score: number;
+  totalPoints: number;
+  percentage: number;
+  completed: boolean;
+  submittedAt: Date;
 }
 
 export type Options = {

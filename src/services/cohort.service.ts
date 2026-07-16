@@ -10,6 +10,7 @@ import instructorProfileModel from "../models/instructorProfile.model.js";
 import { AppError } from "../errors/AppError.js";
 import courseModel from "../models/course.model.js";
 import userModel from "../models/user.model.js";
+import { getPagination } from "../utils/getPagination.js";
 
 export const createCohort = async (
   data: CreateCohortRequest,
@@ -99,4 +100,59 @@ export const assignInstructorToCohort = async (
   });
 
   return `cohort ${cohort.name} has been assigned to ${(instructor.instructorId as any).name}`;
+};
+
+export const listCohorts = async (
+  userId: string,
+  role: string | undefined,
+  query: any,
+) => {
+  const { page, limit, skip } = getPagination(query);
+
+  const filter: Record<string, any> = {};
+  if (query.course) filter.course = query.course;
+  if (role !== "admin") filter.creator = userId;
+
+  const [cohorts, total] = await Promise.all([
+    cohortModel
+      .find(filter)
+      .populate("course", "title")
+      .skip(skip)
+      .limit(limit)
+      .sort({ createdAt: -1 }),
+    cohortModel.countDocuments(filter),
+  ]);
+
+  return {
+    cohorts: cohorts.map((c: any) => ({
+      _id: c._id.toString(),
+      name: c.name,
+      description: c.description,
+      course: c.course
+        ? { _id: c.course._id.toString(), title: c.course.title }
+        : null,
+      studentsCount: c.students.length,
+      isActive: c.isActive,
+      createdAt: c.createdAt,
+    })),
+    pagination: {
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    },
+  };
+};
+
+export const getCohortById = async (cohortId: string) => {
+  const cohort = await cohortModel
+    .findById(cohortId)
+    .populate("course", "title")
+    .populate("students", "name email");
+
+  if (!cohort) {
+    throw new AppError("cohort not found", 404);
+  }
+
+  return cohort;
 };

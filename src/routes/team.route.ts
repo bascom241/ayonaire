@@ -1,0 +1,19 @@
+import express from "express";
+const router = express.Router();
+
+import { authorize, restrictTo } from "../middlewares/auth.middleware.js";
+import {
+  getAll,
+  invite,
+  updateRole,
+  suspend,
+  remove,
+} from "../controllers/team.controller.js";
+
+router.get("/", authorize, restrictTo("admin"), getAll);
+router.post("/invite", authorize, restrictTo("admin"), invite);
+router.put("/:id/role", authorize, restrictTo("admin"), updateRole);
+router.put("/:id/suspend", authorize, restrictTo("admin"), suspend);
+router.delete("/:id", authorize, restrictTo("admin"), remove);
+
+export default router;

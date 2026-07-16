@@ -78,6 +78,7 @@ export enum OrderStatus {
 }
 
 export interface BulkActionData {
+  orderIds: string[];
   Completed: string;
   Onhold: string;
   Cancelled: string;
@@ -85,6 +86,13 @@ export interface BulkActionData {
   Refund: string;
   Delete: string;
   Processing: string;
+}
+
+export interface AddOrderNoteRequest {
+  orderId: string;
+  authorId: string;
+  content: string;
+  isPrivate?: boolean;
 }
 
 export interface EditOrderRequest {

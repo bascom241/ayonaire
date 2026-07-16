@@ -4,6 +4,8 @@ import {
   create,
   assign,
   assignInstructor,
+  getAll,
+  getSingle,
 } from "../controllers/cohort.controller.js";
 import { authorize, restrictTo } from "../middlewares/auth.middleware.js";
 
@@ -20,4 +22,6 @@ router.post(
   restrictTo("admin"),
   assignInstructor,
 );
+router.get("/", authorize, restrictTo("admin", "instructor"), getAll);
+router.get("/:cohortId", authorize, restrictTo("admin", "instructor"), getSingle);
 export default router;

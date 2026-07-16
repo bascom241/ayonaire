@@ -8,11 +8,15 @@ import {
   assign,
   saveToDraft,
   getAdminCourses,
-  getSingleAdminCourse,
+  getAll,
+  getSingle,
+  remove,
+  togglePublish,
 } from "../controllers/course.controller.js";
 import { upload } from "../middlewares/multer.js";
 import { cache } from "../middlewares/cache.middleware.js";
 
+router.get("/all", authorize, getAll);
 router.post("/cat", authorize, restrictTo("admin"), createCourseCat);
 router.post(
   "/create",
@@ -47,6 +51,17 @@ router.put(
 );
 // Not documented and deployed
 router.get("/", authorize, restrictTo("admin"), cache(60), getAdminCourses);
-// Not Documented and deployed
-router.get("/:courseId", authorize, restrictTo("admin"), getSingleAdminCourse);
+router.delete(
+  "/:courseId",
+  authorize,
+  restrictTo("admin", "instructor"),
+  remove,
+);
+router.put(
+  "/:courseId/publish",
+  authorize,
+  restrictTo("admin", "instructor"),
+  togglePublish,
+);
+router.get("/:courseId", authorize, getSingle);
 export default router;

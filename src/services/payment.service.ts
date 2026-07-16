@@ -265,10 +265,20 @@ export const payHistory = async (data: PaymentHistoryRequest) => {
 };
 
 export const bulkActionForOrder = async (data: BulkActionData) => {
-  const hasAtLeastOne = Object.values(data).some(Boolean);
+  if (!data.orderIds || data.orderIds.length === 0) {
+    throw new AppError("orderIds is required", 400);
+  }
+
+  const hasAtLeastOne = [
+    data.Completed,
+    data.Onhold,
+    data.Cancelled,
+    data.Processing,
+    data.Delete,
+  ].some(Boolean);
 
   if (!hasAtLeastOne) {
-    throw new Error("At least one action must be provided");
+    throw new AppError("At least one action must be provided", 400);
   }
 
   const statusFields = [
@@ -282,6 +292,12 @@ export const bulkActionForOrder = async (data: BulkActionData) => {
     throw new AppError("Only one status action allowed at a time", 400);
   }
 
+  const filter = { _id: { $in: data.orderIds } };
+
+  if (data.Delete) {
+    return await paymentModel.updateMany(filter, { $set: { isDeleted: true } });
+  }
+
   const updatedFields: any = {};
 
   if (data.Cancelled) updatedFields.orderStatus = OrderStatus.CANCELLED;
@@ -289,11 +305,7 @@ export const bulkActionForOrder = async (data: BulkActionData) => {
   if (data.Onhold) updatedFields.orderStatus = OrderStatus.ON_HOLD;
   if (data.Processing) updatedFields.orderStatus = OrderStatus.PROCESSING;
 
-  if (data.Delete) {
-    await paymentModel.updateMany({}, { $set: { isDeleted: true } });
-  }
-
-  return await paymentModel.updateMany({}, { $set: updatedFields });
+  return await paymentModel.updateMany(filter, { $set: updatedFields });
 };
 
 export const editOrder = async (
@@ -308,13 +320,8 @@ export const editOrder = async (
     throw new AppError("Order not found", 404);
   }
 
-  if (payment.student.toString() !== userId) {
-    throw new AppError("Unauthorized", 403);
-  }
-
-  if (payment.orderStatus === OrderStatus.COMPLETED) {
-    throw new AppError("Cannot edit a completed order", 400);
-  }
+  // This service is only reachable via the admin-only /edit-order route, so
+  // any admin may edit any order's billing/shipping details.
 
   if (billingAddress) {
     payment.billingAddress = {
@@ -336,20 +343,28 @@ export const editOrder = async (
   return payment;
 };
 
-export const viewSingleOrder = async (
-  data: ViewSingleOrderRequest,
-): Promise<PaymentResponse> => {
+export const viewSingleOrder = async (data: ViewSingleOrderRequest) => {
   validateRequestBodyWithValues<ViewSingleOrderRequest>(data, ["orderId"]);
 
   const { orderId } = data;
   const order = await paymentModel
     .findById(orderId)
-    .populate("student", "name");
+    .populate("student", "name email")
+    .populate("course", "title")
+    .populate("notes.author", "name");
+
   if (!order) {
     throw new AppError("order not found", 400);
   }
 
+  const purchaseHistory = await paymentModel
+    .find({ student: order.student, isDeleted: { $ne: true } })
+    .populate("course", "title")
+    .sort({ createdAt: -1 })
+    .limit(10);
+
   return {
+    _id: order._id.toString(),
     student: order.student,
     course: order.course,
     amount: order.amount,
@@ -359,5 +374,122 @@ export const viewSingleOrder = async (
     status: order.status,
     paidAt: order.paidAt,
     orderStatus: order.orderStatus,
+    billingAddress: order.billingAddress,
+    shippingAddress: order.shippingAddress,
+    notes: order.notes,
+    createdAt: (order as any).createdAt,
+    purchaseHistory: purchaseHistory.map((p: any) => ({
+      _id: p._id.toString(),
+      course: p.course,
+      amount: p.amount,
+      status: p.status,
+      orderStatus: p.orderStatus,
+      createdAt: p.createdAt,
+    })),
+  };
+};
+
+export const addOrderNote = async (
+  orderId: string,
+  authorId: string,
+  content: string,
+  isPrivate = true,
+) => {
+  const order = await paymentModel.findById(orderId);
+  if (!order) {
+    throw new AppError("order not found", 404);
+  }
+
+  order.notes.push({
+    author: new mongoose.Types.ObjectId(authorId),
+    content,
+    isPrivate,
+    createdAt: new Date(),
+  } as any);
+
+  await order.save();
+  return order.notes;
+};
+
+export const getPaymentAnalytics = async () => {
+  const [totals, monthly, platformFeeAgg] = await Promise.all([
+    paymentModel.aggregate([
+      { $match: { status: PaymentStatus.SUCCESS, isDeleted: { $ne: true } } },
+      { $group: { _id: null, totalRevenue: { $sum: "$amount" }, count: { $sum: 1 } } },
+    ]),
+    paymentModel.aggregate([
+      { $match: { status: PaymentStatus.SUCCESS, isDeleted: { $ne: true } } },
+      {
+        $group: {
+          _id: { year: { $year: "$paidAt" }, month: { $month: "$paidAt" } },
+          revenue: { $sum: "$amount" },
+        },
+      },
+      { $sort: { "_id.year": 1, "_id.month": 1 } },
+      { $limit: 12 },
+    ]),
+    paymentModel.aggregate([
+      { $match: { status: PaymentStatus.SUCCESS, isDeleted: { $ne: true } } },
+      {
+        $group: {
+          _id: "$course",
+          revenue: { $sum: "$amount" },
+        },
+      },
+    ]),
+  ]);
+
+  const totalRevenue = totals[0]?.totalRevenue || 0;
+  // Platform fee is a flat configurable percentage of gross revenue; instructor
+  // payout is the remainder. No per-course revenue-share model exists yet, so
+  // this is a simple global split rather than a per-instructor ledger.
+  const PLATFORM_FEE_PERCENT = 15;
+  const platformFees = Math.round((totalRevenue * PLATFORM_FEE_PERCENT) / 100);
+  const instructorPayouts = totalRevenue - platformFees;
+
+  return {
+    totalRevenue,
+    totalTransactions: totals[0]?.count || 0,
+    platformFees,
+    instructorPayouts,
+    platformFeePercent: PLATFORM_FEE_PERCENT,
+    monthlyRevenue: monthly.map((m) => ({
+      year: m._id.year,
+      month: m._id.month,
+      revenue: m.revenue,
+    })),
+  };
+};
+
+export const getStudentPurchases = async (query: any) => {
+  const page = Math.max(1, parseInt(query.page) || 1);
+  const limit = Math.max(1, parseInt(query.limit) || 10);
+  const skip = (page - 1) * limit;
+
+  const filter: Record<string, any> = { isDeleted: { $ne: true } };
+  if (query.status) filter.status = query.status;
+
+  const [purchases, total] = await Promise.all([
+    paymentModel
+      .find(filter)
+      .populate("student", "name email")
+      .populate("course", "title")
+      .skip(skip)
+      .limit(limit)
+      .sort({ createdAt: -1 }),
+    paymentModel.countDocuments(filter),
+  ]);
+
+  return {
+    purchases: purchases.map((p: any) => ({
+      _id: p._id.toString(),
+      student: p.student,
+      course: p.course,
+      amount: p.amount,
+      channel: p.channel,
+      status: p.status,
+      createdAt: p.createdAt,
+    })),
+    pagination: { total, page, limit, totalPages: Math.ceil(total / limit) },
   };
 };

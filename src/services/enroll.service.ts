@@ -12,6 +12,8 @@ import {
   StudentCourseDetail,
 } from "../types/enrollment.types.js";
 import { pipeline } from "node:stream";
+import { getPagination } from "../utils/getPagination.js";
+import { validateRequestBodyWithValues } from "../utils/validateRequestBody.js";
 
 export const enrollStudent = async (
   data: EnrollmentRequest,
@@ -58,7 +60,7 @@ export const removeStudentFromCourse = async (
     course: data.course,
   });
 
-  const course = await courseModel.findByIdAndDelete(data.course, {
+  const course = await courseModel.findByIdAndUpdate(data.course, {
     $pull: { students: data.student },
   });
   return ` ${user.email} has been removed from this course ${course?.title}`;
@@ -260,4 +262,131 @@ export const getEnrolledCourseDetail = async (
       : null,
     enrolledAt: enrollment.createdAt,
   };
+};
+
+/// ----------- Admin enrollment management ---------------///
+
+export const getAllEnrollmentsForAdmin = async (query: any) => {
+  const { page, limit, skip } = getPagination(query);
+
+  const filter: Record<string, any> = {};
+  if (query.course) filter.course = query.course;
+  if (query.status) filter.status = query.status;
+
+  const [enrollments, total] = await Promise.all([
+    enrollmentModel
+      .find(filter)
+      .populate("student", "name email")
+      .populate("course", "title")
+      .skip(skip)
+      .limit(limit)
+      .sort({ createdAt: -1 }),
+    enrollmentModel.countDocuments(filter),
+  ]);
+
+  return {
+    enrollments: enrollments.map((e: any) => ({
+      _id: e._id.toString(),
+      student: e.student
+        ? { _id: e.student._id.toString(), name: e.student.name, email: e.student.email }
+        : null,
+      course: e.course
+        ? { _id: e.course._id.toString(), title: e.course.title }
+        : null,
+      status: e.status,
+      progress: e.progress,
+      completed: e.completed,
+      createdAt: e.createdAt,
+    })),
+    pagination: {
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    },
+  };
+};
+
+export const bulkEnrollStudents = async (
+  courseId: string,
+  studentIds: string[],
+) => {
+  validateRequestBodyWithValues<{ courseId: string; studentIds: string[] }>(
+    { courseId, studentIds },
+    ["courseId", "studentIds"],
+  );
+
+  const course = await courseModel.findById(courseId);
+  if (!course) {
+    throw new AppError("course does not exist", 404);
+  }
+
+  const enrolled: string[] = [];
+  const skipped: string[] = [];
+
+  for (const studentId of studentIds) {
+    const user = await userModel.findById(studentId);
+    if (!user) {
+      skipped.push(studentId);
+      continue;
+    }
+
+    const existing = await enrollmentModel.findOne({
+      student: studentId,
+      course: courseId,
+    });
+    if (existing) {
+      skipped.push(user.email);
+      continue;
+    }
+
+    await enrollmentModel.create({ course: courseId, student: studentId });
+    await courseModel.findByIdAndUpdate(courseId, {
+      $addToSet: { students: studentId },
+    });
+    enrolled.push(user.email);
+  }
+
+  return { enrolled, skipped };
+};
+
+export const bulkEnrollStudentsByEmail = async (
+  courseId: string,
+  emails: string[],
+) => {
+  const course = await courseModel.findById(courseId);
+  if (!course) {
+    throw new AppError("course does not exist", 404);
+  }
+
+  const enrolled: string[] = [];
+  const skipped: string[] = [];
+
+  for (const rawEmail of emails) {
+    const email = rawEmail.trim().toLowerCase();
+    if (!email) continue;
+
+    const user = await userModel.findOne({ email });
+    if (!user) {
+      skipped.push(email);
+      continue;
+    }
+
+    const existing = await enrollmentModel.findOne({
+      student: user._id,
+      course: courseId,
+    });
+    if (existing) {
+      skipped.push(email);
+      continue;
+    }
+
+    await enrollmentModel.create({ course: courseId, student: user._id });
+    await courseModel.findByIdAndUpdate(courseId, {
+      $addToSet: { students: user._id },
+    });
+    enrolled.push(email);
+  }
+
+  return { enrolled, skipped };
 };

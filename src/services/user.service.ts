@@ -564,6 +564,20 @@ export const suspendUser = async (id: string): Promise<void> => {
   await User.findByIdAndUpdate(id, { status: UserStatus.SUSPENDED });
 };
 
+export const activateUser = async (id: string): Promise<void> => {
+  const user = await User.findById(id);
+
+  if (user !== null && user.role === UserRole.ADMIN) {
+    throw new AppError("cant modify an admin", 404);
+  }
+
+  if (user !== null && user.status === UserStatus.ACTIVE) {
+    throw new AppError("account already active", 404);
+  }
+
+  await User.findByIdAndUpdate(id, { status: UserStatus.ACTIVE });
+};
+
 export const assignRole = async (
   id: string,
   data: AssignRole,
@@ -964,6 +978,7 @@ export const acceptInvite = async (
     email: invite.email,
     password: hashPassword,
     isEmailVerified: true,
+    role: invite.role || UserRole.USER,
   });
 
   if (invite.courseId) {

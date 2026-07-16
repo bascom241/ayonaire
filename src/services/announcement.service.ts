@@ -11,6 +11,7 @@ import {
   AnnouncementResponse,
   CreateAnnouncement,
   CreateAnnouncementResponse,
+  UpdateAnnouncementRequest,
 } from "../types/announcement.types.js";
 import { getPagination } from "../utils/getPagination.js";
 import { validateRequestBodyWithValues } from "../utils/validateRequestBody.js";
@@ -27,6 +28,15 @@ export const createAnnouncement = async (
   if (!hasAtLeastOne) {
     throw new AppError("At leat one value must be provided", 400);
   }
+
+  const commonFields = {
+    title,
+    summary,
+    createdBy: data.createdBy,
+    status: data.status,
+    scheduledAt: data.scheduledAt,
+  };
+
   if (cohortId) {
     const cohort = await cohortModel
       .findById(cohortId)
@@ -41,9 +51,9 @@ export const createAnnouncement = async (
     await sendAnnouncementToStudentsInACohort(studentEmails, title, summary);
 
     const announcment = await announcementModel.create({
+      ...commonFields,
       audience: cohort.name,
-      title: title,
-      summary: summary,
+      cohort: cohortId,
     });
 
     return {
@@ -69,9 +79,9 @@ export const createAnnouncement = async (
     await sendAnnouncementToStudentsInACourse(studentEmails, title, summary);
 
     const announcment = await announcementModel.create({
+      ...commonFields,
       audience: course.title,
-      title: title,
-      summary: summary,
+      course: courseId,
     });
 
     return {
@@ -84,7 +94,7 @@ export const createAnnouncement = async (
 
   if (students) {
     const existingStudents: string[] = [];
-
+    const existingStudentIds: string[] = [];
     const nonExistentStudents: string[] = [];
 
     for (const studentEmail of students) {
@@ -92,6 +102,7 @@ export const createAnnouncement = async (
 
       if (isStudentExist) {
         existingStudents.push(studentEmail);
+        existingStudentIds.push(isStudentExist._id.toString());
       } else {
         nonExistentStudents.push(studentEmail);
         console.log(`Student not found in platform: ${studentEmail}`);
@@ -110,9 +121,9 @@ export const createAnnouncement = async (
       );
 
       const announcment = await announcementModel.create({
+        ...commonFields,
         audience: "Specific students",
-        title: title,
-        summary: summary,
+        students: existingStudentIds,
       });
 
       return {
@@ -133,9 +144,16 @@ export const getAllAnnounceMents = async (
   data: any,
 ): Promise<AnnouncementResponse> => {
   const { page, skip, limit } = getPagination(data);
+
+  const filter: Record<string, any> = {};
+  if (data.course) filter.course = data.course;
+  if (data.cohort) filter.cohort = data.cohort;
+  if (data.createdBy) filter.createdBy = data.createdBy;
+  if (data.status) filter.status = data.status;
+
   const [announcements, total] = await Promise.all([
-    announcementModel.find().skip(skip).limit(limit),
-    announcementModel.countDocuments(),
+    announcementModel.find(filter).skip(skip).limit(limit).sort({ createdAt: -1 }),
+    announcementModel.countDocuments(filter),
   ]);
 
   const formattedAnnouceMent = announcements.map((announcement) => ({
@@ -143,6 +161,12 @@ export const getAllAnnounceMents = async (
     audience: announcement.audience,
     title: announcement.title,
     summary: announcement.summary,
+    course: announcement.course ? announcement.course.toString() : null,
+    cohort: announcement.cohort ? announcement.cohort.toString() : null,
+    createdBy: announcement.createdBy ? announcement.createdBy.toString() : null,
+    status: announcement.status,
+    views: announcement.views,
+    createdAt: (announcement as any).createdAt,
   }));
 
   return {
@@ -154,4 +178,54 @@ export const getAllAnnounceMents = async (
       totalPages: Math.ceil(total / limit),
     },
   };
+};
+
+export const updateAnnouncement = async (
+  announcementId: string,
+  userId: string,
+  role: string | undefined,
+  data: UpdateAnnouncementRequest,
+) => {
+  const announcement = await announcementModel.findById(announcementId);
+  if (!announcement) {
+    throw new AppError("Announcement not found", 404);
+  }
+
+  if (
+    role !== "admin" &&
+    announcement.createdBy &&
+    announcement.createdBy.toString() !== userId
+  ) {
+    throw new AppError("You do not own this announcement", 403);
+  }
+
+  if (data.title !== undefined) announcement.title = data.title;
+  if (data.summary !== undefined) announcement.summary = data.summary;
+  if (data.status !== undefined) announcement.status = data.status as any;
+  if (data.scheduledAt !== undefined)
+    announcement.scheduledAt = data.scheduledAt as any;
+
+  await announcement.save();
+  return announcement;
+};
+
+export const deleteAnnouncement = async (
+  announcementId: string,
+  userId: string,
+  role: string | undefined,
+) => {
+  const announcement = await announcementModel.findById(announcementId);
+  if (!announcement) {
+    throw new AppError("Announcement not found", 404);
+  }
+
+  if (
+    role !== "admin" &&
+    announcement.createdBy &&
+    announcement.createdBy.toString() !== userId
+  ) {
+    throw new AppError("You do not own this announcement", 403);
+  }
+
+  await announcementModel.findByIdAndDelete(announcementId);
 };

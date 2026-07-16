@@ -342,4 +342,130 @@ export const getASingleCourseForAdminDashboard = async (
   };
 };
 
+/// ----------- General course browsing (all roles) ---------------///
+
+export const getAllCourses = async (query: any) => {
+  const { page, limit, skip } = getPagination(query);
+
+  const filter: Record<string, any> = {};
+  if (query.instructor) filter.instructor = query.instructor;
+  if (query.status) filter.status = query.status;
+  if (query.category) filter.category = query.category;
+  if (query.search) {
+    filter.title = { $regex: query.search, $options: "i" };
+  }
+
+  const [courses, total] = await Promise.all([
+    courseModel
+      .find(filter)
+      .populate("category", "title")
+      .populate("instructor", "name email")
+      .skip(skip)
+      .limit(limit)
+      .sort({ createdAt: -1 }),
+    courseModel.countDocuments(filter),
+  ]);
+
+  const courseIds = courses.map((course) => course._id);
+  const enrollments = await enrollmentModel.find({
+    course: { $in: courseIds },
+  });
+  const enrollmentCountMap: Record<string, number> = {};
+  enrollments.forEach((enroll) => {
+    const courseId = enroll.course.toString();
+    enrollmentCountMap[courseId] = (enrollmentCountMap[courseId] || 0) + 1;
+  });
+
+  return {
+    courses: courses.map((course: any) => ({
+      _id: course._id.toString(),
+      title: course.title,
+      description: course.description,
+      thumbnail: course.thumbnail,
+      category: course.category,
+      instructor: course.instructor,
+      price: course.price,
+      status: course.status,
+      courseLevel: course.courseLevel,
+      enrollmentCount: enrollmentCountMap[course._id.toString()] || 0,
+      createdAt: course.createdAt,
+    })),
+    pagination: {
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    },
+  };
+};
+
+export const getCourseById = async (courseId: string) => {
+  const course = await courseModel
+    .findById(courseId)
+    .populate("category", "title")
+    .populate("instructor", "name email")
+    .populate("modules");
+
+  if (!course) {
+    throw new AppError("Course not found", 404);
+  }
+
+  return course;
+};
+
+export const deleteCourse = async (
+  courseId: string,
+  userId: string,
+  role: string | undefined,
+) => {
+  const course = await courseModel.findById(courseId);
+  if (!course) {
+    throw new AppError("Course not found", 404);
+  }
+
+  if (
+    role !== "admin" &&
+    course.instructor &&
+    course.instructor.toString() !== userId
+  ) {
+    throw new AppError("You do not own this course", 403);
+  }
+
+  if (course.thumbnail?.publicId) {
+    await deleteImage(course.thumbnail.publicId);
+  }
+  if (course.introVideo?.publicId) {
+    await deleteImage(course.introVideo.publicId);
+  }
+
+  await courseModel.findByIdAndDelete(courseId);
+};
+
+export const toggleCoursePublishStatus = async (
+  courseId: string,
+  userId: string,
+  role: string | undefined,
+) => {
+  const course = await courseModel.findById(courseId);
+  if (!course) {
+    throw new AppError("Course not found", 404);
+  }
+
+  if (
+    role !== "admin" &&
+    course.instructor &&
+    course.instructor.toString() !== userId
+  ) {
+    throw new AppError("You do not own this course", 403);
+  }
+
+  course.status =
+    course.status === CourseStatus.ACTIVE
+      ? CourseStatus.DRAFT
+      : CourseStatus.ACTIVE;
+
+  await course.save();
+  return course;
+};
+
 /// ----------- Students Service for Apis  ---------------///

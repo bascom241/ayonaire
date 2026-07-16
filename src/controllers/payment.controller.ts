@@ -6,12 +6,16 @@ import {
   initializePayment,
   payHistory,
   viewSingleOrder,
+  addOrderNote,
+  getPaymentAnalytics,
+  getStudentPurchases,
 } from "../services/payment.service.js";
 import {
   PaymentRequest,
   PaystackWebhookEvent,
   PaymentHistoryRequest,
   EditOrderRequest,
+  BulkActionData,
 } from "../types/payment.types.js";
 import crypto from "crypto";
 import { AppError } from "../errors/AppError.js";
@@ -118,16 +122,6 @@ export const paymentHistory = async (
   }
 };
 
-export interface BulkActionData {
-  Completed: string;
-  Onhold: string;
-  Cancelled: string;
-  Revoke: string;
-  Refund: string;
-  Delete: string;
-  Processing: string;
-}
-
 export const bulkEdit = async (
   req: Request,
   res: Response,
@@ -135,8 +129,9 @@ export const bulkEdit = async (
 ) => {
   try {
     const dataToSend: BulkActionData = {
+      orderIds: req.body.orderIds,
       Completed: req.body.completed,
-      Onhold: req.body.completed,
+      Onhold: req.body.onhold,
       Cancelled: req.body.cancelled,
       Revoke: req.body.revoke,
       Refund: req.body.refund,
@@ -182,7 +177,7 @@ export const viewSingle = async (
   next: NextFunction,
 ) => {
   try {
-    const { orderId } = req.params;
+    const orderId = req.params.orderId as string;
 
     if (!orderId || typeof orderId !== "string") {
       throw new AppError("order id is missing or Invalid format", 400);
@@ -190,6 +185,58 @@ export const viewSingle = async (
 
     const data = await viewSingleOrder({ orderId });
     res.status(200).json({ success: true, data });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const addNote = async (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const authorId = req.user?.id;
+    if (!authorId) throw new AppError("Unauthorized", 401);
+
+    const orderId = req.params.orderId as string;
+    if (!req.body.content) {
+      throw new AppError("content is required", 400);
+    }
+
+    const data = await addOrderNote(
+      orderId,
+      authorId,
+      req.body.content,
+      req.body.isPrivate,
+    );
+    res.status(200).json({ success: true, data });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const analytics = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const data = await getPaymentAnalytics();
+    res.status(200).json({ success: true, data });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const studentPurchases = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const data = await getStudentPurchases(req.query);
+    res.status(200).json({ success: true, ...data });
   } catch (error) {
     next(error);
   }

@@ -19,6 +19,7 @@ import {
 } from "../types/lesson.types.js";
 import { uploadMedia } from "../utils/uploadToCloudinary.js";
 import { MarkLessonCompletedEnrollmentResponse } from "../types/enrollment.types.js";
+import { issueCertificateIfEligible } from "./certificate.service.js";
 export const uploadLesson = async (
   data: UploadLessonRequest,
 ): Promise<UploadLessonResponse> => {
@@ -128,6 +129,10 @@ export const markLessonAsCompleted = async (
     enrollment.completed = true;
   }
   await enrollment.save();
+
+  if (enrollment.completed) {
+    await issueCertificateIfEligible(data.studentId, data.courseId);
+  }
 
   return {
     course: enrollment.course.toString(),

@@ -3,11 +3,17 @@ import { CreateAnnouncement } from "../types/announcement.types.js";
 import {
   createAnnouncement,
   getAllAnnounceMents,
+  updateAnnouncement,
+  deleteAnnouncement,
 } from "../services/announcement.service.js";
 import { AppError } from "../errors/AppError.js";
 
+interface AuthRequest extends Request {
+  user?: { id?: string; role?: string };
+}
+
 export const create = async (
-  req: Request,
+  req: AuthRequest,
   res: Response,
   next: NextFunction,
 ) => {
@@ -21,6 +27,9 @@ export const create = async (
     const dataToSend: CreateAnnouncement = {
       title,
       summary,
+      createdBy: req.user?.id,
+      status: req.body.status,
+      scheduledAt: req.body.scheduledAt,
     };
 
     if (cohortId) {
@@ -52,6 +61,45 @@ export const getAll = async (
     const query = req.query;
     const data = await getAllAnnounceMents(query);
     res.status(200).json({ success: true, data });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const update = async (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) throw new AppError("Unauthorized", 401);
+
+    const announcementId = req.params.announcementId as string;
+    const data = await updateAnnouncement(announcementId, userId, req.user?.role, {
+      title: req.body.title,
+      summary: req.body.summary,
+      status: req.body.status,
+      scheduledAt: req.body.scheduledAt,
+    });
+    res.status(200).json({ success: true, data });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const remove = async (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) throw new AppError("Unauthorized", 401);
+
+    const announcementId = req.params.announcementId as string;
+    await deleteAnnouncement(announcementId, userId, req.user?.role);
+    res.status(200).json({ success: true, message: "Announcement deleted" });
   } catch (error) {
     next(error);
   }

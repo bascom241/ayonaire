@@ -8,11 +8,14 @@ const inviteSchema = new mongoose.Schema(
     },
     courseId: {
       type: mongoose.Types.ObjectId,
-      required: [true, "courseId is required"],
     },
     cohortId: {
       type: mongoose.Types.ObjectId,
-      required: [true, "cohortId id required"],
+    },
+    role: {
+      type: String,
+      enum: ["user", "instructor", "admin"],
+      default: "user",
     },
     token: {
       type: String,

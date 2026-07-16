@@ -1,4 +1,5 @@
 import mongoose, { Schema } from "mongoose";
+import { AssignmentStatus, AssignmentType } from "../types/assignment.types.js";
 
 const assignmentSchema = new Schema(
   {
@@ -12,6 +13,10 @@ const assignmentSchema = new Schema(
       ref: "Course",
       required: [true, "Course Id is Required to create an assignment"],
     },
+    cohort: {
+      type: Schema.Types.ObjectId,
+      ref: "Cohort",
+    },
     title: {
       type: String,
       required: [true, "Assignment Title is required"],
@@ -19,6 +24,9 @@ const assignmentSchema = new Schema(
     description: {
       type: String,
       required: [true, "Assignment Description is required"],
+    },
+    instructions: {
+      type: String,
     },
     materials: [
       {
@@ -32,6 +40,24 @@ const assignmentSchema = new Schema(
       ref: "Module",
       required: [true, "Module is is required "],
     },
+    assignmentType: {
+      type: String,
+      enum: Object.values(AssignmentType),
+      default: AssignmentType.DOCUMENT,
+    },
+    status: {
+      type: String,
+      enum: Object.values(AssignmentStatus),
+      default: AssignmentStatus.DRAFT,
+    },
+    dueDate: {
+      type: Date,
+    },
+    totalPoints: {
+      type: Number,
+      default: 100,
+    },
+    allowedFileTypes: [String],
   },
   { timestamps: true },
 );
