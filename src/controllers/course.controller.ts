@@ -2,6 +2,7 @@ import { NextFunction, Request, Response } from "express";
 import { Express } from "express";
 import {
   createCourseCategory,
+  listCourseCategories,
   createCourse,
   updateCourse,
   assignInstuctorToCourse,
@@ -41,6 +42,19 @@ export const createCourseCat = async (
     const { title } = req.body;
     const data = await createCourseCategory(title);
     res.status(201).json({ success: true, data });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getCourseCategories = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const data = await listCourseCategories();
+    res.status(200).json({ success: true, data });
   } catch (error) {
     next(error);
   }
@@ -101,6 +115,11 @@ export const edit = async (req: Request, res: Response, next: NextFunction) => {
       thumbnail,
       introVideo,
       courseLevel: req.body.courseLevel,
+      completionCertificate:
+        req.body.completionCertificate !== undefined
+          ? req.body.completionCertificate === "true" ||
+            req.body.completionCertificate === true
+          : undefined,
     };
 
     const data = await updateCourse(courseId, dataToSend);

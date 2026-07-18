@@ -65,6 +65,7 @@ export interface CreateCourseRequest {
   price: number;
   status: string;
   courseLevel: string;
+  completionCertificate?: boolean;
 }
 export interface CreateCourseResponse {
   _id: string;

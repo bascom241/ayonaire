@@ -28,6 +28,9 @@ export const uploadLesson = async (
     module: data.module,
     course: data.course,
     order: data.order,
+    isPublished: data.isPublished ?? true,
+    isFreePreview: data.isFreePreview,
+    isLocked: data.isLocked,
   };
 
   const isModule = await moduleModel.findById(lessonData.module);

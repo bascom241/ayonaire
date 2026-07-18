@@ -3,6 +3,7 @@ const router = express.Router();
 import { restrictTo, authorize } from "../middlewares/auth.middleware.js";
 import {
   createCourseCat,
+  getCourseCategories,
   create,
   edit,
   assign,
@@ -17,6 +18,7 @@ import { upload } from "../middlewares/multer.js";
 import { cache } from "../middlewares/cache.middleware.js";
 
 router.get("/all", authorize, getAll);
+router.get("/cat", authorize, getCourseCategories);
 router.post("/cat", authorize, restrictTo("admin"), createCourseCat);
 router.post(
   "/create",

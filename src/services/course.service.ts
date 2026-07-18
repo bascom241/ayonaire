@@ -27,6 +27,21 @@ export const createCourseCategory = async (title: CourseCategoryEnum) => {
   return category;
 };
 
+// Categories are drawn from a small fixed enum, but course.category stores a
+// reference to a CourseCategory document rather than the raw enum value, so
+// callers still need document _ids to submit. Self-seeds on first call so
+// instructors aren't blocked waiting on an admin to have created them first.
+export const listCourseCategories = async () => {
+  const existing = await CourseCategory.find();
+  if (existing.length > 0) {
+    return existing;
+  }
+
+  return CourseCategory.insertMany(
+    Object.values(CourseCategoryEnum).map((title) => ({ title })),
+  );
+};
+
 export const createCourse = async (
   data: CreateCourseRequest,
 ): Promise<CreateCourseResponse> => {
@@ -137,6 +152,8 @@ export const updateCourse = async (
     course.courseLevel = data.courseLevel as CourseLevel;
   if (data.instructor !== undefined)
     course.instructor = new mongoose.Types.ObjectId(data.instructor);
+  if (data.completionCertificate !== undefined)
+    course.completionCertificate = data.completionCertificate;
 
   const updatedCourse = await course.save();
 
