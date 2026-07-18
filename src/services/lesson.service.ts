@@ -16,6 +16,7 @@ import {
   UpdateLastLessonResponse,
   ViewLessonRequest,
   ViewCourseContentResponse,
+  ViewCourseContentForOwnerResponse,
 } from "../types/lesson.types.js";
 import { uploadMedia } from "../utils/uploadToCloudinary.js";
 import { MarkLessonCompletedEnrollmentResponse } from "../types/enrollment.types.js";
@@ -284,4 +285,50 @@ export const viewLessonContent = async (
       ? myEnrollment.lastLesson.toString()
       : null,
   };
+};
+
+// For the course's own instructor (or an admin) to preview its curriculum -
+// there is no enrollment record for them to key off, so this skips the
+// isCompleted/progress overlay entirely rather than reusing viewLessonContent.
+export const viewCourseContentForOwner = async (
+  courseId: string,
+  userId: string,
+  role: string | undefined,
+): Promise<ViewCourseContentForOwnerResponse> => {
+  const course = await courseModel.findById(courseId);
+  if (!course) {
+    throw new AppError("course not found", 404);
+  }
+
+  if (
+    role !== "admin" &&
+    course.instructor &&
+    course.instructor.toString() !== userId
+  ) {
+    throw new AppError("You do not own this course", 403);
+  }
+
+  const pipeline: PipelineStage[] = [
+    { $match: { course: new Types.ObjectId(courseId) } },
+    { $sort: { order: 1 } },
+    {
+      $lookup: {
+        from: "lessons",
+        localField: "_id",
+        foreignField: "module",
+        as: "lessons",
+      },
+    },
+    {
+      $addFields: {
+        lessons: {
+          $sortArray: { input: "$lessons", sortBy: { order: 1 } },
+        },
+      },
+    },
+  ];
+
+  const modules = await moduleModel.aggregate(pipeline);
+
+  return { modules };
 };

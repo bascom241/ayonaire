@@ -3,6 +3,7 @@ dotenv.config();
 
 import app from "./app.js";
 import { connecToDB } from "./utils/db.js";
+import { connectRedis } from "./config/redis.js";
 
 import http from "http";
 import { Server } from "socket.io";
@@ -39,6 +40,14 @@ const startServer = async () => {
 
     server.listen(port, "0.0.0.0", () => {
       console.log(`🚀 Server running on port ${port}`);
+    });
+
+    // Redis is only used for response caching (see cache.middleware.ts /
+    // safeCacheDel) - both are already written to degrade gracefully when
+    // Redis is unreachable, so a failed/slow connection here must never
+    // block server startup or crash the process.
+    connectRedis().catch((err) => {
+      console.error("⚠️ Redis connection failed - continuing without cache:", err);
     });
   } catch (err) {
     console.error("❌ Startup error:", err);

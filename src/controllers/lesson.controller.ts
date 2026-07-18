@@ -4,6 +4,7 @@ import {
   updateLastLesson,
   uploadLesson,
   viewLessonContent,
+  viewCourseContentForOwner,
 } from "../services/lesson.service.js";
 import { NextFunction, Request, Response } from "express";
 import {
@@ -162,6 +163,27 @@ export const view = async (
     };
 
     const data = await viewLessonContent(dataToSend);
+    res.status(200).json({ success: true, data });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const viewOwn = async (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) throw new AppError("Unauthorized", 401);
+
+    const courseId = req.params.courseId as string;
+    const data = await viewCourseContentForOwner(
+      courseId,
+      userId,
+      req.user?.role,
+    );
     res.status(200).json({ success: true, data });
   } catch (error) {
     next(error);

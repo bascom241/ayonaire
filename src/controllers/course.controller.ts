@@ -16,7 +16,7 @@ import {
 } from "../services/course.service.js";
 import { CreateCourseRequest } from "../types/course.types.js";
 import { AppError } from "../errors/AppError.js";
-import redisClient from "../config/redis.js";
+import { safeCacheDel } from "../config/redis.js";
 
 interface AuthRequest extends Request {
   user?: { id: string; role?: string };
@@ -85,7 +85,7 @@ export const create = async (
     };
 
     const data = await createCourse(dataToSend);
-    await redisClient.del("cache:/course");
+    await safeCacheDel("cache:/course");
 
     res.status(201).json({
       success: true,
@@ -258,7 +258,7 @@ export const remove = async (
 
     const courseId = req.params.courseId as string;
     await deleteCourse(courseId, userId, req.user?.role);
-    await redisClient.del("cache:/course");
+    await safeCacheDel("cache:/course");
     res.status(200).json({ success: true, message: "Course deleted" });
   } catch (error) {
     next(error);
@@ -280,7 +280,7 @@ export const togglePublish = async (
       userId,
       req.user?.role,
     );
-    await redisClient.del("cache:/course");
+    await safeCacheDel("cache:/course");
     res.status(200).json({ success: true, data });
   } catch (error) {
     next(error);

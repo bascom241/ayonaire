@@ -166,3 +166,16 @@ export interface ViewCourseContentResponse {
   progress: number;
   lastLesson: string | null;
 }
+
+export interface ModuleWithLessonsPreview {
+  _id: string;
+  title: string;
+  description: string;
+  course: string;
+  order: number;
+  lessons: Omit<LessonWithProgress, "isCompleted">[];
+}
+
+export interface ViewCourseContentForOwnerResponse {
+  modules: ModuleWithLessonsPreview[];
+}
