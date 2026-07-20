@@ -238,8 +238,9 @@ export interface LeaderboardEntry {
 
 export interface InviteRequest {
   emails: string[];
-  courseId: string;
-  cohortId: string;
+  courseId?: string;
+  cohortId?: string;
+  role?: string;
 }
 export interface AcceptInviteRequest {
   token: string;

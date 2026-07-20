@@ -6,6 +6,7 @@ import {
   getAssignmentById,
   gradeSubmission,
   listAssignments,
+  listAllSubmissions,
   listSubmissionsForAssignment,
   submitAssignment,
   updateAssignment,
@@ -205,6 +206,22 @@ export const getSubmissions = async (
       req.user?.role,
     );
     res.status(200).json({ success: true, data });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getAllSubmissions = async (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) throw new AppError("Unauthorized", 401);
+
+    const data = await listAllSubmissions(userId, req.user?.role, req.query);
+    res.status(200).json({ success: true, ...data });
   } catch (error) {
     next(error);
   }

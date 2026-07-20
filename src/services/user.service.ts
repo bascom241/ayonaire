@@ -873,16 +873,10 @@ export const addUser = async (data: AddUserDto): Promise<UserResponse> => {
 
 interface InviteRequestBody {
   emails: string[];
-  courseId: string;
-  cohortId: string;
 }
 
 export const inviteUser = async (data: InviteRequest) => {
-  validateRequestBodyWithValues<InviteRequestBody>(data, [
-    "emails",
-    "courseId",
-    "cohortId",
-  ]);
+  validateRequestBodyWithValues<InviteRequestBody>(data, ["emails"]);
 
   const results = {
     sent: [] as string[],
@@ -913,6 +907,7 @@ export const inviteUser = async (data: InviteRequest) => {
         email,
         courseId: data.courseId,
         cohortId: data.cohortId,
+        role: data.role,
         token,
         expiresAt: Date.now() + 1000 * 60 * 60 * 24,
       });

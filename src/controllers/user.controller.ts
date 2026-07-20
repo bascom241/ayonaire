@@ -417,6 +417,7 @@ export const invite = async (
       emails: req.body.emails,
       courseId: req.body.courseId,
       cohortId: req.body.cohortId,
+      role: req.body.role,
     };
 
     const data = await inviteUser(dataToSend);

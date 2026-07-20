@@ -11,6 +11,7 @@ import {
   remove,
   submit,
   getSubmissions,
+  getAllSubmissions,
   grade,
 } from "../controllers/assignment.controller.js";
 
@@ -22,6 +23,12 @@ router.post(
   create,
 );
 router.get("/", authorize, restrictTo("admin", "instructor"), getAll);
+router.get(
+  "/submissions",
+  authorize,
+  restrictTo("admin", "instructor"),
+  getAllSubmissions,
+);
 router.get("/:assignmentId", authorize, getSingle);
 router.put(
   "/:assignmentId",

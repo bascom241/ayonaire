@@ -350,6 +350,48 @@ export const listSubmissionsForAssignment = async (
   return submissions;
 };
 
+export const listAllSubmissions = async (
+  userId: string,
+  role: string | undefined,
+  query: any,
+) => {
+  const { page, limit, skip } = getPagination(query);
+
+  const assignmentFilter: Record<string, any> = {};
+  if (role !== "admin") assignmentFilter.instructor = userId;
+  if (query.course) assignmentFilter.course = query.course;
+
+  const assignmentIds = await assignmentModel
+    .find(assignmentFilter)
+    .distinct("_id");
+
+  const filter: Record<string, any> = { assignment: { $in: assignmentIds } };
+  if (query.status) filter.status = query.status;
+  if (query.assignment) filter.assignment = query.assignment;
+
+  const [submissions, total] = await Promise.all([
+    assignmentSubmissionModel
+      .find(filter)
+      .populate("student", "name email")
+      .populate("assignment", "title course")
+      .populate("course", "title")
+      .skip(skip)
+      .limit(limit)
+      .sort({ createdAt: -1 }),
+    assignmentSubmissionModel.countDocuments(filter),
+  ]);
+
+  return {
+    submissions,
+    pagination: {
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    },
+  };
+};
+
 export const gradeSubmission = async (data: GradeSubmissionRequest) => {
   validateRequestBodyWithValues<{ submissionId: string; grade: number }>(
     data,
