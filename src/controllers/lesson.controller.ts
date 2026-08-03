@@ -60,9 +60,23 @@ export const uploadVid = async (
 
     const { lessonId } = req.body;
 
-    const titles = req.body.titles; // array of strings
+    // multer collapses repeated same-named text fields down to the last
+    // value, so multiple "titles" fields never arrive as an array here -
+    // the frontend sends them as a single JSON-encoded array string instead.
+    let titles: string[] = [];
+    if (Array.isArray(req.body.titles)) {
+      titles = req.body.titles;
+    } else if (typeof req.body.titles === "string") {
+      try {
+        const parsed = JSON.parse(req.body.titles);
+        titles = Array.isArray(parsed) ? parsed : [req.body.titles];
+      } catch {
+        titles = [req.body.titles];
+      }
+    }
+
     const videos = req.files.map((file, index) => ({
-      title: titles?.[index] || file.originalname,
+      title: titles[index] || file.originalname,
       buffer: file.buffer,
       mimetype: file.mimetype,
       originalname: file.originalname,

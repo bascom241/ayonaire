@@ -52,6 +52,46 @@ export default {
     },
   },
   "/api/v1/workshop/{id}": {
+    get: {
+      tags: ["Workshops"],
+      summary: "Get single workshop",
+      description: "Returns one workshop by ID.",
+      security: [],
+      parameters: [
+        {
+          name: "id",
+          in: "path",
+          required: true,
+          schema: { type: "string" },
+          description: "Workshop ID",
+        },
+      ],
+      responses: {
+        200: { description: "Workshop fetched successfully" },
+        404: { $ref: "#/components/responses/NotFoundError" },
+      },
+    },
+    delete: {
+      tags: ["Workshops"],
+      summary: "Delete a workshop",
+      description: "Deletes an existing workshop. Admin/Instructor only.",
+      security: [{ bearerAuth: [] }],
+      parameters: [
+        {
+          name: "id",
+          in: "path",
+          required: true,
+          schema: { type: "string" },
+          description: "Workshop ID",
+        },
+      ],
+      responses: {
+        200: { description: "Workshop deleted successfully" },
+        401: { $ref: "#/components/responses/UnauthorizedError" },
+        403: { $ref: "#/components/responses/ForbiddenError" },
+        404: { $ref: "#/components/responses/NotFoundError" },
+      },
+    },
     put: {
       tags: ["Workshops"],
       summary: "Edit a workshop",

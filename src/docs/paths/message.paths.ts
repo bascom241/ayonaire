@@ -82,31 +82,23 @@ export default {
     },
   },
 
-  "/api/v1/message": {
+  "/api/v1/message/{roomId}": {
     get: {
       tags: ["Messages"],
       summary: "Get room messages",
-      description:
-        "Returns paginated messages for a room. Current backend expects roomId in the request body.",
+      description: "Returns paginated messages for a room.",
       security: [{ bearerAuth: [] }],
       parameters: [
+        {
+          in: "path",
+          name: "roomId",
+          required: true,
+          schema: { type: "string" },
+          description: "Room ID",
+        },
         { in: "query", name: "page", schema: { type: "number", default: 1 } },
         { in: "query", name: "limit", schema: { type: "number", default: 10 } },
       ],
-      requestBody: {
-        required: true,
-        content: {
-          "application/json": {
-            schema: {
-              type: "object",
-              required: ["roomId"],
-              properties: {
-                roomId: { type: "string", example: "661f2a8c9c1234567890abcd" },
-              },
-            },
-          },
-        },
-      },
       responses: {
         200: {
           description: "Messages retrieved successfully",

@@ -145,6 +145,55 @@ export default {
       },
     },
   },
+  "/api/v1/feed/share": {
+    post: {
+      tags: ["Feeds"],
+      summary: "Share a feed",
+      security: [{ bearerAuth: [] }],
+      requestBody: {
+        required: true,
+        content: {
+          "application/json": {
+            schema: {
+              type: "object",
+              properties: {
+                feedId: { type: "string" },
+              },
+            },
+          },
+        },
+      },
+      responses: {
+        200: { description: "Feed shared successfully" },
+        401: { $ref: "#/components/responses/UnauthorizedError" },
+      },
+    },
+  },
+  "/api/v1/feed/report": {
+    post: {
+      tags: ["Feeds"],
+      summary: "Report a feed",
+      security: [{ bearerAuth: [] }],
+      requestBody: {
+        required: true,
+        content: {
+          "application/json": {
+            schema: {
+              type: "object",
+              properties: {
+                feedId: { type: "string" },
+                reason: { type: "string" },
+              },
+            },
+          },
+        },
+      },
+      responses: {
+        200: { description: "Feed reported successfully" },
+        401: { $ref: "#/components/responses/UnauthorizedError" },
+      },
+    },
+  },
   "/api/v1/feed/tag": {
     post: {
       tags: ["Feeds"],

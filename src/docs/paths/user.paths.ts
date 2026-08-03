@@ -529,6 +529,32 @@ export default {
         404: { $ref: "#/components/responses/NotFoundError" },
       },
     },
+    delete: {
+      tags: ["Admin"],
+      summary: "Delete user",
+      description: "Permanently removes a user account. Admin only.",
+      security: [{ bearerAuth: [] }],
+      parameters: [userIdParam],
+      responses: {
+        200: {
+          description: "User deleted successfully",
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  success: { type: "boolean", example: true },
+                  message: { type: "string", example: "user deleted" },
+                },
+              },
+            },
+          },
+        },
+        401: { $ref: "#/components/responses/UnauthorizedError" },
+        403: { $ref: "#/components/responses/ForbiddenError" },
+        404: { $ref: "#/components/responses/NotFoundError" },
+      },
+    },
   },
 
   "/api/v1/auth/user/{id}/login-history": {
@@ -720,6 +746,35 @@ export default {
                 properties: {
                   success: { type: "boolean", example: true },
                   message: { type: "string", example: "user suspended" },
+                },
+              },
+            },
+          },
+        },
+        401: { $ref: "#/components/responses/UnauthorizedError" },
+        403: { $ref: "#/components/responses/ForbiddenError" },
+        404: { $ref: "#/components/responses/NotFoundError" },
+      },
+    },
+  },
+
+  "/api/v1/auth/user/{id}/activate-user": {
+    put: {
+      tags: ["Admin"],
+      summary: "Activate user",
+      description: "Reactivates a deactivated or suspended user account. Admin only.",
+      security: [{ bearerAuth: [] }],
+      parameters: [userIdParam],
+      responses: {
+        200: {
+          description: "User activated successfully",
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  success: { type: "boolean", example: true },
+                  message: { type: "string", example: "user activated" },
                 },
               },
             },

@@ -225,4 +225,99 @@ export default {
       },
     },
   },
+
+  "/api/v1/instructor/dashboard/stats": {
+    get: {
+      tags: ["Instructor"],
+      summary: "Get instructor dashboard stats",
+      description:
+        "Returns aggregate stats (courses, students, revenue, etc.) for the authenticated instructor.",
+      security: [{ bearerAuth: [] }],
+      responses: {
+        200: {
+          description: "Stats retrieved successfully",
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  success: { type: "boolean", example: true },
+                  data: { type: "object" },
+                },
+              },
+            },
+          },
+        },
+        401: { $ref: "#/components/responses/UnauthorizedError" },
+        403: { $ref: "#/components/responses/ForbiddenError" },
+      },
+    },
+  },
+
+  "/api/v1/instructor/dashboard/courses": {
+    get: {
+      tags: ["Instructor"],
+      summary: "Get instructor dashboard courses",
+      description:
+        "Returns paginated courses owned by the authenticated instructor.",
+      security: [{ bearerAuth: [] }],
+      parameters: [
+        { in: "query", name: "page", schema: { type: "number", default: 1 } },
+        { in: "query", name: "limit", schema: { type: "number", default: 10 } },
+      ],
+      responses: {
+        200: {
+          description: "Courses retrieved successfully",
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  success: { type: "boolean", example: true },
+                  data: {
+                    type: "array",
+                    items: { $ref: "#/components/schemas/Course" },
+                  },
+                },
+              },
+            },
+          },
+        },
+        401: { $ref: "#/components/responses/UnauthorizedError" },
+        403: { $ref: "#/components/responses/ForbiddenError" },
+      },
+    },
+  },
+
+  "/api/v1/instructor/dashboard/students": {
+    get: {
+      tags: ["Instructor"],
+      summary: "Get instructor dashboard students",
+      description:
+        "Returns paginated students enrolled in the authenticated instructor's courses.",
+      security: [{ bearerAuth: [] }],
+      parameters: [
+        { in: "query", name: "page", schema: { type: "number", default: 1 } },
+        { in: "query", name: "limit", schema: { type: "number", default: 10 } },
+      ],
+      responses: {
+        200: {
+          description: "Students retrieved successfully",
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  success: { type: "boolean", example: true },
+                  data: { type: "array", items: { type: "object" } },
+                },
+              },
+            },
+          },
+        },
+        401: { $ref: "#/components/responses/UnauthorizedError" },
+        403: { $ref: "#/components/responses/ForbiddenError" },
+      },
+    },
+  },
 };
