@@ -3,7 +3,8 @@ export default {
     post: {
       tags: ["Career Accelerator"],
       summary: "Generate AI resume content",
-      description: "Create an AI-powered resume summary and role-focused bullet points.",
+      description:
+        "Create an AI-powered resume summary and role-focused bullet points.",
       security: [{ bearerAuth: [] }],
       requestBody: {
         required: true,
@@ -121,7 +122,8 @@ export default {
     post: {
       tags: ["Career Accelerator"],
       summary: "Import LinkedIn profile",
-      description: "Extract career summary and skills from a LinkedIn profile text or URL.",
+      description:
+        "Extract career summary and skills from a LinkedIn profile text or URL.",
       security: [{ bearerAuth: [] }],
       requestBody: {
         required: true,
@@ -134,7 +136,8 @@ export default {
                 profileText: { type: "string" },
               },
               example: {
-                profileText: "Experienced learner with project work in UX design and frontend development.",
+                profileText:
+                  "Experienced learner with project work in UX design and frontend development.",
               },
             },
           },
@@ -317,7 +320,8 @@ export default {
     post: {
       tags: ["Career Accelerator"],
       summary: "Create freelance profile",
-      description: "Save a student freelance profile for marketplace opportunities.",
+      description:
+        "Save a student freelance profile for marketplace opportunities.",
       security: [{ bearerAuth: [] }],
       requestBody: {
         required: true,
@@ -343,11 +347,17 @@ export default {
                       headline: { type: "string" },
                       summary: { type: "string" },
                       skills: { type: "array", items: { type: "string" } },
-                      portfolioLinks: { type: "array", items: { type: "string" } },
+                      portfolioLinks: {
+                        type: "array",
+                        items: { type: "string" },
+                      },
                       hourlyRate: { type: "string" },
                       availability: { type: "string" },
                       services: { type: "array", items: { type: "string" } },
-                      expertiseAreas: { type: "array", items: { type: "string" } },
+                      expertiseAreas: {
+                        type: "array",
+                        items: { type: "string" },
+                      },
                       createdAt: { type: "string", format: "date-time" },
                       updatedAt: { type: "string", format: "date-time" },
                     },
@@ -416,7 +426,8 @@ export default {
     post: {
       tags: ["Career Accelerator"],
       summary: "Generate company-specific interview practice",
-      description: "Create interview preparation for a specific company and role.",
+      description:
+        "Create interview preparation for a specific company and role.",
       security: [{ bearerAuth: [] }],
       requestBody: {
         required: true,

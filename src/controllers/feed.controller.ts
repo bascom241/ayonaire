@@ -9,6 +9,7 @@ import {
   createTags,
   sharePost,
   reportPost,
+  getCommunityStats,
 } from "../services/feed.service.js";
 import { Response, Request, NextFunction } from "express";
 import {
@@ -194,6 +195,19 @@ export const shareFeed = async (
     };
     const data = await sharePost(dataToSend, userId);
     res.status(200).json({ success: true, message: "Feed shared", data });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const communityStats = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const data = await getCommunityStats();
+    res.status(200).json({ success: true, data });
   } catch (error) {
     next(error);
   }

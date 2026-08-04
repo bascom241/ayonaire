@@ -15,11 +15,16 @@ import {
   ViewFeedsQuery,
 } from "../types/feed.types.js";
 import userModel from "../models/user.model.js";
+import announcementModel from "../models/announcement.model.js";
 import { AppError } from "../errors/AppError.js";
 import mongoose from "mongoose";
 import { validateRequestBodyWithValues } from "../utils/validateRequestBody.js";
 import { deleteImage } from "../utils/uploadToCloudinary.js";
-import { CreateTagRequest, CreateTagResponse } from "../types/feed.types.js";
+import {
+  CreateTagRequest,
+  CreateTagResponse,
+  CommunityStatsResponse,
+} from "../types/feed.types.js";
 import feedTagModel from "../models/feedTag.model.js";
 import { getPagination } from "../utils/getPagination.js";
 
@@ -372,6 +377,21 @@ export const sharePost = async (
     feedId: sharedFeed._id.toString(),
     shares: sharedFeed.shares,
   };
+};
+
+export const getCommunityStats = async (): Promise<CommunityStatsResponse> => {
+  const startOfToday = new Date();
+  startOfToday.setHours(0, 0, 0, 0);
+
+  const [totalMembers, totalPosts, totalAnnouncements, postsToday] =
+    await Promise.all([
+      userModel.countDocuments({ role: { $ne: "admin" } }),
+      feedModel.countDocuments({}),
+      announcementModel.countDocuments({}),
+      feedModel.countDocuments({ createdAt: { $gte: startOfToday } }),
+    ]);
+
+  return { totalMembers, totalPosts, totalAnnouncements, postsToday };
 };
 
 export const reportPost = async (

@@ -52,8 +52,7 @@ export default {
     get: {
       tags: ["Modules"],
       summary: "Get modules for a course",
-      description:
-        "Returns all modules for a course (Admin/Instructor only)",
+      description: "Returns all modules for a course (Admin/Instructor only)",
       security: [{ bearerAuth: [] }],
       parameters: [
         {

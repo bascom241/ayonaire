@@ -415,8 +415,7 @@ export default {
     put: {
       tags: ["Courses"],
       summary: "Toggle course publish status",
-      description:
-        "Publishes or unpublishes a course (Admin/Instructor only)",
+      description: "Publishes or unpublishes a course (Admin/Instructor only)",
       security: [{ bearerAuth: [] }],
       parameters: [
         {

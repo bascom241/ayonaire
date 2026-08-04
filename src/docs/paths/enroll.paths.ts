@@ -14,7 +14,8 @@ export default {
     get: {
       tags: ["Enrollment"],
       summary: "Get enrolled courses",
-      description: "Retrieves all courses the authenticated user is enrolled in.",
+      description:
+        "Retrieves all courses the authenticated user is enrolled in.",
       security: [{ bearerAuth: [] }],
       responses: {
         200: {
@@ -56,7 +57,8 @@ export default {
     get: {
       tags: ["Enrollment"],
       summary: "Get completed courses",
-      description: "Retrieves all courses the authenticated user has completed.",
+      description:
+        "Retrieves all courses the authenticated user has completed.",
       security: [{ bearerAuth: [] }],
       responses: {
         200: {
@@ -76,7 +78,8 @@ export default {
     get: {
       tags: ["Enrollment"],
       summary: "Get all enrollments",
-      description: "Returns paginated enrollments across the platform. Admin only.",
+      description:
+        "Returns paginated enrollments across the platform. Admin only.",
       security: [{ bearerAuth: [] }],
       parameters: [
         { in: "query", name: "page", schema: { type: "number", default: 1 } },

@@ -20,7 +20,7 @@ export const io = new Server(server, {
 
 connectSocket(io);
 
-const port = Number(process.env.PORT) || 3000;
+const port = Number(process.env.PORT) || 5000;
 
 // Catch hidden crashes
 process.on("uncaughtException", (err) => {
@@ -46,9 +46,7 @@ const startServer = async () => {
     // safeCacheDel) - both are already written to degrade gracefully when
     // Redis is unreachable, so a failed/slow connection here must never
     // block server startup or crash the process.
-    connectRedis().catch((err) => {
-      console.error("⚠️ Redis connection failed - continuing without cache:", err);
-    });
+  
   } catch (err) {
     console.error("❌ Startup error:", err);
     process.exit(1);

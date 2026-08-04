@@ -762,7 +762,8 @@ export default {
     put: {
       tags: ["Admin"],
       summary: "Activate user",
-      description: "Reactivates a deactivated or suspended user account. Admin only.",
+      description:
+        "Reactivates a deactivated or suspended user account. Admin only.",
       security: [{ bearerAuth: [] }],
       parameters: [userIdParam],
       responses: {

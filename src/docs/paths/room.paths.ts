@@ -60,7 +60,8 @@ export default {
     get: {
       tags: ["Rooms"],
       summary: "Get my rooms",
-      description: "Returns all rooms (group and DM) the authenticated user belongs to.",
+      description:
+        "Returns all rooms (group and DM) the authenticated user belongs to.",
       security: [{ bearerAuth: [] }],
       responses: {
         200: {
@@ -97,7 +98,10 @@ export default {
               type: "object",
               required: ["otherUserId"],
               properties: {
-                otherUserId: { type: "string", example: "661f2a8c9c1234567890abcd" },
+                otherUserId: {
+                  type: "string",
+                  example: "661f2a8c9c1234567890abcd",
+                },
               },
             },
           },

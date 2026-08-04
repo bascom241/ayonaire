@@ -288,7 +288,8 @@ export default {
     get: {
       tags: ["Payments"],
       summary: "Get student purchases",
-      description: "Returns paginated purchases grouped by student. Admin only.",
+      description:
+        "Returns paginated purchases grouped by student. Admin only.",
       security: [{ bearerAuth: [] }],
       parameters: [
         { in: "query", name: "page", schema: { type: "number", default: 1 } },
@@ -435,7 +436,8 @@ export default {
     put: {
       tags: ["Payments"],
       summary: "Set primary payment gateway",
-      description: "Marks a gateway as the primary one used for checkout. Admin only.",
+      description:
+        "Marks a gateway as the primary one used for checkout. Admin only.",
       security: [{ bearerAuth: [] }],
       parameters: [
         {

@@ -166,7 +166,8 @@ export default {
     get: {
       tags: ["Quiz"],
       summary: "Get all quizzes",
-      description: "Returns quizzes visible to the authenticated user (Admin/Instructor only)",
+      description:
+        "Returns quizzes visible to the authenticated user (Admin/Instructor only)",
       security: [{ bearerAuth: [] }],
       parameters: [
         { in: "query", name: "page", schema: { type: "number", default: 1 } },

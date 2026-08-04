@@ -12,6 +12,7 @@ import {
   uploadTags,
   shareFeed,
   reportFeed,
+  communityStats,
 } from "../controllers/feed.controller.js";
 import { upload } from "../middlewares/multer.js";
 
@@ -19,6 +20,7 @@ router.post("/", authorize, upload.single("media"), create);
 router.put("/", authorize, upload.single("media"), edit);
 router.delete("/", authorize, deleteF);
 router.get("/", authorize, view);
+router.get("/community-stats", authorize, communityStats);
 router.post("/like", authorize, likeFeed);
 router.post("/comment", authorize, commentOnAfeed);
 router.delete("/comment", authorize, deleteC);

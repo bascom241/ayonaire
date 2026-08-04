@@ -114,3 +114,10 @@ export interface ViewFeedsQuery {
   page?: number;
   limit?: number;
 }
+
+export interface CommunityStatsResponse {
+  totalMembers: number;
+  totalPosts: number;
+  totalAnnouncements: number;
+  postsToday: number;
+}
