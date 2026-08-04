@@ -38,6 +38,12 @@ const getUserProfilePayload = (user: any) =>
 
 // Shared shape-builder so REST, and the feed socket layer that broadcasts
 // full records to every connected client, never drift out of sync.
+//
+// userId/comments[].userId are populated refs, but the referenced User can
+// be deleted after a post/comment was made - a single such orphaned record
+// used to throw here and take down the *entire* feed list response (Array.map
+// aborts on the first error), so every field pulled off a populated ref is
+// guarded instead of assumed present.
 const toFeedResponse = (feed: any): FeedResponse => ({
   id: feed._id.toString(),
   content: feed.content,
@@ -49,15 +55,15 @@ const toFeedResponse = (feed: any): FeedResponse => ({
     : undefined,
   tag: (feed.tag as any)?.titles,
   user: {
-    id: feed.userId._id.toString(),
-    name: (feed.userId as any).name,
+    id: feed.userId?._id?.toString() ?? "",
+    name: (feed.userId as any)?.name ?? "Deleted user",
     profile: getUserProfilePayload(feed.userId),
   },
   likes: feed.likes.map((id: any) => id.toString()),
   comments: feed.comments.map((c: any) => ({
     user: {
-      id: c.userId._id.toString(),
-      name: c.userId.name,
+      id: c.userId?._id?.toString() ?? "",
+      name: c.userId?.name ?? "Deleted user",
     },
     text: c.text,
     createdAt: c.createdAt.toISOString(),
