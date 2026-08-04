@@ -6,9 +6,21 @@ export interface MediaData {
   originalname: string;
 }
 
+// Which community "space" a post belongs to - distinct from `tag` (topic
+// labels like AI Engineering / Data Science). GENERAL is both the default
+// and what the main Feed page shows unfiltered (all channels mixed); the
+// other values back their own dedicated space page. Announcements and Ask
+// for Help are NOT here - those are separate models/features entirely.
+export enum FeedChannel {
+  GENERAL = "general",
+  INTRODUCTIONS = "introductions",
+  GENERAL_DISCUSSION = "general-discussion",
+}
+
 export interface CreateFeedRequest {
   content: string;
   tag?: string;
+  channel?: string;
   media?: MediaData;
 }
 
@@ -25,6 +37,7 @@ export interface EditFeedRequest {
   tag: string;
   feedId: string;
   content: string;
+  channel?: string;
   media?: MediaData;
 }
 
@@ -40,6 +53,7 @@ export interface FeedResponse {
     publicId: string;
   };
   tag?: string[];
+  channel: string;
   user: {
     id: string;
     name: string;
@@ -111,6 +125,7 @@ export interface ReportFeedRequest {
 
 export interface ViewFeedsQuery {
   tag?: string;
+  channel?: string;
   page?: number;
   limit?: number;
 }

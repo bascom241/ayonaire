@@ -53,11 +53,12 @@ export const create = async (
   next: NextFunction,
 ) => {
   try {
-    const { content, tag } = req.body;
+    const { content, tag, channel } = req.body;
     const userId = req.user?.id;
     const dataToSend: CreateFeedRequest = {
       content,
       tag,
+      channel,
       media: req.file,
     };
     const data = await createFeed(dataToSend, userId);
@@ -73,12 +74,13 @@ export const edit = async (
   next: NextFunction,
 ) => {
   try {
-    const { content, feedId, tag } = req.body;
+    const { content, feedId, tag, channel } = req.body;
     const userId = req.user?.id;
     const dataToSend: EditFeedRequest = {
       tag,
       feedId,
       content,
+      channel,
       media: req.file,
     };
 
@@ -111,9 +113,10 @@ export const deleteF = async (
 
 export const view = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { tag, page, limit } = req.query;
+    const { tag, channel, page, limit } = req.query;
     const data = await viewFeeds({
       tag: tag as string | undefined,
+      channel: channel as string | undefined,
       page: page ? Number(page) : undefined,
       limit: limit ? Number(limit) : undefined,
     });

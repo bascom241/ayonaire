@@ -24,6 +24,7 @@ import {
   CreateTagRequest,
   CreateTagResponse,
   CommunityStatsResponse,
+  FeedChannel,
 } from "../types/feed.types.js";
 import feedTagModel from "../models/feedTag.model.js";
 import { getPagination } from "../utils/getPagination.js";
@@ -35,6 +36,11 @@ const getUserProfilePayload = (user: any) =>
         publicId: user.profile.publicId,
       }
     : null;
+
+const normalizeChannel = (channel?: string): FeedChannel =>
+  (Object.values(FeedChannel) as string[]).includes(channel ?? "")
+    ? (channel as FeedChannel)
+    : FeedChannel.GENERAL;
 
 // Shared shape-builder so REST, and the feed socket layer that broadcasts
 // full records to every connected client, never drift out of sync.
@@ -54,6 +60,7 @@ const toFeedResponse = (feed: any): FeedResponse => ({
       }
     : undefined,
   tag: (feed.tag as any)?.titles,
+  channel: feed.channel ?? FeedChannel.GENERAL,
   user: {
     id: feed.userId?._id?.toString() ?? "",
     name: (feed.userId as any)?.name ?? "Deleted user",
@@ -107,7 +114,7 @@ export const createFeed = async (
   data: CreateFeedRequest,
   userId: string | undefined,
 ): Promise<FeedResponse> => {
-  const { content, media, tag } = data;
+  const { content, media, tag, channel } = data;
   const user = await userModel.findById(userId);
   if (!user) {
     throw new AppError("user does not exits", 400);
@@ -142,6 +149,7 @@ export const createFeed = async (
   const feedData: any = {
     userId: new mongoose.Types.ObjectId(userId),
     content: postContent,
+    channel: normalizeChannel(channel),
   };
 
   if (tag) {
@@ -169,7 +177,7 @@ export const editFeed = async (
 ): Promise<FeedResponse> => {
   validateRequestBodyWithValues<EditFeedRequest>(data, ["feedId"]);
 
-  const { feedId, content, media, tag } = data;
+  const { feedId, content, media, tag, channel } = data;
 
   const convertedUserId = new mongoose.Types.ObjectId(userId);
 
@@ -196,6 +204,7 @@ export const editFeed = async (
 
   if (content !== undefined) feedToEdit.content = content;
   if (tag !== undefined) feedToEdit.tag = new mongoose.Types.ObjectId(tag);
+  if (channel !== undefined) feedToEdit.channel = normalizeChannel(channel);
 
   const updatedFeed = await feedToEdit.save();
   const newEditedFeed = await getFeedById(updatedFeed._id.toString());
@@ -225,7 +234,7 @@ export const deleteFeed = async (
 export const viewFeeds = async (
   query: ViewFeedsQuery = {},
 ): Promise<FeedResponse[]> => {
-  const { tag } = query;
+  const { tag, channel } = query;
   const { limit, skip } = getPagination({
     page: query.page,
     limit: query.limit || 20,
@@ -235,6 +244,11 @@ export const viewFeeds = async (
   if (tag) {
     const matchingTags = await feedTagModel.find({ titles: tag }, "_id");
     filter.tag = { $in: matchingTags.map((t) => t._id) };
+  }
+  // Unfiltered (no channel param) intentionally shows every channel mixed
+  // together - that's what the main Feed page relies on today.
+  if (channel) {
+    filter.channel = channel;
   }
 
   const feeds = await feedModel

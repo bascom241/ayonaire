@@ -41,6 +41,7 @@ interface IncomingMedia {
 interface CreateFeedPayload {
   content: string;
   tag?: string;
+  channel?: string;
   media?: IncomingMedia;
 }
 
@@ -77,6 +78,7 @@ interface ReportFeedPayload {
 
 interface ViewFeedsPayload {
   tag?: string;
+  channel?: string;
   page?: number;
   limit?: number;
 }
@@ -119,6 +121,7 @@ const feedSocket = (io: Server) => {
           const dataToSend: CreateFeedRequest = {
             content: payload?.content,
             tag: payload?.tag,
+            channel: payload?.channel,
             media: normalizeMedia(payload?.media),
           };
           const data = await createFeed(dataToSend, userId);
@@ -137,6 +140,7 @@ const feedSocket = (io: Server) => {
           feedId: payload?.feedId,
           content: payload?.content,
           tag: payload?.tag as string,
+          channel: payload?.channel,
           media: normalizeMedia(payload?.media),
         };
         const data = await editFeed(dataToSend, userId);
@@ -167,6 +171,7 @@ const feedSocket = (io: Server) => {
       try {
         const query: ViewFeedsQuery = {
           tag: payload?.tag,
+          channel: payload?.channel,
           page: payload?.page,
           limit: payload?.limit,
         };
