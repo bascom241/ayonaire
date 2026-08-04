@@ -1,6 +1,6 @@
 import express from "express";
 const router = express.Router();
-import { restrictTo, authorize } from "../middlewares/auth.middleware.js";
+import { authorize } from "../middlewares/auth.middleware.js";
 import {
   create,
   edit,
@@ -9,7 +9,6 @@ import {
   likeFeed,
   commentOnAfeed,
   deleteC,
-  uploadTags,
   shareFeed,
   reportFeed,
   communityStats,
@@ -26,6 +25,5 @@ router.post("/comment", authorize, commentOnAfeed);
 router.delete("/comment", authorize, deleteC);
 router.post("/share", authorize, shareFeed);
 router.post("/report", authorize, reportFeed);
-router.post("/tag", authorize, restrictTo("admin"), uploadTags);
 
 export default router;

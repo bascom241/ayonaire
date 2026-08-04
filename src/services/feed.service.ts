@@ -13,6 +13,8 @@ import {
   ShareFeedResponse,
   ReportFeedRequest,
   ViewFeedsQuery,
+  CommunityStatsResponse,
+  FeedChannel,
 } from "../types/feed.types.js";
 import userModel from "../models/user.model.js";
 import announcementModel from "../models/announcement.model.js";
@@ -20,13 +22,6 @@ import { AppError } from "../errors/AppError.js";
 import mongoose from "mongoose";
 import { validateRequestBodyWithValues } from "../utils/validateRequestBody.js";
 import { deleteImage } from "../utils/uploadToCloudinary.js";
-import {
-  CreateTagRequest,
-  CreateTagResponse,
-  CommunityStatsResponse,
-  FeedChannel,
-} from "../types/feed.types.js";
-import feedTagModel from "../models/feedTag.model.js";
 import { getPagination } from "../utils/getPagination.js";
 
 const getUserProfilePayload = (user: any) =>
@@ -41,6 +36,11 @@ const normalizeChannel = (channel?: string): FeedChannel =>
   (Object.values(FeedChannel) as string[]).includes(channel ?? "")
     ? (channel as FeedChannel)
     : FeedChannel.GENERAL;
+
+const normalizeTag = (tag?: string): FeedTag | undefined =>
+  (Object.values(FeedTag) as string[]).includes(tag ?? "")
+    ? (tag as FeedTag)
+    : undefined;
 
 // Shared shape-builder so REST, and the feed socket layer that broadcasts
 // full records to every connected client, never drift out of sync.
@@ -59,7 +59,7 @@ const toFeedResponse = (feed: any): FeedResponse => ({
         publicId: feed.media.publicId,
       }
     : undefined,
-  tag: (feed.tag as any)?.titles,
+  tag: feed.tag ?? undefined,
   channel: feed.channel ?? FeedChannel.GENERAL,
   user: {
     id: feed.userId?._id?.toString() ?? "",
@@ -85,31 +85,10 @@ export const getFeedById = async (
   const feed = await feedModel
     .findById(feedId)
     .populate("userId", "name profile")
-    .populate("comments.userId", "name")
-    .populate("tag", "titles");
+    .populate("comments.userId", "name");
   return feed ? toFeedResponse(feed) : null;
 };
 
-export const createTags = async (
-  data: CreateTagRequest,
-): Promise<CreateTagResponse> => {
-  const { titles } = data;
-  if (titles.length === 0) {
-    throw new AppError("titles can not be empty");
-  }
-  const allowedTags = Object.values(FeedTag) as FeedTag[];
-  const isValid = titles.every((str) => allowedTags.includes(str as FeedTag));
-  if (!isValid) {
-    throw new AppError("title tag is a not allowed");
-  }
-  const newTags = await feedTagModel.create({
-    titles,
-  });
-  return {
-    id: newTags._id.toString(),
-    titles: newTags.titles,
-  };
-};
 export const createFeed = async (
   data: CreateFeedRequest,
   userId: string | undefined,
@@ -152,8 +131,9 @@ export const createFeed = async (
     channel: normalizeChannel(channel),
   };
 
-  if (tag) {
-    feedData.tag = new mongoose.Types.ObjectId(tag);
+  const normalizedTag = normalizeTag(tag);
+  if (normalizedTag) {
+    feedData.tag = normalizedTag;
   }
 
   if (uploadResult) {
@@ -203,7 +183,7 @@ export const editFeed = async (
   }
 
   if (content !== undefined) feedToEdit.content = content;
-  if (tag !== undefined) feedToEdit.tag = new mongoose.Types.ObjectId(tag);
+  if (tag !== undefined) feedToEdit.tag = normalizeTag(tag);
   if (channel !== undefined) feedToEdit.channel = normalizeChannel(channel);
 
   const updatedFeed = await feedToEdit.save();
@@ -242,8 +222,7 @@ export const viewFeeds = async (
 
   const filter: Record<string, any> = {};
   if (tag) {
-    const matchingTags = await feedTagModel.find({ titles: tag }, "_id");
-    filter.tag = { $in: matchingTags.map((t) => t._id) };
+    filter.tag = tag;
   }
   // Unfiltered (no channel param) intentionally shows every channel mixed
   // together - that's what the main Feed page relies on today.
@@ -255,7 +234,6 @@ export const viewFeeds = async (
     .find(filter)
     .populate("userId", "name profile")
     .populate("comments.userId", "name")
-    .populate("tag", "titles")
     .sort({ createdAt: -1 })
     .skip(skip)
     .limit(limit);
@@ -331,7 +309,6 @@ export const commentOnAPost = async (
   feedToComment.commentCounts += 1;
   const feed = await feedToComment.save();
   await feed.populate("comments.userId", "name");
-  await feed.populate("tag", "titles");
 
   return toFeedResponse(feed);
 };

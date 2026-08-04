@@ -25,7 +25,7 @@ export interface CreateFeedRequest {
 }
 
 export interface CreateFeedResponse {
-  tag?: string[];
+  tag?: string;
   content: string;
   media?: {
     url: string;
@@ -52,7 +52,7 @@ export interface FeedResponse {
     url: string;
     publicId: string;
   };
-  tag?: string[];
+  tag?: string;
   channel: string;
   user: {
     id: string;
@@ -94,19 +94,13 @@ export enum FeedType {
   WORKSHOP = "workshop",
 }
 
+// Fixed set of topic labels a post can be tagged with - a plain enum field
+// on Feed (see FeedChannel above for the same pattern), not a referenced
+// document, since there's no such thing as a user-defined topic here.
 export enum FeedTag {
-  CYBER_SECURITY = "cyberSecurity",
+  CYBER_SECURITY = "cyber-security",
   AI_ENGINEERING = "ai-engineering",
-  DATA_SCIENCE = "data_science",
-}
-
-export interface CreateTagRequest {
-  titles: string[];
-}
-
-export interface CreateTagResponse {
-  id: string;
-  titles: string[];
+  DATA_SCIENCE = "data-science",
 }
 
 export interface ShareFeedRequest {

@@ -6,7 +6,6 @@ import {
   likePost,
   commentOnAPost,
   deleteComment,
-  createTags,
   sharePost,
   reportPost,
   getCommunityStats,
@@ -15,7 +14,6 @@ import { Response, Request, NextFunction } from "express";
 import {
   CommentFeedRequest,
   CreateFeedRequest,
-  CreateTagRequest,
   DeleteCommentRequest,
   DeleteFeedRequest,
   EditFeedRequest,
@@ -23,29 +21,11 @@ import {
   ShareFeedRequest,
   ReportFeedRequest,
 } from "../types/feed.types.js";
-import mongoose from "mongoose";
 
 export interface AuthRequest<T = any> extends Request {
   body: T;
   user?: { id: string; email?: string };
 }
-
-export const uploadTags = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) => {
-  try {
-    const { titles } = req.body;
-    const dataToSend: CreateTagRequest = {
-      titles,
-    };
-    const data = await createTags(dataToSend);
-    res.status(201).json({ success: true, data });
-  } catch (error) {
-    next(error);
-  }
-};
 
 export const create = async (
   req: AuthRequest,

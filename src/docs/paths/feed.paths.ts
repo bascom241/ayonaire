@@ -194,35 +194,4 @@ export default {
       },
     },
   },
-  "/api/v1/feed/tag": {
-    post: {
-      tags: ["Feeds"],
-      summary: "Create feed tags",
-      description: "Creates one or more feed tags. Admin only.",
-      security: [{ bearerAuth: [] }],
-      requestBody: {
-        required: true,
-        content: {
-          "application/json": {
-            schema: {
-              type: "object",
-              required: ["titles"],
-              properties: {
-                titles: {
-                  type: "array",
-                  items: { type: "string" },
-                  example: ["announcement", "learning"],
-                },
-              },
-            },
-          },
-        },
-      },
-      responses: {
-        201: { description: "Tags created successfully" },
-        401: { $ref: "#/components/responses/UnauthorizedError" },
-        403: { $ref: "#/components/responses/ForbiddenError" },
-      },
-    },
-  },
 };

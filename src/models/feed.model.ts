@@ -1,10 +1,10 @@
 import mongoose, { Schema } from "mongoose";
-import { FeedType, FeedChannel } from "../types/feed.types.js";
+import { FeedType, FeedChannel, FeedTag } from "../types/feed.types.js";
 const feedSchema = new Schema(
   {
     tag: {
-      type: Schema.Types.ObjectId,
-      ref: "FeedTag",
+      type: String,
+      enum: Object.values(FeedTag),
     },
     channel: {
       type: String,
