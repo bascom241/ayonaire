@@ -469,3 +469,6 @@
 2026-08-04T06:30:07.234Z [[32minfo[39m]: OPTIONS /api/v1/auth/leaderboard?period=all-time&limit=8 [32m204[39m 0ms
 2026-08-04T06:30:07.394Z [[32minfo[39m]: GET /api/v1/announcement [36m304[39m 294ms
 2026-08-04T06:30:07.652Z [[32minfo[39m]: GET /api/v1/auth/leaderboard?period=all-time&limit=8 [36m304[39m 384ms
+2026-08-17T11:43:49.980Z [[32minfo[39m]: POST / [33m404[39m 11ms
+2026-08-17T12:07:26.408Z [[32minfo[39m]: GET /api/v1/courses/all [33m404[39m 6ms
+2026-08-17T12:08:12.607Z [[32minfo[39m]: GET /api/v1/course/all [32m200[39m 683ms

@@ -17,7 +17,7 @@ import {
 import { upload } from "../middlewares/multer.js";
 import { cache } from "../middlewares/cache.middleware.js";
 
-router.get("/all", authorize, getAll);
+router.get("/all",  getAll);
 router.get("/cat", authorize, getCourseCategories);
 router.post("/cat", authorize, restrictTo("admin"), createCourseCat);
 router.post(

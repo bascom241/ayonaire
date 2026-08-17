@@ -221,9 +221,6 @@ export const viewLessonContent = async (
     course: data.courseId,
   });
 
-  if (!myEnrollment) {
-    throw new AppError("you are not enrolled for this course", 401);
-  }
 
   const pipeline: PipelineStage[] = [
     {
@@ -266,7 +263,7 @@ export const viewLessonContent = async (
 
                 {
                   isCompleted: {
-                    $in: ["$$lesson._id", myEnrollment.comletedLessons],
+                    $in: ["$$lesson._id", myEnrollment?.comletedLessons ?? [],],
                   },
                 },
               ],
@@ -280,8 +277,8 @@ export const viewLessonContent = async (
 
   return {
     modules,
-    progress: myEnrollment.progress,
-    lastLesson: myEnrollment.lastLesson
+    progress: myEnrollment ? myEnrollment.progress : 0,
+    lastLesson: myEnrollment?.lastLesson
       ? myEnrollment.lastLesson.toString()
       : null,
   };
