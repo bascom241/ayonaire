@@ -1,6 +1,6 @@
 import csvParser from "csv-parser";
 import { Readable } from "node:stream";
-import { viewCompletedCourses, viewEnrolledCourses, getEnrolledCourseDetail, getAllEnrollmentsForAdmin, bulkEnrollStudents, bulkEnrollStudentsByEmail, } from "../services/enroll.service.js";
+import { viewCompletedCourses, viewEnrolledCourses, getEnrolledCourseDetail, getAssignableStudentsForAdmin, getAllEnrollmentsForAdmin, bulkEnrollStudents, bulkEnrollStudentsByEmail, } from "../services/enroll.service.js";
 import { AppError } from "../errors/AppError.js";
 export const enrolledCourses = async (req, res, next) => {
     try {
@@ -48,6 +48,15 @@ export const courseDetail = async (req, res, next) => {
 export const getAllEnrollments = async (req, res, next) => {
     try {
         const data = await getAllEnrollmentsForAdmin(req.query);
+        res.status(200).json({ success: true, ...data });
+    }
+    catch (error) {
+        next(error);
+    }
+};
+export const getAssignableStudents = async (req, res, next) => {
+    try {
+        const data = await getAssignableStudentsForAdmin(req.query);
         res.status(200).json({ success: true, ...data });
     }
     catch (error) {

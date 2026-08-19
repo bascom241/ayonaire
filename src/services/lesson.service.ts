@@ -56,7 +56,7 @@ export const uploadLesson = async (
     module: lesson.module.toString(),
     course: lesson.course.toString(),
     order: lesson.order,
-    duration: lesson.duration,
+    duration: lesson.duration ?? undefined,
     isPublished: lesson.isPublished,
     isFreePreview: lesson.isFreePreview,
     isLocked: lesson.isLocked,

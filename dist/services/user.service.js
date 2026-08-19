@@ -9,6 +9,7 @@ import enrollmentModel from "../models/enrollment.model.js";
 import courseModel from "../models/course.model.js";
 import cohortModel from "../models/cohort.model.js";
 import { validateRequestBodyWithValues } from "../utils/validateRequestBody.js";
+import { getPagination } from "../utils/getPagination.js";
 import crypto from "crypto";
 import invitesModel from "../models/invites.model.js";
 import refreshTokenModel from "../models/refreshToken.model.js";
@@ -357,18 +358,41 @@ export const editUser = async (id, data) => {
         throw new AppError("cant update", 500);
     }
 };
-export const fetchNonAdminUsers = async () => {
-    const users = await User.find({ role: { $ne: "admin" } }, { password: 0 });
-    return users.map((user) => ({
-        _id: user._id.toString(),
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        status: user.status,
-        profile: getProfilePayload(user),
-        createdAt: user.createdAt,
-        updatedAt: user.updatedAt,
-    }));
+export const fetchNonAdminUsers = async (query = {}) => {
+    const { page, limit, skip } = getPagination(query);
+    const filter = { role: { $ne: UserRole.ADMIN } };
+    const search = typeof query.search === "string" ? query.search.trim() : "";
+    if (search) {
+        filter.$or = [
+            { name: { $regex: search, $options: "i" } },
+            { email: { $regex: search, $options: "i" } },
+        ];
+    }
+    const [users, total] = await Promise.all([
+        User.find(filter, { password: 0 })
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(limit),
+        User.countDocuments(filter),
+    ]);
+    return {
+        users: users.map((user) => ({
+            _id: user._id.toString(),
+            name: user.name,
+            email: user.email,
+            role: user.role,
+            status: user.status,
+            profile: getProfilePayload(user),
+            createdAt: user.createdAt,
+            updatedAt: user.updatedAt,
+        })),
+        pagination: {
+            total,
+            page,
+            limit,
+            totalPages: Math.ceil(total / limit),
+        },
+    };
 };
 export const deleteUser = async (id) => {
     const user = await User.findById(id);

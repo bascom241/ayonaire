@@ -5,6 +5,7 @@ import {
   viewCompletedCourses,
   viewEnrolledCourses,
   getEnrolledCourseDetail,
+  getAssignableStudentsForAdmin,
   getAllEnrollmentsForAdmin,
   bulkEnrollStudents,
   bulkEnrollStudentsByEmail,
@@ -84,6 +85,19 @@ export const getAllEnrollments = async (
 ) => {
   try {
     const data = await getAllEnrollmentsForAdmin(req.query);
+    res.status(200).json({ success: true, ...data });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getAssignableStudents = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const data = await getAssignableStudentsForAdmin(req.query);
     res.status(200).json({ success: true, ...data });
   } catch (error) {
     next(error);

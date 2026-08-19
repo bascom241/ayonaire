@@ -14,6 +14,7 @@ import {
 import { pipeline } from "node:stream";
 import { getPagination } from "../utils/getPagination.js";
 import { validateRequestBodyWithValues } from "../utils/validateRequestBody.js";
+import { UserRole } from "../types/user.types.js";
 
 export const enrollStudent = async (
   data: EnrollmentRequest,
@@ -271,6 +272,49 @@ export const getEnrolledCourseDetail = async (
 };
 
 /// ----------- Admin enrollment management ---------------///
+
+export const getAssignableStudentsForAdmin = async (query: any) => {
+  const { page, limit, skip } = getPagination(query);
+  const search = typeof query.search === "string" ? query.search.trim() : "";
+
+  const filter: Record<string, any> = { role: UserRole.USER };
+  if (search) {
+    filter.$or = [
+      { name: { $regex: search, $options: "i" } },
+      { email: { $regex: search, $options: "i" } },
+    ];
+  }
+
+  const [users, total] = await Promise.all([
+    userModel
+      .find(filter, { password: 0 })
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit),
+    userModel.countDocuments(filter),
+  ]);
+
+  return {
+    students: users.map((user) => ({
+      _id: user._id.toString(),
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      status: user.status,
+      profile: user.profile
+        ? { url: user.profile.url, publicId: user.profile.publicId }
+        : null,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+    })),
+    pagination: {
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    },
+  };
+};
 
 export const getAllEnrollmentsForAdmin = async (query: any) => {
   const { page, limit, skip } = getPagination(query);

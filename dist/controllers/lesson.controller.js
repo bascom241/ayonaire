@@ -3,15 +3,26 @@ import { AppError } from "../errors/AppError.js";
 import { uploadVideo } from "../services/lesson.service.js";
 export const upload = async (req, res, next) => {
     try {
-        const { title, module, course, order } = req.body;
+        const { title, module, course, order, duration } = req.body;
         if (!course || !title || !module || !order) {
             throw new AppError("Title,module, course and order is required", 400);
         }
+        const parseBoolean = (value) => {
+            if (typeof value === "boolean")
+                return value;
+            if (typeof value === "string")
+                return value === "true";
+            return undefined;
+        };
         const dataToSend = {
             title,
             module,
             course,
-            order,
+            order: Number(order),
+            duration: duration !== undefined ? Number(duration) : undefined,
+            isPublished: parseBoolean(req.body.isPublished),
+            isFreePreview: parseBoolean(req.body.isFreePreview),
+            isLocked: parseBoolean(req.body.isLocked),
         };
         const data = await uploadLesson(dataToSend);
         res.status(200).json({ success: true, data, message: "Lesson created" });
@@ -26,6 +37,9 @@ export const uploadVid = async (req, res, next) => {
             return res.status(400).json({ message: "No videos uploaded" });
         }
         const { lessonId } = req.body;
+        if (!lessonId) {
+            throw new AppError("lessonId is required", 400);
+        }
         // multer collapses repeated same-named text fields down to the last
         // value, so multiple "titles" fields never arrive as an array here -
         // the frontend sends them as a single JSON-encoded array string instead.

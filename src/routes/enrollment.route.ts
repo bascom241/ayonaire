@@ -4,6 +4,7 @@ import {
   completedCourses,
   enrolledCourses,
   courseDetail,
+  getAssignableStudents,
   getAllEnrollments,
   enrollStudents,
   enrollStudentsCsv,
@@ -19,6 +20,12 @@ router.get(
   authorize,
   restrictTo("admin"),
   getAllEnrollments,
+);
+router.get(
+  "/admin/students",
+  authorize,
+  restrictTo("admin"),
+  getAssignableStudents,
 );
 router.post(
   "/admin/enroll",
