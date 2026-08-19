@@ -29,9 +29,10 @@ export const uploadLesson = async (
     module: data.module,
     course: data.course,
     order: data.order,
+    duration: data.duration,
     isPublished: data.isPublished ?? true,
-    isFreePreview: data.isFreePreview,
-    isLocked: data.isLocked,
+    isFreePreview: data.isFreePreview ?? false,
+    isLocked: data.isLocked ?? true,
   };
 
   const isModule = await moduleModel.findById(lessonData.module);
@@ -55,13 +56,14 @@ export const uploadLesson = async (
     module: lesson.module.toString(),
     course: lesson.course.toString(),
     order: lesson.order,
+    duration: lesson.duration,
     isPublished: lesson.isPublished,
     isFreePreview: lesson.isFreePreview,
     isLocked: lesson.isLocked,
   };
 };
 
-const MAX_VIDEO_SIZE = 20 * 1024 * 1024; // 20MB
+const MAX_VIDEO_SIZE = 500 * 1024 * 1024; // 500MB
 
 export const uploadVideo = async (
   lessonId: string,
@@ -76,7 +78,7 @@ export const uploadVideo = async (
 
   for (const video of data.videos) {
     if (video.buffer.length > MAX_VIDEO_SIZE) {
-      throw new AppError(`Cant upload. ${video.title} exceeds 30mb`);
+      throw new AppError(`Cant upload. ${video.title} exceeds 500MB`);
     }
 
     const result = await uploadMedia(video.buffer, "video");

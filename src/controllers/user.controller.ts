@@ -157,8 +157,14 @@ export const getNonAdminUsers = async (
   next: NextFunction,
 ) => {
   try {
-    const users = await fetchNonAdminUsers();
-    res.status(200).json({ success: true, data: users });
+    const data = await fetchNonAdminUsers(req.query);
+    res.status(200).json({
+      success: true,
+      data: data.users,
+      users: data.users,
+      count: data.pagination.total,
+      pagination: data.pagination,
+    });
   } catch (error) {
     next(error);
   }

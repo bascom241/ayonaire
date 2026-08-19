@@ -40,6 +40,7 @@ export interface UploadLessonRequest {
   module: string;
   course: string;
   order: number;
+  duration?: number;
   isPublished?: boolean;
   isFreePreview?: boolean;
   isLocked?: boolean;
@@ -51,6 +52,7 @@ export interface UploadLessonResponse {
   module: string;
   course: string;
   order: number;
+  duration?: number;
   isPublished: boolean;
   isFreePreview: boolean;
   isLocked: boolean;

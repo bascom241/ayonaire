@@ -158,6 +158,16 @@ export interface NonAdminUser {
 
 export type NonAdminUsers = NonAdminUser[];
 
+export interface PaginatedNonAdminUsers {
+  users: NonAdminUser[];
+  pagination: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  };
+}
+
 export interface editUserDto {
   email: string;
   name: string;

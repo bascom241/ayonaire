@@ -31,15 +31,26 @@ export const upload = async (
   next: NextFunction,
 ) => {
   try {
-    const { title, module, course, order } = req.body;
+    const { title, module, course, order, duration } = req.body;
     if (!course || !title || !module || !order) {
       throw new AppError("Title,module, course and order is required", 400);
     }
+
+    const parseBoolean = (value: unknown) => {
+      if (typeof value === "boolean") return value;
+      if (typeof value === "string") return value === "true";
+      return undefined;
+    };
+
     const dataToSend: UploadLessonRequest = {
       title,
       module,
       course,
-      order,
+      order: Number(order),
+      duration: duration !== undefined ? Number(duration) : undefined,
+      isPublished: parseBoolean(req.body.isPublished),
+      isFreePreview: parseBoolean(req.body.isFreePreview),
+      isLocked: parseBoolean(req.body.isLocked),
     };
     const data = await uploadLesson(dataToSend);
     res.status(200).json({ success: true, data, message: "Lesson created" });
@@ -59,6 +70,9 @@ export const uploadVid = async (
     }
 
     const { lessonId } = req.body;
+    if (!lessonId) {
+      throw new AppError("lessonId is required", 400);
+    }
 
     // multer collapses repeated same-named text fields down to the last
     // value, so multiple "titles" fields never arrive as an array here -
