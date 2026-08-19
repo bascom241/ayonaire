@@ -14,7 +14,6 @@ import {
 import { pipeline } from "node:stream";
 import { getPagination } from "../utils/getPagination.js";
 import { validateRequestBodyWithValues } from "../utils/validateRequestBody.js";
-import { UserRole } from "../types/user.types.js";
 
 export const enrollStudent = async (
   data: EnrollmentRequest,
@@ -277,7 +276,7 @@ export const getAssignableStudentsForAdmin = async (query: any) => {
   const { page, limit, skip } = getPagination(query);
   const search = typeof query.search === "string" ? query.search.trim() : "";
 
-  const filter: Record<string, any> = { role: UserRole.USER };
+  const filter: Record<string, any> = {};
   if (search) {
     filter.$or = [
       { name: { $regex: search, $options: "i" } },

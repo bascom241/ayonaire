@@ -521,7 +521,7 @@ export const fetchNonAdminUsers = async (
   query: Record<string, any> = {},
 ): Promise<PaginatedNonAdminUsers> => {
   const { page, limit, skip } = getPagination(query);
-  const filter: Record<string, any> = { role: { $ne: UserRole.ADMIN } };
+  const filter: Record<string, any> = {};
   const search = typeof query.search === "string" ? query.search.trim() : "";
 
   if (search) {

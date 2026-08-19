@@ -27,6 +27,7 @@ import systemSettingRouter from "./routes/systemSetting.route.js";
 import certificateRouter from "./routes/certificate.route.js";
 import teamRouter from "./routes/team.route.js";
 import supportRouter from "./routes/support.route.js";
+import courseInteractionRouter from "./routes/courseInteraction.route.js";
 
 import cors from "cors";
 import { setupSwagger } from "./docs/index.js";
@@ -48,6 +49,7 @@ app.use(
 
 app.use("/api/v1/auth", userRouter);
 app.use("/api/v1/course", courseRouter);
+app.use("/api/v1/course-interactions", courseInteractionRouter);
 app.use("/api/v1/instructor-management", instructorManagementRouter);
 // Alias: the frontend's instructor.ts endpoint file calls /api/v1/instructor/*
 // for apply/approve/reject/profile/profiles, so instructorManagementRouter is
