@@ -142,5 +142,74 @@ const cohortPaths = {
             },
         },
     },
+    "/api/v1/cohort": {
+        get: {
+            tags: ["Cohorts"],
+            summary: "Get all cohorts",
+            description: "Returns cohorts visible to the authenticated user (Admin/Instructor only)",
+            security: [{ bearerAuth: [] }],
+            parameters: [
+                { in: "query", name: "page", schema: { type: "number", default: 1 } },
+                { in: "query", name: "limit", schema: { type: "number", default: 10 } },
+            ],
+            responses: {
+                200: {
+                    description: "Cohorts retrieved successfully",
+                    content: {
+                        "application/json": {
+                            schema: {
+                                type: "object",
+                                properties: {
+                                    success: { type: "boolean", example: true },
+                                    data: {
+                                        type: "array",
+                                        items: { $ref: "#/components/schemas/Cohort" },
+                                    },
+                                },
+                            },
+                        },
+                    },
+                },
+                401: { $ref: "#/components/responses/UnauthorizedError" },
+                403: { $ref: "#/components/responses/ForbiddenError" },
+            },
+        },
+    },
+    "/api/v1/cohort/{cohortId}": {
+        get: {
+            tags: ["Cohorts"],
+            summary: "Get single cohort",
+            description: "Returns one cohort by ID (Admin/Instructor only)",
+            security: [{ bearerAuth: [] }],
+            parameters: [
+                {
+                    in: "path",
+                    name: "cohortId",
+                    required: true,
+                    schema: { type: "string" },
+                    description: "Cohort ID",
+                },
+            ],
+            responses: {
+                200: {
+                    description: "Cohort retrieved successfully",
+                    content: {
+                        "application/json": {
+                            schema: {
+                                type: "object",
+                                properties: {
+                                    success: { type: "boolean", example: true },
+                                    data: { $ref: "#/components/schemas/Cohort" },
+                                },
+                            },
+                        },
+                    },
+                },
+                401: { $ref: "#/components/responses/UnauthorizedError" },
+                403: { $ref: "#/components/responses/ForbiddenError" },
+                404: { $ref: "#/components/responses/NotFoundError" },
+            },
+        },
+    },
 };
 export default cohortPaths;

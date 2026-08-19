@@ -1,4 +1,5 @@
-import { assignInstructorToCohort, assignStudentToCohort, createCohort, } from "../services/cohort.service.js";
+import { assignInstructorToCohort, assignStudentToCohort, createCohort, listCohorts, getCohortById, } from "../services/cohort.service.js";
+import { AppError } from "../errors/AppError.js";
 export const create = async (req, res, next) => {
     try {
         const { name, course, creator, isActive, description } = req.body;
@@ -39,6 +40,28 @@ export const assignInstructor = async (req, res, next) => {
         };
         const data = await assignInstructorToCohort(dataToSend);
         res.status(200).json({ success: true, message: data });
+    }
+    catch (error) {
+        next(error);
+    }
+};
+export const getAll = async (req, res, next) => {
+    try {
+        const userId = req.user?.id;
+        if (!userId)
+            throw new AppError("Unauthorized", 401);
+        const data = await listCohorts(userId, req.user?.role, req.query);
+        res.status(200).json({ success: true, ...data });
+    }
+    catch (error) {
+        next(error);
+    }
+};
+export const getSingle = async (req, res, next) => {
+    try {
+        const cohortId = req.params.cohortId;
+        const data = await getCohortById(cohortId);
+        res.status(200).json({ success: true, data });
     }
     catch (error) {
         next(error);

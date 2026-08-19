@@ -1,38 +1,70 @@
 import feedModel from "../models/feed.model.js";
 import { uploadMedia } from "../utils/uploadToCloudinary.js";
-import { FeedTag, } from "../types/feed.types.js";
+import { FeedTag, FeedChannel, } from "../types/feed.types.js";
 import userModel from "../models/user.model.js";
+import announcementModel from "../models/announcement.model.js";
 import { AppError } from "../errors/AppError.js";
 import mongoose from "mongoose";
 import { validateRequestBodyWithValues } from "../utils/validateRequestBody.js";
 import { deleteImage } from "../utils/uploadToCloudinary.js";
-import feedTagModel from "../models/feedTag.model.js";
+import { getPagination } from "../utils/getPagination.js";
 const getUserProfilePayload = (user) => user?.profile
     ? {
         url: user.profile.url,
         publicId: user.profile.publicId,
     }
     : null;
-export const createTags = async (data) => {
-    const { titles } = data;
-    if (titles.length === 0) {
-        throw new AppError("titles can not be empty");
-    }
-    const allowedTags = Object.values(FeedTag);
-    const isValid = titles.every((str) => allowedTags.includes(str));
-    if (!isValid) {
-        throw new AppError("title tag is a not allowed");
-    }
-    const newTags = await feedTagModel.create({
-        titles,
-    });
-    return {
-        id: newTags._id.toString(),
-        titles: newTags.titles,
-    };
+const normalizeChannel = (channel) => Object.values(FeedChannel).includes(channel ?? "")
+    ? channel
+    : FeedChannel.GENERAL;
+const normalizeTag = (tag) => Object.values(FeedTag).includes(tag ?? "")
+    ? tag
+    : undefined;
+// Shared shape-builder so REST, and the feed socket layer that broadcasts
+// full records to every connected client, never drift out of sync.
+//
+// userId/comments[].userId are populated refs, but the referenced User can
+// be deleted after a post/comment was made - a single such orphaned record
+// used to throw here and take down the *entire* feed list response (Array.map
+// aborts on the first error), so every field pulled off a populated ref is
+// guarded instead of assumed present.
+const toFeedResponse = (feed) => ({
+    id: feed._id.toString(),
+    content: feed.content,
+    media: feed.media
+        ? {
+            url: feed.media.url,
+            publicId: feed.media.publicId,
+        }
+        : undefined,
+    tag: feed.tag ?? undefined,
+    channel: feed.channel ?? FeedChannel.GENERAL,
+    user: {
+        id: feed.userId?._id?.toString() ?? "",
+        name: feed.userId?.name ?? "Deleted user",
+        profile: getUserProfilePayload(feed.userId),
+    },
+    likes: feed.likes.map((id) => id.toString()),
+    comments: feed.comments.map((c) => ({
+        user: {
+            id: c.userId?._id?.toString() ?? "",
+            name: c.userId?.name ?? "Deleted user",
+        },
+        text: c.text,
+        createdAt: c.createdAt.toISOString(),
+    })),
+    shares: feed.shares,
+    createdAt: feed.createdAt.toISOString(),
+});
+export const getFeedById = async (feedId) => {
+    const feed = await feedModel
+        .findById(feedId)
+        .populate("userId", "name profile")
+        .populate("comments.userId", "name");
+    return feed ? toFeedResponse(feed) : null;
 };
 export const createFeed = async (data, userId) => {
-    const { content, media, tag } = data;
+    const { content, media, tag, channel } = data;
     const user = await userModel.findById(userId);
     if (!user) {
         throw new AppError("user does not exits", 400);
@@ -63,9 +95,11 @@ export const createFeed = async (data, userId) => {
     const feedData = {
         userId: new mongoose.Types.ObjectId(userId),
         content: postContent,
+        channel: normalizeChannel(channel),
     };
-    if (tag) {
-        feedData.tag = new mongoose.Types.ObjectId(tag);
+    const normalizedTag = normalizeTag(tag);
+    if (normalizedTag) {
+        feedData.tag = normalizedTag;
     }
     if (uploadResult) {
         feedData.media = {
@@ -74,26 +108,15 @@ export const createFeed = async (data, userId) => {
         };
     }
     const createdFeed = await feedModel.create(feedData);
-    const newData = await feedModel
-        .findById(createdFeed._id)
-        .populate("tag", "titles");
+    const newData = await getFeedById(createdFeed._id.toString());
     if (!newData) {
         throw new AppError("Failed to retrieve created feed", 500);
     }
-    return {
-        tag: newData.tag?.titles,
-        content: newData.content,
-        media: newData.media
-            ? {
-                url: newData.media.url,
-                publicId: newData.media.publicId,
-            }
-            : undefined,
-    };
+    return newData;
 };
 export const editFeed = async (data, userId) => {
     validateRequestBodyWithValues(data, ["feedId"]);
-    const { feedId, content, media, tag } = data;
+    const { feedId, content, media, tag, channel } = data;
     const convertedUserId = new mongoose.Types.ObjectId(userId);
     const feedToEdit = await feedModel.findOne({
         _id: feedId,
@@ -115,24 +138,15 @@ export const editFeed = async (data, userId) => {
     if (content !== undefined)
         feedToEdit.content = content;
     if (tag !== undefined)
-        feedToEdit.tag = new mongoose.Types.ObjectId(tag);
+        feedToEdit.tag = normalizeTag(tag);
+    if (channel !== undefined)
+        feedToEdit.channel = normalizeChannel(channel);
     const updatedFeed = await feedToEdit.save();
-    const newEditedFeed = await feedModel
-        .findById(updatedFeed._id)
-        .populate("tag", "titles");
+    const newEditedFeed = await getFeedById(updatedFeed._id.toString());
     if (!newEditedFeed) {
         throw new AppError("Failed to retrieve created feed", 500);
     }
-    return {
-        tag: newEditedFeed.tag?.titles,
-        content: updatedFeed.content,
-        media: updatedFeed.media
-            ? {
-                url: updatedFeed.media.url,
-                publicId: updatedFeed.media.publicId,
-            }
-            : undefined,
-    };
+    return newEditedFeed;
 };
 export const deleteFeed = async (data, userId) => {
     validateRequestBodyWithValues(data, ["feedId"]);
@@ -147,39 +161,29 @@ export const deleteFeed = async (data, userId) => {
     await feedModel.findByIdAndDelete(feedId);
     return "Feed Deleted successfully";
 };
-export const viewFeeds = async () => {
+export const viewFeeds = async (query = {}) => {
+    const { tag, channel } = query;
+    const { limit, skip } = getPagination({
+        page: query.page,
+        limit: query.limit || 20,
+    });
+    const filter = {};
+    if (tag) {
+        filter.tag = tag;
+    }
+    // Unfiltered (no channel param) intentionally shows every channel mixed
+    // together - that's what the main Feed page relies on today.
+    if (channel) {
+        filter.channel = channel;
+    }
     const feeds = await feedModel
-        .find()
+        .find(filter)
         .populate("userId", "name profile")
         .populate("comments.userId", "name")
         .sort({ createdAt: -1 })
-        .limit(20);
-    return feeds.map((feed) => ({
-        id: feed._id.toString(),
-        content: feed.content,
-        media: feed.media
-            ? {
-                url: feed.media.url,
-                publicId: feed.media.publicId,
-            }
-            : undefined,
-        user: {
-            id: feed.userId._id.toString(),
-            name: feed.userId.name,
-            profile: getUserProfilePayload(feed.userId),
-        },
-        likes: feed.likes.map((id) => id.toString()),
-        comments: feed.comments.map((c) => ({
-            user: {
-                id: c.userId._id.toString(),
-                name: c.userId.name,
-            },
-            text: c.text,
-            createdAt: c.createdAt.toISOString(),
-        })),
-        shares: feed.shares,
-        createdAt: feed.createdAt.toISOString(),
-    }));
+        .skip(skip)
+        .limit(limit);
+    return feeds.map(toFeedResponse);
 };
 export const likePost = async (data, userId) => {
     validateRequestBodyWithValues(data, ["feedId"]);
@@ -195,11 +199,16 @@ export const likePost = async (data, userId) => {
     }
     const hasLiked = feedToLike.likes.includes(convertedUserId);
     if (hasLiked) {
-        return await feedModel.updateOne({ _id: feedId }, { $pull: { likes: convertedUserId }, $inc: { likesCount: -1 } });
+        await feedModel.updateOne({ _id: feedId }, { $pull: { likes: convertedUserId }, $inc: { likesCount: -1 } });
     }
     else {
-        return await feedModel.updateOne({ _id: feedId }, { $addToSet: { likes: convertedUserId }, $inc: { likesCount: 1 } });
+        await feedModel.updateOne({ _id: feedId }, { $addToSet: { likes: convertedUserId }, $inc: { likesCount: 1 } });
     }
+    const updatedFeed = await getFeedById(feedToLike._id.toString());
+    if (!updatedFeed) {
+        throw new AppError("Feed does not exists");
+    }
+    return updatedFeed;
 };
 export const commentOnAPost = async (data, userId) => {
     validateRequestBodyWithValues(data, ["feedId"]);
@@ -224,32 +233,7 @@ export const commentOnAPost = async (data, userId) => {
     feedToComment.commentCounts += 1;
     const feed = await feedToComment.save();
     await feed.populate("comments.userId", "name");
-    return {
-        id: feed._id.toString(),
-        content: feed.content,
-        media: feed.media
-            ? {
-                url: feed.media.url,
-                publicId: feed.media.publicId,
-            }
-            : undefined,
-        user: {
-            id: feed.userId._id.toString(),
-            name: feed.userId.name,
-            profile: getUserProfilePayload(feed.userId),
-        },
-        likes: feed.likes.map((id) => id.toString()),
-        comments: feed.comments.map((c) => ({
-            user: {
-                id: c.userId._id.toString(),
-                name: c.userId.name,
-            },
-            text: c.text,
-            createdAt: c.createdAt.toISOString(),
-        })),
-        shares: feed.shares,
-        createdAt: feed.createdAt.toISOString(),
-    };
+    return toFeedResponse(feed);
 };
 export const deleteComment = async (data, userId) => {
     validateRequestBodyWithValues(data, [
@@ -272,4 +256,53 @@ export const deleteComment = async (data, userId) => {
     }
     await feedModel.updateOne({ _id: feedId }, { $pull: { comments: { _id: commentId } }, $inc: { commentCounts: -1 } });
     return "Comment Deleted successfully";
+};
+export const sharePost = async (data, userId) => {
+    validateRequestBodyWithValues(data, ["feedId"]);
+    const { feedId } = data;
+    const user = await userModel.findById(userId);
+    if (!user) {
+        throw new AppError("user not found", 400);
+    }
+    const sharedFeed = await feedModel.findByIdAndUpdate(feedId, { $inc: { shares: 1 } }, { new: true });
+    if (!sharedFeed) {
+        throw new AppError("Feed does not exists", 400);
+    }
+    return {
+        feedId: sharedFeed._id.toString(),
+        shares: sharedFeed.shares,
+    };
+};
+export const getCommunityStats = async () => {
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+    const [totalMembers, totalPosts, totalAnnouncements, postsToday] = await Promise.all([
+        userModel.countDocuments({ role: { $ne: "admin" } }),
+        feedModel.countDocuments({}),
+        announcementModel.countDocuments({}),
+        feedModel.countDocuments({ createdAt: { $gte: startOfToday } }),
+    ]);
+    return { totalMembers, totalPosts, totalAnnouncements, postsToday };
+};
+export const reportPost = async (data, userId) => {
+    validateRequestBodyWithValues(data, [
+        "feedId",
+        "reason",
+    ]);
+    const { feedId, reason } = data;
+    const user = await userModel.findById(userId);
+    if (!user) {
+        throw new AppError("user not found", 400);
+    }
+    const convertedUserId = new mongoose.Types.ObjectId(userId);
+    const feedToReport = await feedModel.findById(feedId);
+    if (!feedToReport) {
+        throw new AppError("Feed does not exists", 400);
+    }
+    const alreadyReported = feedToReport.reports.some((report) => report.userId?.equals(convertedUserId));
+    if (alreadyReported) {
+        throw new AppError("You have already reported this post", 400);
+    }
+    await feedModel.updateOne({ _id: feedId }, { $push: { reports: { userId: convertedUserId, reason } } });
+    return "Post reported successfully";
 };

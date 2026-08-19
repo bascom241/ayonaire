@@ -221,6 +221,9 @@ export const viewLessonContent = async (
     course: data.courseId,
   });
 
+  if (!myEnrollment) {
+    throw new AppError("You are not enrolled in this course", 403);
+  }
 
   const pipeline: PipelineStage[] = [
     {

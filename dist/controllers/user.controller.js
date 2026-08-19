@@ -1,6 +1,6 @@
 import csvParser from "csv-parser";
 import { Readable } from "node:stream";
-import { createUser, fetchNonAdminUsers, forgotUserPassword, loginUser, refreshAuthToken, logoutUser, resendUserVerificationEmail, resetUserPassword, verifyUserEmail, editUser, loginHistory, userActivity, assignRole, deactivateUser, suspendUser, viewProfile, addProfileImage, editProfile, addUser, inviteUser, acceptInvite, fetchLeaderboard, } from "../services/user.service.js";
+import { createUser, fetchNonAdminUsers, forgotUserPassword, loginUser, refreshAuthToken, logoutUser, resendUserVerificationEmail, resetUserPassword, verifyUserEmail, editUser, loginHistory, userActivity, assignRole, deactivateUser, suspendUser, activateUser, deleteUser, viewProfile, addProfileImage, editProfile, addUser, inviteUser, acceptInvite, fetchLeaderboard, } from "../services/user.service.js";
 import { AppError } from "../errors/AppError.js";
 export const registerUser = async (req, res, next) => {
     try {
@@ -104,6 +104,26 @@ export const suspendToUser = async (req, res, next) => {
         const { id } = req.params;
         await suspendUser(id);
         res.status(200).json({ success: true, message: "user suspended" });
+    }
+    catch (error) {
+        next(error);
+    }
+};
+export const removeUser = async (req, res, next) => {
+    try {
+        const { id } = req.params;
+        await deleteUser(id);
+        res.status(200).json({ success: true, message: "user deleted" });
+    }
+    catch (error) {
+        next(error);
+    }
+};
+export const activateToUser = async (req, res, next) => {
+    try {
+        const { id } = req.params;
+        await activateUser(id);
+        res.status(200).json({ success: true, message: "user activated" });
     }
     catch (error) {
         next(error);
@@ -243,6 +263,7 @@ export const invite = async (req, res, next) => {
             emails: req.body.emails,
             courseId: req.body.courseId,
             cohortId: req.body.cohortId,
+            role: req.body.role,
         };
         const data = await inviteUser(dataToSend);
         res.status(200).json({ success: true, data });

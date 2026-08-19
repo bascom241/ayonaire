@@ -1,0 +1,10 @@
+import express from "express";
+const router = express.Router();
+import { authorize, restrictTo } from "../middlewares/auth.middleware.js";
+import { issue, getAll, getMine, verify, revoke, } from "../controllers/certificate.controller.js";
+router.post("/issue", authorize, restrictTo("admin"), issue);
+router.get("/", authorize, restrictTo("admin"), getAll);
+router.get("/my", authorize, getMine);
+router.get("/verify/:certificateId", verify);
+router.delete("/:id", authorize, restrictTo("admin"), revoke);
+export default router;

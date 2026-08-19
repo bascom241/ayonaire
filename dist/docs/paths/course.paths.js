@@ -1,5 +1,59 @@
 export default {
+    "/api/v1/course/all": {
+        get: {
+            tags: ["Courses"],
+            summary: "Get all published courses",
+            description: "Returns all publicly listed courses.",
+            security: [{ bearerAuth: [] }],
+            responses: {
+                200: {
+                    description: "Courses retrieved successfully",
+                    content: {
+                        "application/json": {
+                            schema: {
+                                type: "object",
+                                properties: {
+                                    success: { type: "boolean", example: true },
+                                    data: {
+                                        type: "array",
+                                        items: { $ref: "#/components/schemas/Course" },
+                                    },
+                                },
+                            },
+                        },
+                    },
+                },
+                401: { $ref: "#/components/responses/UnauthorizedError" },
+            },
+        },
+    },
     "/api/v1/course/cat": {
+        get: {
+            tags: ["Courses"],
+            summary: "Get course categories",
+            description: "Returns all course categories.",
+            security: [{ bearerAuth: [] }],
+            responses: {
+                200: {
+                    description: "Categories retrieved successfully",
+                    content: {
+                        "application/json": {
+                            schema: {
+                                type: "object",
+                                properties: {
+                                    success: { type: "boolean", example: true },
+                                    data: {
+                                        type: "array",
+                                        items: { $ref: "#/components/schemas/CourseCategory" },
+                                    },
+                                },
+                            },
+                        },
+                    },
+                },
+                401: { $ref: "#/components/responses/UnauthorizedError" },
+            },
+        },
         post: {
             tags: ["Courses"],
             summary: "Create course category",
@@ -87,6 +141,11 @@ export default {
                                     format: "binary",
                                     description: "Course thumbnail image",
                                 },
+                                introVideo: {
+                                    type: "string",
+                                    format: "binary",
+                                    description: "Optional course intro video",
+                                },
                             },
                         },
                     },
@@ -154,6 +213,11 @@ export default {
                                     type: "string",
                                     format: "binary",
                                     description: "New course thumbnail image",
+                                },
+                                introVideo: {
+                                    type: "string",
+                                    format: "binary",
+                                    description: "New optional course intro video",
                                 },
                             },
                         },
@@ -238,7 +302,7 @@ export default {
         put: {
             tags: ["Courses"],
             summary: "Save course as draft",
-            description: "Creates a draft course with thumbnail and intro video using the uploaded file. Admin only.",
+            description: "Creates a draft course. Thumbnail is required and introVideo is optional. Admin only.",
             security: [{ bearerAuth: [] }],
             requestBody: {
                 required: true,
@@ -256,7 +320,12 @@ export default {
                                 category: { type: "string", description: "Category ID" },
                                 price: { type: "number", example: 99.99 },
                                 instructorId: { type: "string" },
+                                courseLevel: {
+                                    type: "string",
+                                    enum: ["Beginner", "Intermediate", "Advanced"],
+                                },
                                 thumbnail: { type: "string", format: "binary" },
+                                introVideo: { type: "string", format: "binary" },
                             },
                         },
                     },
@@ -305,6 +374,63 @@ export default {
             responses: {
                 200: { description: "Course retrieved successfully" },
                 400: { $ref: "#/components/responses/ValidationError" },
+                401: { $ref: "#/components/responses/UnauthorizedError" },
+                403: { $ref: "#/components/responses/ForbiddenError" },
+                404: { $ref: "#/components/responses/NotFoundError" },
+            },
+        },
+        delete: {
+            tags: ["Courses"],
+            summary: "Delete course",
+            description: "Deletes a course (Admin/Instructor only)",
+            security: [{ bearerAuth: [] }],
+            parameters: [
+                {
+                    in: "path",
+                    name: "courseId",
+                    required: true,
+                    schema: { type: "string" },
+                    description: "Course ID",
+                },
+            ],
+            responses: {
+                200: { description: "Course deleted successfully" },
+                401: { $ref: "#/components/responses/UnauthorizedError" },
+                403: { $ref: "#/components/responses/ForbiddenError" },
+                404: { $ref: "#/components/responses/NotFoundError" },
+            },
+        },
+    },
+    "/api/v1/course/{courseId}/publish": {
+        put: {
+            tags: ["Courses"],
+            summary: "Toggle course publish status",
+            description: "Publishes or unpublishes a course (Admin/Instructor only)",
+            security: [{ bearerAuth: [] }],
+            parameters: [
+                {
+                    in: "path",
+                    name: "courseId",
+                    required: true,
+                    schema: { type: "string" },
+                    description: "Course ID",
+                },
+            ],
+            responses: {
+                200: {
+                    description: "Course publish status toggled successfully",
+                    content: {
+                        "application/json": {
+                            schema: {
+                                type: "object",
+                                properties: {
+                                    success: { type: "boolean", example: true },
+                                    data: { $ref: "#/components/schemas/Course" },
+                                },
+                            },
+                        },
+                    },
+                },
                 401: { $ref: "#/components/responses/UnauthorizedError" },
                 403: { $ref: "#/components/responses/ForbiddenError" },
                 404: { $ref: "#/components/responses/NotFoundError" },

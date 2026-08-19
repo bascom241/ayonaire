@@ -20,3 +20,16 @@ export const createModule = async (data) => {
         lessons: module.lessons.map((id) => id.toString()),
     };
 };
+export const getModulesForCourse = async (courseId) => {
+    const modules = await moduleModel
+        .find({ course: courseId })
+        .sort({ order: 1 });
+    return modules.map((m) => ({
+        _id: m._id.toString(),
+        title: m.title,
+        description: m.description,
+        course: m.course.toString(),
+        order: m.order,
+        lessonsCount: m.lessons.length,
+    }));
+};

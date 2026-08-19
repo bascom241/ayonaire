@@ -187,7 +187,7 @@ export const viewEnrolledCourses = async (
               as: "instructor",
             },
           },
-          { $unwind: "$instructor" },
+          { $unwind: { path: "$instructor", preserveNullAndEmptyArrays: true } },
           {
             $project: {
               _id: 1,
@@ -195,7 +195,13 @@ export const viewEnrolledCourses = async (
               thumbnail: 1,
 
               status: 1,
-              instructor: { name: "$instructor.name" },
+              instructor: {
+                $cond: [
+                  "$instructor",
+                  { name: "$instructor.name" },
+                  null,
+                ],
+              },
             },
           },
         ],
@@ -297,6 +303,7 @@ export const getAllEnrollmentsForAdmin = async (query: any) => {
       progress: e.progress,
       completed: e.completed,
       createdAt: e.createdAt,
+      updatedAt: e.updatedAt,
     })),
     pagination: {
       total,

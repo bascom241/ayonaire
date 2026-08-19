@@ -149,8 +149,11 @@ export interface NonAdminUser {
   _id: string;
   name: string;
   email: string;
+  role: UserRole;
   status: UserStatus;
+  profile?: Profile | null;
   createdAt: Date;
+  updatedAt: Date;
 }
 
 export type NonAdminUsers = NonAdminUser[];

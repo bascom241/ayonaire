@@ -5,13 +5,22 @@ const roomSchema = new Schema({
         ref: "User",
         required: [true, "creator id is required"],
     },
+    isGroup: {
+        type: Boolean,
+        default: false,
+    },
+    participants: [
+        {
+            type: Schema.Types.ObjectId,
+            ref: "User",
+            required: true,
+        },
+    ],
     name: {
         type: String,
-        required: [true, "room name is required"],
     },
     description: {
         type: String,
-        required: [true, "description is required"],
     },
     profile: {
         type: {
@@ -20,4 +29,5 @@ const roomSchema = new Schema({
         },
     },
 }, { timestamps: true });
+roomSchema.index({ participants: 1 });
 export default mongoose.model("Room", roomSchema);

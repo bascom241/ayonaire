@@ -1,4 +1,5 @@
 import { getMessagesForRoom, sendMessage, } from "../services/message.service.js";
+import { AppError } from "../errors/AppError.js";
 export const send = async (req, res, next) => {
     try {
         const authRequest = req;
@@ -7,7 +8,6 @@ export const send = async (req, res, next) => {
             return res.status(400).json({ message: "Sender id is required" });
         }
         const { text, roomId } = req.body;
-        console.log(req.body);
         const dataToSend = {
             senderId,
             roomId,
@@ -24,11 +24,19 @@ export const send = async (req, res, next) => {
 };
 export const getMessagesForARoom = async (req, res, next) => {
     try {
-        const query = req.query;
-        const { roomId } = req.body;
+        const authRequest = req;
+        const requesterId = authRequest.user?.id;
+        if (!requesterId) {
+            throw new AppError("unauthorized", 401);
+        }
+        const { roomId } = req.params;
+        if (!roomId || typeof roomId !== "string") {
+            throw new AppError("roomId is required", 400);
+        }
         const dataToSend = {
             roomId,
-            query,
+            requesterId,
+            query: req.query,
         };
         const data = await getMessagesForRoom(dataToSend);
         res.status(200).json({ success: true, data });

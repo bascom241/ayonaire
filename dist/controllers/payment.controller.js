@@ -1,4 +1,4 @@
-import { bulkActionForOrder, editOrder, handlePaystackWebhook, initializePayment, payHistory, viewSingleOrder, } from "../services/payment.service.js";
+import { bulkActionForOrder, editOrder, handlePaystackWebhook, initializePayment, payHistory, viewSingleOrder, addOrderNote, getPaymentAnalytics, getStudentPurchases, } from "../services/payment.service.js";
 import crypto from "crypto";
 import { AppError } from "../errors/AppError.js";
 export const pay = async (req, res, next) => {
@@ -77,8 +77,9 @@ export const paymentHistory = async (req, res, next) => {
 export const bulkEdit = async (req, res, next) => {
     try {
         const dataToSend = {
+            orderIds: req.body.orderIds,
             Completed: req.body.completed,
-            Onhold: req.body.completed,
+            Onhold: req.body.onhold,
             Cancelled: req.body.cancelled,
             Revoke: req.body.revoke,
             Refund: req.body.refund,
@@ -109,12 +110,46 @@ export const edit = async (req, res, next) => {
 };
 export const viewSingle = async (req, res, next) => {
     try {
-        const { orderId } = req.params;
+        const orderId = req.params.orderId;
         if (!orderId || typeof orderId !== "string") {
             throw new AppError("order id is missing or Invalid format", 400);
         }
         const data = await viewSingleOrder({ orderId });
         res.status(200).json({ success: true, data });
+    }
+    catch (error) {
+        next(error);
+    }
+};
+export const addNote = async (req, res, next) => {
+    try {
+        const authorId = req.user?.id;
+        if (!authorId)
+            throw new AppError("Unauthorized", 401);
+        const orderId = req.params.orderId;
+        if (!req.body.content) {
+            throw new AppError("content is required", 400);
+        }
+        const data = await addOrderNote(orderId, authorId, req.body.content, req.body.isPrivate);
+        res.status(200).json({ success: true, data });
+    }
+    catch (error) {
+        next(error);
+    }
+};
+export const analytics = async (req, res, next) => {
+    try {
+        const data = await getPaymentAnalytics();
+        res.status(200).json({ success: true, data });
+    }
+    catch (error) {
+        next(error);
+    }
+};
+export const studentPurchases = async (req, res, next) => {
+    try {
+        const data = await getStudentPurchases(req.query);
+        res.status(200).json({ success: true, ...data });
     }
     catch (error) {
         next(error);

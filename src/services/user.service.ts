@@ -519,11 +519,14 @@ export const fetchNonAdminUsers = async (): Promise<NonAdminUsers> => {
   const users = await User.find({ role: { $ne: "admin" } }, { password: 0 });
 
   return users.map((user) => ({
-    _id: user._id,
+    _id: user._id.toString(),
     name: user.name,
     email: user.email,
+    role: user.role,
     status: user.status,
+    profile: getProfilePayload(user),
     createdAt: user.createdAt,
+    updatedAt: user.updatedAt,
   }));
 };
 

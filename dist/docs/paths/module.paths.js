@@ -47,4 +47,43 @@ export default {
             },
         },
     },
+    "/api/v1/module": {
+        get: {
+            tags: ["Modules"],
+            summary: "Get modules for a course",
+            description: "Returns all modules for a course (Admin/Instructor only)",
+            security: [{ bearerAuth: [] }],
+            parameters: [
+                {
+                    in: "query",
+                    name: "courseId",
+                    required: true,
+                    schema: { type: "string" },
+                    description: "Course ID",
+                },
+            ],
+            responses: {
+                200: {
+                    description: "Modules retrieved successfully",
+                    content: {
+                        "application/json": {
+                            schema: {
+                                type: "object",
+                                properties: {
+                                    success: { type: "boolean", example: true },
+                                    data: {
+                                        type: "array",
+                                        items: { $ref: "#/components/schemas/Module" },
+                                    },
+                                },
+                            },
+                        },
+                    },
+                },
+                400: { $ref: "#/components/responses/ValidationError" },
+                401: { $ref: "#/components/responses/UnauthorizedError" },
+                403: { $ref: "#/components/responses/ForbiddenError" },
+            },
+        },
+    },
 };

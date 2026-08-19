@@ -14,6 +14,13 @@ export const createAnnouncement = async (data) => {
     if (!hasAtLeastOne) {
         throw new AppError("At leat one value must be provided", 400);
     }
+    const commonFields = {
+        title,
+        summary,
+        createdBy: data.createdBy,
+        status: data.status,
+        scheduledAt: data.scheduledAt,
+    };
     if (cohortId) {
         const cohort = await cohortModel
             .findById(cohortId)
@@ -27,9 +34,9 @@ export const createAnnouncement = async (data) => {
         const studentEmails = cohort.students.map((student) => student.email);
         await sendAnnouncementToStudentsInACohort(studentEmails, title, summary);
         const announcment = await announcementModel.create({
+            ...commonFields,
             audience: cohort.name,
-            title: title,
-            summary: summary,
+            cohort: cohortId,
         });
         return {
             id: announcment._id.toString(),
@@ -51,9 +58,9 @@ export const createAnnouncement = async (data) => {
         const studentEmails = course.students.map((student) => student.email);
         await sendAnnouncementToStudentsInACourse(studentEmails, title, summary);
         const announcment = await announcementModel.create({
+            ...commonFields,
             audience: course.title,
-            title: title,
-            summary: summary,
+            course: courseId,
         });
         return {
             id: announcment._id.toString(),
@@ -64,11 +71,13 @@ export const createAnnouncement = async (data) => {
     }
     if (students) {
         const existingStudents = [];
+        const existingStudentIds = [];
         const nonExistentStudents = [];
         for (const studentEmail of students) {
             const isStudentExist = await userModel.findOne({ email: studentEmail });
             if (isStudentExist) {
                 existingStudents.push(studentEmail);
+                existingStudentIds.push(isStudentExist._id.toString());
             }
             else {
                 nonExistentStudents.push(studentEmail);
@@ -79,9 +88,9 @@ export const createAnnouncement = async (data) => {
         if (existingStudents.length > 0) {
             await sendAnnouncementToStudentsInACourse(existingStudents, title, summary);
             const announcment = await announcementModel.create({
+                ...commonFields,
                 audience: "Specific students",
-                title: title,
-                summary: summary,
+                students: existingStudentIds,
             });
             return {
                 id: announcment._id.toString(),
@@ -98,15 +107,30 @@ export const createAnnouncement = async (data) => {
 };
 export const getAllAnnounceMents = async (data) => {
     const { page, skip, limit } = getPagination(data);
+    const filter = {};
+    if (data.course)
+        filter.course = data.course;
+    if (data.cohort)
+        filter.cohort = data.cohort;
+    if (data.createdBy)
+        filter.createdBy = data.createdBy;
+    if (data.status)
+        filter.status = data.status;
     const [announcements, total] = await Promise.all([
-        announcementModel.find().skip(skip).limit(limit),
-        announcementModel.countDocuments(),
+        announcementModel.find(filter).skip(skip).limit(limit).sort({ createdAt: -1 }),
+        announcementModel.countDocuments(filter),
     ]);
     const formattedAnnouceMent = announcements.map((announcement) => ({
         id: announcement._id.toString(),
         audience: announcement.audience,
         title: announcement.title,
         summary: announcement.summary,
+        course: announcement.course ? announcement.course.toString() : null,
+        cohort: announcement.cohort ? announcement.cohort.toString() : null,
+        createdBy: announcement.createdBy ? announcement.createdBy.toString() : null,
+        status: announcement.status,
+        views: announcement.views,
+        createdAt: announcement.createdAt,
     }));
     return {
         announcement: formattedAnnouceMent,
@@ -117,4 +141,37 @@ export const getAllAnnounceMents = async (data) => {
             totalPages: Math.ceil(total / limit),
         },
     };
+};
+export const updateAnnouncement = async (announcementId, userId, role, data) => {
+    const announcement = await announcementModel.findById(announcementId);
+    if (!announcement) {
+        throw new AppError("Announcement not found", 404);
+    }
+    if (role !== "admin" &&
+        announcement.createdBy &&
+        announcement.createdBy.toString() !== userId) {
+        throw new AppError("You do not own this announcement", 403);
+    }
+    if (data.title !== undefined)
+        announcement.title = data.title;
+    if (data.summary !== undefined)
+        announcement.summary = data.summary;
+    if (data.status !== undefined)
+        announcement.status = data.status;
+    if (data.scheduledAt !== undefined)
+        announcement.scheduledAt = data.scheduledAt;
+    await announcement.save();
+    return announcement;
+};
+export const deleteAnnouncement = async (announcementId, userId, role) => {
+    const announcement = await announcementModel.findById(announcementId);
+    if (!announcement) {
+        throw new AppError("Announcement not found", 404);
+    }
+    if (role !== "admin" &&
+        announcement.createdBy &&
+        announcement.createdBy.toString() !== userId) {
+        throw new AppError("You do not own this announcement", 403);
+    }
+    await announcementModel.findByIdAndDelete(announcementId);
 };

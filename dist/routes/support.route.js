@@ -1,0 +1,10 @@
+import express from "express";
+const router = express.Router();
+import { authorize, restrictTo } from "../middlewares/auth.middleware.js";
+import { create, getAll, getSingle, reply, updateStatus, } from "../controllers/support.controller.js";
+router.post("/", authorize, create);
+router.get("/", authorize, getAll);
+router.get("/:ticketId", authorize, getSingle);
+router.post("/:ticketId/reply", authorize, reply);
+router.put("/:ticketId/status", authorize, restrictTo("admin"), updateStatus);
+export default router;

@@ -80,6 +80,29 @@ export const sendAnnouncementToStudentsInACohort = async (studentEmails, title, 
         throw new Error("Announcement could not be sent.");
     }
 };
+export const sendBulkNotificationEmail = async (recipientEmails, subject, message) => {
+    if (recipientEmails.length === 0) {
+        return { success: 0, failed: 0 };
+    }
+    try {
+        const defaultClient = SibApiV3Sdk.ApiClient.instance;
+        const apiKey = defaultClient.authentications["api-key"];
+        apiKey.apiKey = process.env.BREVO_API_KEY;
+        const apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
+        const emailHtml = getAnnouncementEmailHTML(subject, message);
+        const sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail();
+        sendSmtpEmail.sender = { email: process.env.EMAIL_FROM };
+        sendSmtpEmail.to = recipientEmails.map((email) => ({ email }));
+        sendSmtpEmail.subject = subject;
+        sendSmtpEmail.htmlContent = emailHtml;
+        await apiInstance.sendTransacEmail(sendSmtpEmail);
+        return { success: recipientEmails.length, failed: 0 };
+    }
+    catch (error) {
+        console.error("Error sending bulk notification email:", error);
+        return { success: 0, failed: recipientEmails.length };
+    }
+};
 export const sendAnnouncementToStudentsInACourse = async (studentEmails, title, summary) => {
     try {
         const defaultClient = SibApiV3Sdk.ApiClient.instance;

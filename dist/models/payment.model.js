@@ -74,5 +74,13 @@ const paymentSchema = new Schema({
         zipCode: String,
         country: String,
     },
+    notes: [
+        {
+            author: { type: Schema.Types.ObjectId, ref: "User" },
+            content: String,
+            isPrivate: { type: Boolean, default: true },
+            createdAt: { type: Date, default: Date.now },
+        },
+    ],
 }, { timestamps: true });
 export default mongoose.model("Payment", paymentSchema);

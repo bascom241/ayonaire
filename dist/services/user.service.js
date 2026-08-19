@@ -360,11 +360,14 @@ export const editUser = async (id, data) => {
 export const fetchNonAdminUsers = async () => {
     const users = await User.find({ role: { $ne: "admin" } }, { password: 0 });
     return users.map((user) => ({
-        _id: user._id,
+        _id: user._id.toString(),
         name: user.name,
         email: user.email,
+        role: user.role,
         status: user.status,
+        profile: getProfilePayload(user),
         createdAt: user.createdAt,
+        updatedAt: user.updatedAt,
     }));
 };
 export const deleteUser = async (id) => {
@@ -395,6 +398,16 @@ export const suspendUser = async (id) => {
         throw new AppError("account already suspended ", 404);
     }
     await User.findByIdAndUpdate(id, { status: UserStatus.SUSPENDED });
+};
+export const activateUser = async (id) => {
+    const user = await User.findById(id);
+    if (user !== null && user.role === UserRole.ADMIN) {
+        throw new AppError("cant modify an admin", 404);
+    }
+    if (user !== null && user.status === UserStatus.ACTIVE) {
+        throw new AppError("account already active", 404);
+    }
+    await User.findByIdAndUpdate(id, { status: UserStatus.ACTIVE });
 };
 export const assignRole = async (id, data) => {
     const user = await User.findById(id);
@@ -645,11 +658,7 @@ export const addUser = async (data) => {
     };
 };
 export const inviteUser = async (data) => {
-    validateRequestBodyWithValues(data, [
-        "emails",
-        "courseId",
-        "cohortId",
-    ]);
+    validateRequestBodyWithValues(data, ["emails"]);
     const results = {
         sent: [],
         skipped: [],
@@ -674,6 +683,7 @@ export const inviteUser = async (data) => {
                 email,
                 courseId: data.courseId,
                 cohortId: data.cohortId,
+                role: data.role,
                 token,
                 expiresAt: Date.now() + 1000 * 60 * 60 * 24,
             });
@@ -723,6 +733,7 @@ export const acceptInvite = async (data) => {
         email: invite.email,
         password: hashPassword,
         isEmailVerified: true,
+        role: invite.role || UserRole.USER,
     });
     if (invite.courseId) {
         const enrollmentExist = await await enrollmentModel.findOne({

@@ -1,8 +1,13 @@
 import express from "express";
 const router = express.Router();
-import { completedCourses, enrolledCourses, } from "../controllers/enroll.controller.js";
-import { authorize } from "../middlewares/auth.middleware.js";
+import { completedCourses, enrolledCourses, courseDetail, getAllEnrollments, enrollStudents, enrollStudentsCsv, } from "../controllers/enroll.controller.js";
+import { authorize, restrictTo } from "../middlewares/auth.middleware.js";
+import { upload } from "../middlewares/multer.js";
 router.get("/enrolled-coures", authorize, enrolledCourses);
 router.get("/enrolled-courses", authorize, enrolledCourses);
 router.get("/completed-courses", authorize, completedCourses);
+router.get("/admin/all", authorize, restrictTo("admin"), getAllEnrollments);
+router.post("/admin/enroll", authorize, restrictTo("admin"), enrollStudents);
+router.post("/admin/enroll-csv", authorize, restrictTo("admin"), upload.single("file"), enrollStudentsCsv);
+router.get("/course/:courseId", authorize, courseDetail);
 export default router;

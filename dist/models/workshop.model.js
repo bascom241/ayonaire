@@ -33,6 +33,10 @@ const workShopSchema = new Schema({
         enum: Object.values(WorkShopStatus),
         default: WorkShopStatus.UPCOMING,
     },
+    createdBy: {
+        type: Schema.Types.ObjectId,
+        ref: "User",
+    },
     startDate: {
         type: Date,
         default: Date.now,
@@ -41,5 +45,5 @@ const workShopSchema = new Schema({
         type: Date,
         required: [true, "End Date is required"],
     },
-});
+}, { timestamps: true });
 export default mongoose.model("WorkShop", workShopSchema);

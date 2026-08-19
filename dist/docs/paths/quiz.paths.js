@@ -161,5 +161,183 @@ export default {
                 403: { $ref: "#/components/responses/ForbiddenError" },
             },
         },
+        get: {
+            tags: ["Quiz"],
+            summary: "Get all quizzes",
+            description: "Returns quizzes visible to the authenticated user (Admin/Instructor only)",
+            security: [{ bearerAuth: [] }],
+            parameters: [
+                { in: "query", name: "page", schema: { type: "number", default: 1 } },
+                { in: "query", name: "limit", schema: { type: "number", default: 10 } },
+            ],
+            responses: {
+                200: {
+                    description: "Quizzes retrieved successfully",
+                    content: {
+                        "application/json": {
+                            schema: {
+                                type: "object",
+                                properties: {
+                                    success: { type: "boolean", example: true },
+                                    data: {
+                                        type: "array",
+                                        items: { $ref: "#/components/schemas/Quiz" },
+                                    },
+                                },
+                            },
+                        },
+                    },
+                },
+                401: { $ref: "#/components/responses/UnauthorizedError" },
+                403: { $ref: "#/components/responses/ForbiddenError" },
+            },
+        },
+    },
+    "/api/v1/quiz/quiz/{quizId}": {
+        get: {
+            tags: ["Quiz"],
+            summary: "Get single quiz",
+            description: "Returns one quiz by ID",
+            security: [{ bearerAuth: [] }],
+            parameters: [
+                {
+                    in: "path",
+                    name: "quizId",
+                    required: true,
+                    schema: { type: "string" },
+                    description: "Quiz ID",
+                },
+            ],
+            responses: {
+                200: {
+                    description: "Quiz retrieved successfully",
+                    content: {
+                        "application/json": {
+                            schema: {
+                                type: "object",
+                                properties: {
+                                    success: { type: "boolean", example: true },
+                                    data: { $ref: "#/components/schemas/Quiz" },
+                                },
+                            },
+                        },
+                    },
+                },
+                401: { $ref: "#/components/responses/UnauthorizedError" },
+                404: { $ref: "#/components/responses/NotFoundError" },
+            },
+        },
+        put: {
+            tags: ["Quiz"],
+            summary: "Update quiz",
+            description: "Updates a quiz (Admin/Instructor only)",
+            security: [{ bearerAuth: [] }],
+            parameters: [
+                {
+                    in: "path",
+                    name: "quizId",
+                    required: true,
+                    schema: { type: "string" },
+                    description: "Quiz ID",
+                },
+            ],
+            requestBody: {
+                content: {
+                    "application/json": {
+                        schema: {
+                            type: "object",
+                            properties: {
+                                title: { type: "string" },
+                                randomizeQuestions: { type: "boolean" },
+                                showCorrectAnswers: { type: "boolean" },
+                                allowRetakes: { type: "boolean" },
+                                status: { type: "string" },
+                                dueDate: { type: "string", format: "date-time" },
+                            },
+                        },
+                    },
+                },
+            },
+            responses: {
+                200: {
+                    description: "Quiz updated successfully",
+                    content: {
+                        "application/json": {
+                            schema: {
+                                type: "object",
+                                properties: {
+                                    success: { type: "boolean", example: true },
+                                    data: { $ref: "#/components/schemas/Quiz" },
+                                },
+                            },
+                        },
+                    },
+                },
+                400: { $ref: "#/components/responses/ValidationError" },
+                401: { $ref: "#/components/responses/UnauthorizedError" },
+                403: { $ref: "#/components/responses/ForbiddenError" },
+                404: { $ref: "#/components/responses/NotFoundError" },
+            },
+        },
+        delete: {
+            tags: ["Quiz"],
+            summary: "Delete quiz",
+            description: "Deletes a quiz (Admin/Instructor only)",
+            security: [{ bearerAuth: [] }],
+            parameters: [
+                {
+                    in: "path",
+                    name: "quizId",
+                    required: true,
+                    schema: { type: "string" },
+                    description: "Quiz ID",
+                },
+            ],
+            responses: {
+                200: { description: "Quiz deleted successfully" },
+                401: { $ref: "#/components/responses/UnauthorizedError" },
+                403: { $ref: "#/components/responses/ForbiddenError" },
+                404: { $ref: "#/components/responses/NotFoundError" },
+            },
+        },
+    },
+    "/api/v1/quiz/quiz/{quizId}/results": {
+        get: {
+            tags: ["Quiz"],
+            summary: "Get quiz results",
+            description: "Returns quiz attempt results (Admin/Instructor only)",
+            security: [{ bearerAuth: [] }],
+            parameters: [
+                {
+                    in: "path",
+                    name: "quizId",
+                    required: true,
+                    schema: { type: "string" },
+                    description: "Quiz ID",
+                },
+            ],
+            responses: {
+                200: {
+                    description: "Results retrieved successfully",
+                    content: {
+                        "application/json": {
+                            schema: {
+                                type: "object",
+                                properties: {
+                                    success: { type: "boolean", example: true },
+                                    data: {
+                                        type: "array",
+                                        items: { $ref: "#/components/schemas/QuizAttempt" },
+                                    },
+                                },
+                            },
+                        },
+                    },
+                },
+                401: { $ref: "#/components/responses/UnauthorizedError" },
+                403: { $ref: "#/components/responses/ForbiddenError" },
+                404: { $ref: "#/components/responses/NotFoundError" },
+            },
+        },
     },
 };

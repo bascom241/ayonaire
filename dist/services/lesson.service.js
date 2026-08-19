@@ -5,12 +5,16 @@ import moduleModel from "../models/module.model.js";
 import courseModel from "../models/course.model.js";
 import mongoose, { Types } from "mongoose";
 import { uploadMedia } from "../utils/uploadToCloudinary.js";
+import { issueCertificateIfEligible } from "./certificate.service.js";
 export const uploadLesson = async (data) => {
     const lessonData = {
         title: data.title,
         module: data.module,
         course: data.course,
         order: data.order,
+        isPublished: data.isPublished ?? true,
+        isFreePreview: data.isFreePreview,
+        isLocked: data.isLocked,
     };
     const isModule = await moduleModel.findById(lessonData.module);
     if (!isModule) {
@@ -86,6 +90,9 @@ export const markLessonAsCompleted = async (data) => {
         enrollment.completed = true;
     }
     await enrollment.save();
+    if (enrollment.completed) {
+        await issueCertificateIfEligible(data.studentId, data.courseId);
+    }
     return {
         course: enrollment.course.toString(),
         student: enrollment.student?.toString() || data.studentId.toString(),
@@ -129,7 +136,7 @@ export const getResumeLesson = async (data) => {
         throw new AppError("enrollment not found", 400);
     }
     if (enrollment.lastLesson) {
-        return enrollment.lastLesson;
+        return { lessonId: enrollment.lastLesson.toString() };
     }
     // fallback → return first lesson
     const firstLesson = await lessonModel
@@ -138,7 +145,7 @@ export const getResumeLesson = async (data) => {
         isPublished: true,
     })
         .sort({ order: 1 });
-    return firstLesson?._id;
+    return { lessonId: firstLesson ? firstLesson._id.toString() : null };
 };
 export const viewLessonContent = async (data) => {
     const myEnrollment = await enrollmentModel.findOne({
@@ -146,7 +153,7 @@ export const viewLessonContent = async (data) => {
         course: data.courseId,
     });
     if (!myEnrollment) {
-        throw new AppError("you are not enrolled for this course", 401);
+        throw new AppError("You are not enrolled in this course", 403);
     }
     const pipeline = [
         {
@@ -186,7 +193,7 @@ export const viewLessonContent = async (data) => {
                                 "$$lesson",
                                 {
                                     isCompleted: {
-                                        $in: ["$$lesson._id", myEnrollment.comletedLessons],
+                                        $in: ["$$lesson._id", myEnrollment?.comletedLessons ?? [],],
                                     },
                                 },
                             ],
@@ -199,7 +206,44 @@ export const viewLessonContent = async (data) => {
     const modules = await moduleModel.aggregate(pipeline);
     return {
         modules,
-        progress: myEnrollment.progress,
-        lastLesson: myEnrollment.lastLesson,
+        progress: myEnrollment ? myEnrollment.progress : 0,
+        lastLesson: myEnrollment?.lastLesson
+            ? myEnrollment.lastLesson.toString()
+            : null,
     };
+};
+// For the course's own instructor (or an admin) to preview its curriculum -
+// there is no enrollment record for them to key off, so this skips the
+// isCompleted/progress overlay entirely rather than reusing viewLessonContent.
+export const viewCourseContentForOwner = async (courseId, userId, role) => {
+    const course = await courseModel.findById(courseId);
+    if (!course) {
+        throw new AppError("course not found", 404);
+    }
+    if (role !== "admin" &&
+        course.instructor &&
+        course.instructor.toString() !== userId) {
+        throw new AppError("You do not own this course", 403);
+    }
+    const pipeline = [
+        { $match: { course: new Types.ObjectId(courseId) } },
+        { $sort: { order: 1 } },
+        {
+            $lookup: {
+                from: "lessons",
+                localField: "_id",
+                foreignField: "module",
+                as: "lessons",
+            },
+        },
+        {
+            $addFields: {
+                lessons: {
+                    $sortArray: { input: "$lessons", sortBy: { order: 1 } },
+                },
+            },
+        },
+    ];
+    const modules = await moduleModel.aggregate(pipeline);
+    return { modules };
 };

@@ -145,11 +145,10 @@ export default {
             },
         },
     },
-    "/api/v1/feed/tag": {
+    "/api/v1/feed/share": {
         post: {
             tags: ["Feeds"],
-            summary: "Create feed tags",
-            description: "Creates one or more feed tags. Admin only.",
+            summary: "Share a feed",
             security: [{ bearerAuth: [] }],
             requestBody: {
                 required: true,
@@ -157,22 +156,41 @@ export default {
                     "application/json": {
                         schema: {
                             type: "object",
-                            required: ["titles"],
                             properties: {
-                                titles: {
-                                    type: "array",
-                                    items: { type: "string" },
-                                    example: ["announcement", "learning"],
-                                },
+                                feedId: { type: "string" },
                             },
                         },
                     },
                 },
             },
             responses: {
-                201: { description: "Tags created successfully" },
+                200: { description: "Feed shared successfully" },
                 401: { $ref: "#/components/responses/UnauthorizedError" },
-                403: { $ref: "#/components/responses/ForbiddenError" },
+            },
+        },
+    },
+    "/api/v1/feed/report": {
+        post: {
+            tags: ["Feeds"],
+            summary: "Report a feed",
+            security: [{ bearerAuth: [] }],
+            requestBody: {
+                required: true,
+                content: {
+                    "application/json": {
+                        schema: {
+                            type: "object",
+                            properties: {
+                                feedId: { type: "string" },
+                                reason: { type: "string" },
+                            },
+                        },
+                    },
+                },
+            },
+            responses: {
+                200: { description: "Feed reported successfully" },
+                401: { $ref: "#/components/responses/UnauthorizedError" },
             },
         },
     },

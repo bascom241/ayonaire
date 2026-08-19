@@ -1,6 +1,6 @@
 import express from "express";
 const router = express.Router();
-import { upload, uploadVid, markLesson, update, resume, view, } from "../controllers/lesson.controller.js";
+import { upload, uploadVid, markLesson, update, resume, view, viewOwn, } from "../controllers/lesson.controller.js";
 import { authorize, restrictTo } from "../middlewares/auth.middleware.js";
 import { upload as uploadMulter } from "../middlewares/multer.js";
 router.post("/upload", authorize, restrictTo("admin", "instructor"), upload);
@@ -9,4 +9,5 @@ router.post("/mark-lesson-as-completed", authorize, markLesson);
 router.post("/update-last-lesson", authorize, update);
 router.get("/resume-last-lesson", authorize, resume);
 router.get("/view-lesson-content", authorize, view);
+router.get("/course-content/:courseId", authorize, restrictTo("admin", "instructor"), viewOwn);
 export default router;

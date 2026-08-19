@@ -3,6 +3,7 @@ import instructorProfileModel from "../models/instructorProfile.model.js";
 import { AppError } from "../errors/AppError.js";
 import courseModel from "../models/course.model.js";
 import userModel from "../models/user.model.js";
+import { getPagination } from "../utils/getPagination.js";
 export const createCohort = async (data) => {
     const course = await courseModel.findById(data.course);
     if (!course) {
@@ -69,4 +70,50 @@ export const assignInstructorToCohort = async (data) => {
         creator: instructor.instructorId,
     });
     return `cohort ${cohort.name} has been assigned to ${instructor.instructorId.name}`;
+};
+export const listCohorts = async (userId, role, query) => {
+    const { page, limit, skip } = getPagination(query);
+    const filter = {};
+    if (query.course)
+        filter.course = query.course;
+    if (role !== "admin")
+        filter.creator = userId;
+    const [cohorts, total] = await Promise.all([
+        cohortModel
+            .find(filter)
+            .populate("course", "title")
+            .skip(skip)
+            .limit(limit)
+            .sort({ createdAt: -1 }),
+        cohortModel.countDocuments(filter),
+    ]);
+    return {
+        cohorts: cohorts.map((c) => ({
+            _id: c._id.toString(),
+            name: c.name,
+            description: c.description,
+            course: c.course
+                ? { _id: c.course._id.toString(), title: c.course.title }
+                : null,
+            studentsCount: c.students.length,
+            isActive: c.isActive,
+            createdAt: c.createdAt,
+        })),
+        pagination: {
+            total,
+            page,
+            limit,
+            totalPages: Math.ceil(total / limit),
+        },
+    };
+};
+export const getCohortById = async (cohortId) => {
+    const cohort = await cohortModel
+        .findById(cohortId)
+        .populate("course", "title")
+        .populate("students", "name email");
+    if (!cohort) {
+        throw new AppError("cohort not found", 404);
+    }
+    return cohort;
 };

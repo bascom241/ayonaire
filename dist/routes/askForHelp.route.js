@@ -1,0 +1,15 @@
+import express from "express";
+const router = express.Router();
+import { authorize } from "../middlewares/auth.middleware.js";
+import { upload } from "../middlewares/multer.js";
+import { create, edit, deleteQ, view, like, answer, deleteAns, share, resolve, } from "../controllers/askForHelp.controller.js";
+router.post("/", authorize, upload.single("media"), create);
+router.put("/", authorize, upload.single("media"), edit);
+router.delete("/", authorize, deleteQ);
+router.get("/", authorize, view);
+router.post("/like", authorize, like);
+router.post("/answer", authorize, answer);
+router.delete("/answer", authorize, deleteAns);
+router.post("/share", authorize, share);
+router.post("/resolve", authorize, resolve);
+export default router;

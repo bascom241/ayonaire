@@ -8,6 +8,7 @@ import {
   remove,
 } from "../controllers/announcement.controller.js";
 
+
 router.post("/", authorize, restrictTo("admin", "instructor"), create);
 router.get("/", authorize, getAll);
 router.put(

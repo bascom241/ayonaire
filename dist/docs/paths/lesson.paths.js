@@ -267,4 +267,40 @@ export default {
             },
         },
     },
+    "/api/v1/lesson/course-content/{courseId}": {
+        get: {
+            tags: ["Lessons"],
+            summary: "View course content as owner",
+            description: "Returns full module/lesson content for a course owned by the authenticated admin/instructor.",
+            security: [{ bearerAuth: [] }],
+            parameters: [
+                {
+                    in: "path",
+                    name: "courseId",
+                    required: true,
+                    schema: { type: "string" },
+                    description: "Course ID",
+                },
+            ],
+            responses: {
+                200: {
+                    description: "Course content retrieved successfully",
+                    content: {
+                        "application/json": {
+                            schema: {
+                                type: "object",
+                                properties: {
+                                    success: { type: "boolean", example: true },
+                                    data: { type: "object" },
+                                },
+                            },
+                        },
+                    },
+                },
+                401: { $ref: "#/components/responses/UnauthorizedError" },
+                403: { $ref: "#/components/responses/ForbiddenError" },
+                404: { $ref: "#/components/responses/NotFoundError" },
+            },
+        },
+    },
 };

@@ -1,5 +1,6 @@
 import { AppError } from "../errors/AppError.js";
 import CourseCategory from "../models/category.model.js";
+import { CourseCategoryEnum } from "../types/category.types.js";
 import { CourseStatus, } from "../types/course.types.js";
 import { uploadMedia } from "../utils/uploadToCloudinary.js";
 import courseModel from "../models/course.model.js";
@@ -16,6 +17,17 @@ export const createCourseCategory = async (title) => {
     }
     const category = await CourseCategory.create({ title });
     return category;
+};
+// Categories are drawn from a small fixed enum, but course.category stores a
+// reference to a CourseCategory document rather than the raw enum value, so
+// callers still need document _ids to submit. Self-seeds on first call so
+// instructors aren't blocked waiting on an admin to have created them first.
+export const listCourseCategories = async () => {
+    const existing = await CourseCategory.find();
+    if (existing.length > 0) {
+        return existing;
+    }
+    return CourseCategory.insertMany(Object.values(CourseCategoryEnum).map((title) => ({ title })));
 };
 export const createCourse = async (data) => {
     const uploadResult = await uploadMedia(data.thumbnail.buffer, "image");
@@ -109,6 +121,8 @@ export const updateCourse = async (courseId, data) => {
         course.courseLevel = data.courseLevel;
     if (data.instructor !== undefined)
         course.instructor = new mongoose.Types.ObjectId(data.instructor);
+    if (data.completionCertificate !== undefined)
+        course.completionCertificate = data.completionCertificate;
     const updatedCourse = await course.save();
     return {
         _id: updatedCourse._id.toString(),
@@ -278,5 +292,105 @@ export const getASingleCourseForAdminDashboard = async (courseId) => {
         price: course.price,
         status: course.status,
     };
+};
+/// ----------- General course browsing (all roles) ---------------///
+export const getAllCourses = async (query) => {
+    const { page, limit, skip } = getPagination(query);
+    const filter = {};
+    if (query.instructor)
+        filter.instructor = query.instructor;
+    if (query.status)
+        filter.status = query.status;
+    if (query.category)
+        filter.category = query.category;
+    if (query.search) {
+        filter.title = { $regex: query.search, $options: "i" };
+    }
+    const [courses, total] = await Promise.all([
+        courseModel
+            .find(filter)
+            .populate("category", "title")
+            .populate("instructor", "name email")
+            .skip(skip)
+            .limit(limit)
+            .sort({ createdAt: -1 }),
+        courseModel.countDocuments(filter),
+    ]);
+    const courseIds = courses.map((course) => course._id);
+    const enrollments = await enrollmentModel.find({
+        course: { $in: courseIds },
+    });
+    const enrollmentCountMap = {};
+    enrollments.forEach((enroll) => {
+        const courseId = enroll.course.toString();
+        enrollmentCountMap[courseId] = (enrollmentCountMap[courseId] || 0) + 1;
+    });
+    return {
+        courses: courses.map((course) => ({
+            _id: course._id.toString(),
+            title: course.title,
+            description: course.description,
+            thumbnail: course.thumbnail,
+            category: course.category,
+            instructor: course.instructor,
+            price: course.price,
+            status: course.status,
+            courseLevel: course.courseLevel,
+            enrollmentCount: enrollmentCountMap[course._id.toString()] || 0,
+            createdAt: course.createdAt,
+        })),
+        pagination: {
+            total,
+            page,
+            limit,
+            totalPages: Math.ceil(total / limit),
+        },
+    };
+};
+export const getCourseById = async (courseId) => {
+    const course = await courseModel
+        .findById(courseId)
+        .populate("category", "title")
+        .populate("instructor", "name email")
+        .populate("modules");
+    if (!course) {
+        throw new AppError("Course not found", 404);
+    }
+    return course;
+};
+export const deleteCourse = async (courseId, userId, role) => {
+    const course = await courseModel.findById(courseId);
+    if (!course) {
+        throw new AppError("Course not found", 404);
+    }
+    if (role !== "admin" &&
+        course.instructor &&
+        course.instructor.toString() !== userId) {
+        throw new AppError("You do not own this course", 403);
+    }
+    if (course.thumbnail?.publicId) {
+        await deleteImage(course.thumbnail.publicId);
+    }
+    if (course.introVideo?.publicId) {
+        await deleteImage(course.introVideo.publicId);
+    }
+    await courseModel.findByIdAndDelete(courseId);
+};
+export const toggleCoursePublishStatus = async (courseId, userId, role) => {
+    const course = await courseModel.findById(courseId);
+    if (!course) {
+        throw new AppError("Course not found", 404);
+    }
+    if (role !== "admin" &&
+        course.instructor &&
+        course.instructor.toString() !== userId) {
+        throw new AppError("You do not own this course", 403);
+    }
+    course.status =
+        course.status === CourseStatus.ACTIVE
+            ? CourseStatus.DRAFT
+            : CourseStatus.ACTIVE;
+    await course.save();
+    return course;
 };
 /// ----------- Students Service for Apis  ---------------///

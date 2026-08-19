@@ -11,6 +11,19 @@ const userResponse = {
         _id: { type: "string", example: "661f2a8c9c1234567890abcd" },
         name: { type: "string", example: "John Doe" },
         email: { type: "string", format: "email", example: "john@example.com" },
+        bio: { type: "string", example: "AI builder and product designer" },
+        linkedin: { type: "string", example: "https://linkedin.com/in/johndoe" },
+        website: { type: "string", example: "https://johndoe.dev" },
+        company: { type: "string", example: "Ayonaire" },
+        instagram: { type: "string", example: "https://instagram.com/johndoe" },
+        profile: {
+            type: "object",
+            nullable: true,
+            properties: {
+                url: { type: "string" },
+                publicId: { type: "string" },
+            },
+        },
         status: { type: "string", example: "active" },
         createdAt: { type: "string", format: "date-time" },
     },
@@ -487,6 +500,32 @@ export default {
                 404: { $ref: "#/components/responses/NotFoundError" },
             },
         },
+        delete: {
+            tags: ["Admin"],
+            summary: "Delete user",
+            description: "Permanently removes a user account. Admin only.",
+            security: [{ bearerAuth: [] }],
+            parameters: [userIdParam],
+            responses: {
+                200: {
+                    description: "User deleted successfully",
+                    content: {
+                        "application/json": {
+                            schema: {
+                                type: "object",
+                                properties: {
+                                    success: { type: "boolean", example: true },
+                                    message: { type: "string", example: "user deleted" },
+                                },
+                            },
+                        },
+                    },
+                },
+                401: { $ref: "#/components/responses/UnauthorizedError" },
+                403: { $ref: "#/components/responses/ForbiddenError" },
+                404: { $ref: "#/components/responses/NotFoundError" },
+            },
+        },
     },
     "/api/v1/auth/user/{id}/login-history": {
         get: {
@@ -680,6 +719,34 @@ export default {
             },
         },
     },
+    "/api/v1/auth/user/{id}/activate-user": {
+        put: {
+            tags: ["Admin"],
+            summary: "Activate user",
+            description: "Reactivates a deactivated or suspended user account. Admin only.",
+            security: [{ bearerAuth: [] }],
+            parameters: [userIdParam],
+            responses: {
+                200: {
+                    description: "User activated successfully",
+                    content: {
+                        "application/json": {
+                            schema: {
+                                type: "object",
+                                properties: {
+                                    success: { type: "boolean", example: true },
+                                    message: { type: "string", example: "user activated" },
+                                },
+                            },
+                        },
+                    },
+                },
+                401: { $ref: "#/components/responses/UnauthorizedError" },
+                403: { $ref: "#/components/responses/ForbiddenError" },
+                404: { $ref: "#/components/responses/NotFoundError" },
+            },
+        },
+    },
     "/api/v1/auth/get-profile": {
         post: {
             tags: ["Users"],
@@ -748,7 +815,7 @@ export default {
         put: {
             tags: ["Users"],
             summary: "Edit profile",
-            description: "Updates the authenticated user's name and profile image.",
+            description: "Partially updates the authenticated user's profile. The profile image is optional.",
             security: [{ bearerAuth: [] }],
             requestBody: {
                 required: true,
@@ -756,10 +823,23 @@ export default {
                     "multipart/form-data": {
                         schema: {
                             type: "object",
-                            required: ["profile"],
                             properties: {
                                 profile: { type: "string", format: "binary" },
                                 name: { type: "string", example: "John Doe" },
+                                bio: {
+                                    type: "string",
+                                    example: "AI builder and product designer",
+                                },
+                                linkedin: {
+                                    type: "string",
+                                    example: "https://linkedin.com/in/johndoe",
+                                },
+                                website: { type: "string", example: "https://johndoe.dev" },
+                                company: { type: "string", example: "Ayonaire" },
+                                instagram: {
+                                    type: "string",
+                                    example: "https://instagram.com/johndoe",
+                                },
                             },
                         },
                     },
@@ -774,12 +854,73 @@ export default {
                                 type: "object",
                                 properties: {
                                     name: { type: "string", example: "John Doe" },
+                                    bio: { type: "string" },
+                                    linkedin: { type: "string" },
+                                    website: { type: "string" },
+                                    company: { type: "string" },
+                                    instagram: { type: "string" },
                                     profile: {
                                         type: "object",
+                                        nullable: true,
                                         properties: {
                                             url: { type: "string" },
                                             publicId: { type: "string" },
                                         },
+                                    },
+                                },
+                            }),
+                        },
+                    },
+                },
+                400: { $ref: "#/components/responses/ValidationError" },
+                401: { $ref: "#/components/responses/UnauthorizedError" },
+            },
+        },
+    },
+    "/api/v1/auth/leaderboard": {
+        get: {
+            tags: ["Users"],
+            summary: "Get leaderboard",
+            description: "Returns ranked users by learning points. Points are calculated from course progress, completed lessons, and completed courses.",
+            security: [{ bearerAuth: [] }],
+            parameters: [
+                {
+                    in: "query",
+                    name: "period",
+                    schema: {
+                        type: "string",
+                        enum: ["all-time", "month", "week"],
+                        default: "all-time",
+                    },
+                },
+                {
+                    in: "query",
+                    name: "limit",
+                    schema: { type: "number", default: 10, minimum: 1, maximum: 100 },
+                },
+            ],
+            responses: {
+                200: {
+                    description: "Leaderboard retrieved successfully",
+                    content: {
+                        "application/json": {
+                            schema: authEnvelope({
+                                type: "array",
+                                items: {
+                                    type: "object",
+                                    properties: {
+                                        rank: { type: "number", example: 1 },
+                                        badge: {
+                                            type: "string",
+                                            nullable: true,
+                                            example: "gold",
+                                        },
+                                        points: { type: "number", example: 420 },
+                                        services: {
+                                            type: "array",
+                                            items: { type: "string" },
+                                        },
+                                        user: userResponse,
                                     },
                                 },
                             }),
