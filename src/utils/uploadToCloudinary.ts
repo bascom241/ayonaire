@@ -11,21 +11,12 @@ export const uploadMedia = (
   return new Promise((resolve, reject) => {
     const options = { folder: "ayoniareCourses", resource_type: type };
 
-    const done = (error: any, result: any) => {
-      if (error) reject(error);
-      else resolve(result);
-    };
-
-    // Use upload_chunked_stream for large files like videos
-    const uploadStream =
-      type === "video"
-        ? cloudinary.uploader.upload_chunked_stream(
-            { ...options, chunk_size: 6 * 1024 * 1024 },
-            done,
-          )
-        : cloudinary.uploader.upload_stream(options, done);
-
-    uploadStream.end(fileBuffer);
+    cloudinary.uploader
+      .upload_stream(options, (error, result) => {
+        if (error) reject(error);
+        else resolve(result);
+      })
+      .end(fileBuffer);
   });
 };
 
