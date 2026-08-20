@@ -18,6 +18,8 @@ import { InstructorApplicationStatus } from "../types/instructor.types.js";
 import { getPagination } from "../utils/getPagination.js";
 import enrollmentModel from "../models/enrollment.model.js";
 import { ensureCourseRoom } from "./room.service.js";
+import User from "../models/user.model.js";
+import { UserRole } from "../types/user.types.js";
 
 const getInstructorUserId = (instructor: any) =>
   instructor?.instructorId?._id?.toString?.() ??
@@ -37,6 +39,38 @@ const addCourseToInstructorProfile = async (
     { instructorId: instructorUserId },
     { $addToSet: { courses: courseId } },
   );
+};
+
+const getAssignableInstructor = async (instructorId: string) => {
+  const instructor = await instructorProfileModel
+    .findOne({ instructorId })
+    .populate("instructorId", "name role");
+
+  if (instructor) {
+    if (instructor.applicationStatus !== InstructorApplicationStatus.APPROVED) {
+      throw new AppError("Instructor has not been approved yet", 404);
+    }
+
+    return {
+      userId: getInstructorUserId(instructor),
+      name: (instructor.instructorId as any).name,
+      profileId: instructor._id,
+    };
+  }
+
+  const instructorUser = await User.findOne({
+    _id: instructorId,
+    role: UserRole.INSTRUCTOR,
+  }).select("name");
+
+  if (!instructorUser) {
+    throw new AppError("instructor not found", 400);
+  }
+
+  return {
+    userId: instructorUser._id.toString(),
+    name: instructorUser.name,
+  };
 };
 export const createCourseCategory = async (title: CourseCategoryEnum) => {
   const existing = await CourseCategory.findOne({ title });
@@ -94,12 +128,15 @@ export const createCourse = async (
     };
   }
 
+  let assignedInstructorId: string | undefined;
   if (data.instructor) {
-    courseData.instructor = new mongoose.Types.ObjectId(data.instructor);
+    const instructor = await getAssignableInstructor(data.instructor);
+    assignedInstructorId = instructor.userId;
+    courseData.instructor = new mongoose.Types.ObjectId(instructor.userId);
   }
 
   const course = await courseModel.create(courseData);
-  await addCourseToInstructorProfile(data.instructor, course._id);
+  await addCourseToInstructorProfile(assignedInstructorId, course._id);
 
   return {
     _id: course._id.toString(),
@@ -132,9 +169,19 @@ export const createCourse = async (
 export const updateCourse = async (
   courseId: string,
   data: Partial<CreateCourseRequest>,
+  userId?: string,
+  role?: string,
 ): Promise<CreateCourseResponse> => {
   const course = await courseModel.findById(courseId);
   if (!course) throw new Error("Course not found");
+
+  if (
+    role !== "admin" &&
+    course.instructor &&
+    course.instructor.toString() !== userId
+  ) {
+    throw new AppError("You do not own this course", 403);
+  }
 
   if (data.thumbnail) {
     if (course.thumbnail?.publicId) {
@@ -172,8 +219,13 @@ export const updateCourse = async (
   if (data.status !== undefined) course.status = data.status as CourseStatus;
   if (data.courseLevel !== undefined)
     course.courseLevel = data.courseLevel as CourseLevel;
-  if (data.instructor !== undefined)
-    course.instructor = new mongoose.Types.ObjectId(data.instructor);
+  if (data.instructor !== undefined) {
+    const instructor = await getAssignableInstructor(data.instructor);
+    if (role !== "admin" && instructor.userId !== userId) {
+      throw new AppError("You cannot assign this course to another instructor", 403);
+    }
+    course.instructor = new mongoose.Types.ObjectId(instructor.userId);
+  }
   if (data.completionCertificate !== undefined)
     course.completionCertificate = data.completionCertificate;
 
@@ -216,40 +268,29 @@ export const assignInstuctorToCourse = async (
   instructorId: string,
   courseId: string,
 ): Promise<string> => {
-  const instructor = await instructorProfileModel
-    .findOne({ instructorId: instructorId })
-    .populate("instructorId", "name");
-  if (!instructor) {
-    throw new AppError("instructor not found", 400);
-  }
+  const instructor = await getAssignableInstructor(instructorId);
   const courseToAssignInstructorTo = await courseModel.findById(courseId);
 
-  if (instructor.applicationStatus === InstructorApplicationStatus.APPROVED) {
-    if (courseToAssignInstructorTo) {
-      if (courseToAssignInstructorTo?.instructor) {
-        throw new AppError("course already belong to an instructor", 404);
-      }
-      courseToAssignInstructorTo.instructor = new mongoose.Types.ObjectId(
-        getInstructorUserId(instructor),
-      );
+  if (courseToAssignInstructorTo) {
+    if (courseToAssignInstructorTo?.instructor) {
+      throw new AppError("course already belong to an instructor", 404);
+    }
+    courseToAssignInstructorTo.instructor = new mongoose.Types.ObjectId(
+      instructor.userId,
+    );
 
-      await courseToAssignInstructorTo.save();
-      await instructorProfileModel.findByIdAndUpdate(instructor._id, {
+    await courseToAssignInstructorTo.save();
+    if (instructor.profileId) {
+      await instructorProfileModel.findByIdAndUpdate(instructor.profileId, {
         $addToSet: { courses: courseToAssignInstructorTo._id },
       });
-      await ensureCourseRoom(
-        courseId,
-        getInstructorUserId(instructor),
-        "instructor",
-      );
-    } else {
-      throw new AppError("course does not exits", 400);
     }
+    await ensureCourseRoom(courseId, instructor.userId, "instructor");
   } else {
-    throw new AppError("Instructor Has not been approved yet", 404);
+    throw new AppError("course does not exits", 400);
   }
 
-  return `${(instructor.instructorId as any).name} has been approved to ${courseToAssignInstructorTo.title}`;
+  return `${instructor.name} has been approved to ${courseToAssignInstructorTo.title}`;
 };
 
 export const saveCourseAsDraft = async (
@@ -282,12 +323,15 @@ export const saveCourseAsDraft = async (
     };
   }
 
+  let assignedInstructorId: string | undefined;
   if (data.instructor) {
-    courseData.instructor = new mongoose.Types.ObjectId(data.instructor);
+    const instructor = await getAssignableInstructor(data.instructor);
+    assignedInstructorId = instructor.userId;
+    courseData.instructor = new mongoose.Types.ObjectId(instructor.userId);
   }
 
   const course = await courseModel.create(courseData);
-  await addCourseToInstructorProfile(data.instructor, course._id);
+  await addCourseToInstructorProfile(assignedInstructorId, course._id);
 
   return {
     _id: course._id.toString(),

@@ -24,6 +24,25 @@ import {
 } from "../types/instructor.types.js";
 import categoryModel from "../models/category.model.js";
 
+const mapUserToInstructorResponse = (user: any): InstructorProfileResponse => ({
+  _id: user._id.toString(),
+  instructorId: {
+    _id: user._id.toString(),
+    name: user.name,
+    email: user.email,
+    loginHistory: user.loginHistory ?? [],
+    activity: user.activity ?? [],
+    profile: user.profile ?? null,
+  },
+  bio: user.bio ?? "",
+  expertise: [],
+  instructorCourseCategory: "-",
+  applicationStatus: InstructorApplicationStatus.APPROVED,
+  courses: [],
+  createdAt: user.createdAt,
+  updatedAt: user.updatedAt,
+});
+
 export const applyAsInstructor = async (
   userId: string | undefined,
   data: instructorRequest,
@@ -123,7 +142,16 @@ export const getInstructorProfiles = async (): Promise<
     })
     .populate("courses", "title status");
 
-  return instructors.map((inst: any) => ({
+  const instructorUserIds = instructors
+    .map((inst: any) => inst.instructorId?._id)
+    .filter(Boolean);
+
+  const usersWithoutProfiles = await User.find({
+    role: UserRole.INSTRUCTOR,
+    _id: { $nin: instructorUserIds },
+  }).select("name email loginHistory activity profile bio createdAt updatedAt");
+
+  const profileResponses = instructors.map((inst: any) => ({
     _id: inst._id.toString(),
     instructorId: {
       _id: inst.instructorId._id.toString(),
@@ -141,6 +169,11 @@ export const getInstructorProfiles = async (): Promise<
     createdAt: inst.createdAt,
     updatedAt: inst.updatedAt,
   }));
+
+  return [
+    ...profileResponses,
+    ...usersWithoutProfiles.map(mapUserToInstructorResponse),
+  ];
 };
 
 export const getInstructorProfile = async (
@@ -160,7 +193,16 @@ export const getInstructorProfile = async (
     .lean();
 
   if (!instructor) {
-    throw new AppError("Instructor profile not found", 404);
+    const instructorUser = await User.findOne({
+      _id: id,
+      role: UserRole.INSTRUCTOR,
+    }).select("name email loginHistory activity profile bio createdAt updatedAt");
+
+    if (!instructorUser) {
+      throw new AppError("Instructor profile not found", 404);
+    }
+
+    return mapUserToInstructorResponse(instructorUser);
   }
 
   const populatedUser = instructor.instructorId as any;

@@ -60,8 +60,11 @@ export const getCourseCategories = async (
   }
 };
 
+const resolveInstructorId = (req: AuthRequest) =>
+  req.user?.role === "instructor" ? req.user.id : req.body.instructorId;
+
 export const create = async (
-  req: Request,
+  req: AuthRequest,
   res: Response,
   next: NextFunction,
 ) => {
@@ -78,7 +81,7 @@ export const create = async (
       category: req.body.category,
       price: req.body.price,
       status: req.body.status,
-      instructor: req.body.instructorId,
+      instructor: resolveInstructorId(req),
       thumbnail,
       introVideo,
       courseLevel: req.body.courseLevel,
@@ -97,7 +100,7 @@ export const create = async (
   }
 };
 
-export const edit = async (req: Request, res: Response, next: NextFunction) => {
+export const edit = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const { courseId } = req.query;
     if (!courseId || typeof courseId !== "string") {
@@ -111,7 +114,7 @@ export const edit = async (req: Request, res: Response, next: NextFunction) => {
       category: req.body.category,
       price: req.body.price,
       status: req.body.status,
-      instructor: req.body.instructorId,
+      instructor: resolveInstructorId(req),
       thumbnail,
       introVideo,
       courseLevel: req.body.courseLevel,
@@ -122,7 +125,7 @@ export const edit = async (req: Request, res: Response, next: NextFunction) => {
           : undefined,
     };
 
-    const data = await updateCourse(courseId, dataToSend);
+    const data = await updateCourse(courseId, dataToSend, req.user?.id, req.user?.role);
 
     res.status(200).json({
       success: true,
@@ -157,7 +160,7 @@ export const assign = async (
 };
 
 export const saveToDraft = async (
-  req: Request,
+  req: AuthRequest,
   res: Response,
   next: NextFunction,
 ) => {
@@ -173,7 +176,7 @@ export const saveToDraft = async (
       category: req.body.category,
       price: req.body.price,
       status: req.body.status,
-      instructor: req.body.instructorId,
+      instructor: resolveInstructorId(req),
       thumbnail,
       introVideo,
       courseLevel: req.body.courseLevel,
