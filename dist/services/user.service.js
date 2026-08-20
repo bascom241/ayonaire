@@ -14,6 +14,7 @@ import crypto from "crypto";
 import invitesModel from "../models/invites.model.js";
 import refreshTokenModel from "../models/refreshToken.model.js";
 import { sendEmailInvites, sendPasswordResetEmail, sendVerificationEmail, } from "../config/mail.js";
+import { ensureCourseRoom } from "./room.service.js";
 const ACCESS_TOKEN_EXPIRES_IN_SECONDS = 15 * 60;
 const REFRESH_TOKEN_EXPIRES_IN_DAYS = 30;
 const hashToken = (token) => crypto.createHash("sha256").update(token).digest("hex");
@@ -32,6 +33,12 @@ const getProfilePayload = (user) => user.profile
     ? {
         url: user.profile.url,
         publicId: user.profile.publicId,
+    }
+    : null;
+const getCoverPhotoPayload = (user) => user.coverPhoto
+    ? {
+        url: user.coverPhoto.url,
+        publicId: user.coverPhoto.publicId,
     }
     : null;
 const getLeaderboardStartDate = (period) => {
@@ -360,7 +367,7 @@ export const editUser = async (id, data) => {
 };
 export const fetchNonAdminUsers = async (query = {}) => {
     const { page, limit, skip } = getPagination(query);
-    const filter = { role: { $ne: UserRole.ADMIN } };
+    const filter = {};
     const search = typeof query.search === "string" ? query.search.trim() : "";
     if (search) {
         filter.$or = [
@@ -485,6 +492,7 @@ export const viewProfile = async (userId) => {
         company: user.company,
         instagram: user.instagram,
         profile: getProfilePayload(user),
+        coverPhoto: getCoverPhotoPayload(user),
     };
 };
 // **for student to view Profile Image
@@ -515,9 +523,19 @@ export const editProfile = async (userId, data) => {
     if (data.profile && user.profile?.publicId) {
         await deleteImage(user.profile.publicId);
     }
+    if (data.coverPhoto && user.coverPhoto?.publicId) {
+        await deleteImage(user.coverPhoto.publicId);
+    }
     if (data.profile) {
         const uploadedResult = await uploadMedia(data.profile.buffer, "image");
         user.profile = {
+            url: uploadedResult.secure_url,
+            publicId: uploadedResult.public_id,
+        };
+    }
+    if (data.coverPhoto) {
+        const uploadedResult = await uploadMedia(data.coverPhoto.buffer, "image");
+        user.coverPhoto = {
             url: uploadedResult.secure_url,
             publicId: uploadedResult.public_id,
         };
@@ -543,6 +561,7 @@ export const editProfile = async (userId, data) => {
         company: editedProfileData.company,
         instagram: editedProfileData.instagram,
         profile: getProfilePayload(editedProfileData),
+        coverPhoto: getCoverPhotoPayload(editedProfileData),
     };
 };
 export const fetchLeaderboard = async (period = "all-time", limit = 10) => {
@@ -663,6 +682,7 @@ export const addUser = async (data) => {
         await courseModel.findByIdAndUpdate(data.courseId, {
             $push: { students: user._id },
         });
+        await ensureCourseRoom(data.courseId, user._id.toString(), "user");
     }
     if (data.cohortId) {
         const cohort = await cohortModel.findById(data.cohortId);
@@ -774,6 +794,7 @@ export const acceptInvite = async (data) => {
         await courseModel.findByIdAndUpdate(invite.courseId, {
             $push: { students: user._id },
         });
+        await ensureCourseRoom(invite.courseId.toString(), user._id.toString(), "user");
     }
     if (invite.cohortId) {
         const cohort = await cohortModel.findById(invite.cohortId);

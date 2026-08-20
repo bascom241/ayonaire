@@ -37,6 +37,12 @@ const userSchema = new Schema({
             publicId: { type: String, required: true },
         },
     },
+    coverPhoto: {
+        type: {
+            url: { type: String, required: true },
+            publicId: { type: String, required: true },
+        },
+    },
     bio: {
         type: String,
         trim: true,

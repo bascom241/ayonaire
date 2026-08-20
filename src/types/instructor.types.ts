@@ -24,16 +24,25 @@ export interface instructorRequest {
 }
 
 type instructorIdPopulatedData = {
+  _id: string;
   name: string;
   email: string;
   loginHistory: loginHistory[];
   activity: Activity[];
+  profile?: {
+    url: string;
+    publicId: string;
+  } | null;
 };
 
 export interface InstructorProfileResponse {
+  _id?: string;
   instructorId: instructorIdPopulatedData;
   bio: string;
   expertise: string[];
   instructorCourseCategory: string;
   applicationStatus: string;
+  courses?: unknown[];
+  createdAt?: Date;
+  updatedAt?: Date;
 }

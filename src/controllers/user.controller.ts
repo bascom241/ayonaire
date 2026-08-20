@@ -347,6 +347,9 @@ interface EditProfileReq extends Request {
   body: Partial<EditProfileRequest>;
   user?: { id: string };
   file?: Express.Multer.File;
+  files?:
+    | Express.Multer.File[]
+    | { [fieldname: string]: Express.Multer.File[] };
 }
 
 export const edit = async (
@@ -367,7 +370,12 @@ export const edit = async (
       website: req.body.website,
       company: req.body.company,
       instagram: req.body.instagram,
-      profile: req.file,
+      profile:
+        req.file ??
+        (!Array.isArray(req.files) ? req.files?.profile?.[0] : undefined),
+      coverPhoto: !Array.isArray(req.files)
+        ? req.files?.coverPhoto?.[0]
+        : undefined,
     };
 
     const data = await editProfile(id, dataToSend);

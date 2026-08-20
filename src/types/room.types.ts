@@ -39,6 +39,7 @@ export interface RoomResponse {
   name?: string;
   description?: string;
   isGroup: boolean;
+  course?: string;
   profile?: {
     url: string;
     publicId: string;

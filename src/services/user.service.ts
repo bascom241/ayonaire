@@ -54,6 +54,7 @@ import {
 } from "../config/mail.js";
 import { appendFile } from "fs";
 import { sendInviteEmail } from "../templates/emailTemplates.js";
+import { ensureCourseRoom } from "./room.service.js";
 
 const ACCESS_TOKEN_EXPIRES_IN_SECONDS = 15 * 60;
 const REFRESH_TOKEN_EXPIRES_IN_DAYS = 30;
@@ -83,6 +84,16 @@ const getProfilePayload = (user: {
     ? {
         url: user.profile.url,
         publicId: user.profile.publicId,
+      }
+    : null;
+
+const getCoverPhotoPayload = (user: {
+  coverPhoto?: { url: string; publicId: string } | null;
+}) =>
+  user.coverPhoto
+    ? {
+        url: user.coverPhoto.url,
+        publicId: user.coverPhoto.publicId,
       }
     : null;
 
@@ -677,6 +688,7 @@ export const viewProfile = async (userId: string): Promise<UserResponse> => {
     company: user.company,
     instagram: user.instagram,
     profile: getProfilePayload(user),
+    coverPhoto: getCoverPhotoPayload(user),
   };
 };
 
@@ -720,11 +732,23 @@ export const editProfile = async (
   if (data.profile && user.profile?.publicId) {
     await deleteImage(user.profile.publicId);
   }
+  if (data.coverPhoto && user.coverPhoto?.publicId) {
+    await deleteImage(user.coverPhoto.publicId);
+  }
 
   if (data.profile) {
     const uploadedResult = await uploadMedia(data.profile.buffer, "image");
 
     user.profile = {
+      url: uploadedResult.secure_url,
+      publicId: uploadedResult.public_id,
+    };
+  }
+
+  if (data.coverPhoto) {
+    const uploadedResult = await uploadMedia(data.coverPhoto.buffer, "image");
+
+    user.coverPhoto = {
       url: uploadedResult.secure_url,
       publicId: uploadedResult.public_id,
     };
@@ -746,6 +770,7 @@ export const editProfile = async (
     company: editedProfileData.company,
     instagram: editedProfileData.instagram,
     profile: getProfilePayload(editedProfileData),
+    coverPhoto: getCoverPhotoPayload(editedProfileData),
   };
 };
 
@@ -880,6 +905,7 @@ export const addUser = async (data: AddUserDto): Promise<UserResponse> => {
     await courseModel.findByIdAndUpdate(data.courseId, {
       $push: { students: user._id },
     });
+    await ensureCourseRoom(data.courseId, user._id.toString(), "user");
   }
 
   if (data.cohortId) {
@@ -1026,6 +1052,7 @@ export const acceptInvite = async (
     await courseModel.findByIdAndUpdate(invite.courseId, {
       $push: { students: user._id },
     });
+    await ensureCourseRoom(invite.courseId.toString(), user._id.toString(), "user");
   }
 
   if (invite.cohortId) {

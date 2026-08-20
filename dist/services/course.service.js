@@ -10,6 +10,16 @@ import instructorProfileModel from "../models/instructorProfile.model.js";
 import { InstructorApplicationStatus } from "../types/instructor.types.js";
 import { getPagination } from "../utils/getPagination.js";
 import enrollmentModel from "../models/enrollment.model.js";
+import { ensureCourseRoom } from "./room.service.js";
+const getInstructorUserId = (instructor) => instructor?.instructorId?._id?.toString?.() ??
+    instructor?.instructorId?.toString?.() ??
+    instructor?.toString?.();
+const getInstructorName = (instructor) => instructor?.name ?? instructor?.instructorId?.name ?? "Unassigned";
+const addCourseToInstructorProfile = async (instructorUserId, courseId) => {
+    if (!instructorUserId)
+        return;
+    await instructorProfileModel.findOneAndUpdate({ instructorId: instructorUserId }, { $addToSet: { courses: courseId } });
+};
 export const createCourseCategory = async (title) => {
     const existing = await CourseCategory.findOne({ title });
     if (existing) {
@@ -55,6 +65,7 @@ export const createCourse = async (data) => {
         courseData.instructor = new mongoose.Types.ObjectId(data.instructor);
     }
     const course = await courseModel.create(courseData);
+    await addCourseToInstructorProfile(data.instructor, course._id);
     return {
         _id: course._id.toString(),
         title: course.title,
@@ -124,6 +135,7 @@ export const updateCourse = async (courseId, data) => {
     if (data.completionCertificate !== undefined)
         course.completionCertificate = data.completionCertificate;
     const updatedCourse = await course.save();
+    await addCourseToInstructorProfile(updatedCourse.instructor?.toString(), updatedCourse._id);
     return {
         _id: updatedCourse._id.toString(),
         title: updatedCourse.title,
@@ -165,8 +177,12 @@ export const assignInstuctorToCourse = async (instructorId, courseId) => {
             if (courseToAssignInstructorTo?.instructor) {
                 throw new AppError("course already belong to an instructor", 404);
             }
-            courseToAssignInstructorTo.instructor = instructor?.instructorId;
+            courseToAssignInstructorTo.instructor = new mongoose.Types.ObjectId(getInstructorUserId(instructor));
             await courseToAssignInstructorTo.save();
+            await instructorProfileModel.findByIdAndUpdate(instructor._id, {
+                $addToSet: { courses: courseToAssignInstructorTo._id },
+            });
+            await ensureCourseRoom(courseId, getInstructorUserId(instructor), "instructor");
         }
         else {
             throw new AppError("course does not exits", 400);
@@ -203,6 +219,7 @@ export const saveCourseAsDraft = async (data) => {
         courseData.instructor = new mongoose.Types.ObjectId(data.instructor);
     }
     const course = await courseModel.create(courseData);
+    await addCourseToInstructorProfile(data.instructor, course._id);
     return {
         _id: course._id.toString(),
         title: course.title,
@@ -237,10 +254,7 @@ export const getAllCoursesForAdminDashboard = async (data) => {
             .find()
             .skip(skip)
             .limit(limit)
-            .populate({
-            path: "instructor",
-            populate: { path: "instructorId", select: "name" },
-        }),
+            .populate("instructor", "name email"),
         courseModel.countDocuments(),
     ]);
     const courseIds = courses.map((course) => course._id);
@@ -260,7 +274,7 @@ export const getAllCoursesForAdminDashboard = async (data) => {
         title: course.title,
         category: course.category.toString(),
         description: course.description,
-        instructor: course.instructor?.instructorId?.name || "N/A",
+        instructor: getInstructorName(course.instructor),
         price: course.price,
         status: course.status,
         enrollments: enrollmentCountMap[course._id.toString()] || 0,
@@ -279,7 +293,9 @@ export const getASingleCourseForAdminDashboard = async (courseId) => {
     if (!courseId) {
         throw new AppError("courseId is required", 404);
     }
-    const course = await courseModel.findById(courseId);
+    const course = await courseModel
+        .findById(courseId)
+        .populate("instructor", "name email");
     if (!course) {
         throw new AppError("No course is found", 400);
     }
@@ -288,7 +304,7 @@ export const getASingleCourseForAdminDashboard = async (courseId) => {
         title: course.title,
         category: course.category.toString(),
         description: course.description,
-        instructor: course.instructor?.instructorId?.name || "N/A",
+        instructor: getInstructorName(course.instructor),
         price: course.price,
         status: course.status,
     };

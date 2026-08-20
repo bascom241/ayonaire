@@ -28,6 +28,11 @@ const roomSchema = new Schema({
             publicId: { type: String, required: true },
         },
     },
+    course: {
+        type: Schema.Types.ObjectId,
+        ref: "Course",
+    },
 }, { timestamps: true });
 roomSchema.index({ participants: 1 });
+roomSchema.index({ course: 1 }, { unique: true, sparse: true });
 export default mongoose.model("Room", roomSchema);

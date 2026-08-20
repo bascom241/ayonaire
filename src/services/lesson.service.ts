@@ -63,7 +63,8 @@ export const uploadLesson = async (
   };
 };
 
-const MAX_VIDEO_SIZE = 500 * 1024 * 1024; // 500MB
+const MAX_VIDEO_SIZE =
+  Number(process.env.MAX_VIDEO_UPLOAD_SIZE_MB || 1500) * 1024 * 1024;
 
 export const uploadVideo = async (
   lessonId: string,
@@ -78,7 +79,12 @@ export const uploadVideo = async (
 
   for (const video of data.videos) {
     if (video.buffer.length > MAX_VIDEO_SIZE) {
-      throw new AppError(`Cant upload. ${video.title} exceeds 500MB`);
+      throw new AppError(
+        `Cant upload. ${video.title} exceeds ${Math.round(
+          MAX_VIDEO_SIZE / 1024 / 1024,
+        )}MB`,
+        413,
+      );
     }
 
     const result = await uploadMedia(video.buffer, "video");
@@ -267,6 +273,7 @@ export const viewLessonContent = async (
                 "$$lesson",
 
                 {
+                  isLocked: false,
                   isCompleted: {
                     $in: ["$$lesson._id", myEnrollment?.comletedLessons ?? [],],
                   },

@@ -17,6 +17,27 @@ import instructorProfileModel from "../models/instructorProfile.model.js";
 import { InstructorApplicationStatus } from "../types/instructor.types.js";
 import { getPagination } from "../utils/getPagination.js";
 import enrollmentModel from "../models/enrollment.model.js";
+import { ensureCourseRoom } from "./room.service.js";
+
+const getInstructorUserId = (instructor: any) =>
+  instructor?.instructorId?._id?.toString?.() ??
+  instructor?.instructorId?.toString?.() ??
+  instructor?.toString?.();
+
+const getInstructorName = (instructor: any) =>
+  instructor?.name ?? instructor?.instructorId?.name ?? "Unassigned";
+
+const addCourseToInstructorProfile = async (
+  instructorUserId: string | undefined,
+  courseId: mongoose.Types.ObjectId,
+) => {
+  if (!instructorUserId) return;
+
+  await instructorProfileModel.findOneAndUpdate(
+    { instructorId: instructorUserId },
+    { $addToSet: { courses: courseId } },
+  );
+};
 export const createCourseCategory = async (title: CourseCategoryEnum) => {
   const existing = await CourseCategory.findOne({ title });
   if (existing) {
@@ -78,6 +99,7 @@ export const createCourse = async (
   }
 
   const course = await courseModel.create(courseData);
+  await addCourseToInstructorProfile(data.instructor, course._id);
 
   return {
     _id: course._id.toString(),
@@ -156,6 +178,10 @@ export const updateCourse = async (
     course.completionCertificate = data.completionCertificate;
 
   const updatedCourse = await course.save();
+  await addCourseToInstructorProfile(
+    updatedCourse.instructor?.toString(),
+    updatedCourse._id,
+  );
 
   return {
     _id: updatedCourse._id.toString(),
@@ -203,9 +229,19 @@ export const assignInstuctorToCourse = async (
       if (courseToAssignInstructorTo?.instructor) {
         throw new AppError("course already belong to an instructor", 404);
       }
-      courseToAssignInstructorTo.instructor = instructor?.instructorId;
+      courseToAssignInstructorTo.instructor = new mongoose.Types.ObjectId(
+        getInstructorUserId(instructor),
+      );
 
       await courseToAssignInstructorTo.save();
+      await instructorProfileModel.findByIdAndUpdate(instructor._id, {
+        $addToSet: { courses: courseToAssignInstructorTo._id },
+      });
+      await ensureCourseRoom(
+        courseId,
+        getInstructorUserId(instructor),
+        "instructor",
+      );
     } else {
       throw new AppError("course does not exits", 400);
     }
@@ -251,6 +287,7 @@ export const saveCourseAsDraft = async (
   }
 
   const course = await courseModel.create(courseData);
+  await addCourseToInstructorProfile(data.instructor, course._id);
 
   return {
     _id: course._id.toString(),
@@ -290,10 +327,7 @@ export const getAllCoursesForAdminDashboard = async (
       .find()
       .skip(skip)
       .limit(limit)
-      .populate({
-        path: "instructor",
-        populate: { path: "instructorId", select: "name" },
-      }),
+      .populate("instructor", "name email"),
     courseModel.countDocuments(),
   ]);
 
@@ -319,7 +353,7 @@ export const getAllCoursesForAdminDashboard = async (
     title: course.title,
     category: course.category.toString(),
     description: course.description,
-    instructor: (course.instructor as any)?.instructorId?.name || "N/A",
+    instructor: getInstructorName(course.instructor),
     price: course.price,
     status: course.status,
     enrollments: enrollmentCountMap[course._id.toString()] || 0,
@@ -342,7 +376,9 @@ export const getASingleCourseForAdminDashboard = async (
   if (!courseId) {
     throw new AppError("courseId is required", 404);
   }
-  const course = await courseModel.findById(courseId);
+  const course = await courseModel
+    .findById(courseId)
+    .populate("instructor", "name email");
 
   if (!course) {
     throw new AppError("No course is found", 400);
@@ -353,7 +389,7 @@ export const getASingleCourseForAdminDashboard = async (
     title: course.title,
     category: course.category.toString(),
     description: course.description,
-    instructor: (course.instructor as any)?.instructorId?.name || "N/A",
+    instructor: getInstructorName(course.instructor),
     price: course.price,
     status: course.status,
   };

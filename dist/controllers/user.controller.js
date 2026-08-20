@@ -223,7 +223,11 @@ export const edit = async (req, res, next) => {
             website: req.body.website,
             company: req.body.company,
             instagram: req.body.instagram,
-            profile: req.file,
+            profile: req.file ??
+                (!Array.isArray(req.files) ? req.files?.profile?.[0] : undefined),
+            coverPhoto: !Array.isArray(req.files)
+                ? req.files?.coverPhoto?.[0]
+                : undefined,
         };
         const data = await editProfile(id, dataToSend);
         res.status(200).json({ success: true, data });

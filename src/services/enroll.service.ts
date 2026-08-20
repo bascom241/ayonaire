@@ -14,6 +14,7 @@ import {
 import { pipeline } from "node:stream";
 import { getPagination } from "../utils/getPagination.js";
 import { validateRequestBodyWithValues } from "../utils/validateRequestBody.js";
+import { ensureCourseRoom } from "./room.service.js";
 
 export const enrollStudent = async (
   data: EnrollmentRequest,
@@ -36,6 +37,7 @@ export const enrollStudent = async (
   const course = await courseModel.findByIdAndUpdate(data.course, {
     $push: { students: data.student },
   });
+  await ensureCourseRoom(data.course.toString(), data.student.toString(), "user");
   return `${user.email} has been added to ${course?.title}`;
 };
 
@@ -394,6 +396,7 @@ export const bulkEnrollStudents = async (
     await courseModel.findByIdAndUpdate(courseId, {
       $addToSet: { students: studentId },
     });
+    await ensureCourseRoom(courseId, studentId, "user");
     enrolled.push(user.email);
   }
 
@@ -435,6 +438,7 @@ export const bulkEnrollStudentsByEmail = async (
     await courseModel.findByIdAndUpdate(courseId, {
       $addToSet: { students: user._id },
     });
+    await ensureCourseRoom(courseId, user._id.toString(), "user");
     enrolled.push(email);
   }
 

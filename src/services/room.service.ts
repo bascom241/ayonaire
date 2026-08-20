@@ -2,6 +2,8 @@ import { AppError } from "../errors/AppError.js";
 import roomModel from "../models/room.model.js";
 import userModel from "../models/user.model.js";
 import messageModel from "../models/message.model.js";
+import courseModel from "../models/course.model.js";
+import enrollmentModel from "../models/enrollment.model.js";
 import {
   CreateGroupRoomRequest,
   CreateDMRequest,
@@ -20,6 +22,7 @@ const toRoomResponse = (room: any): RoomResponse => ({
   name: room.name,
   description: room.description,
   isGroup: room.isGroup,
+  course: room.course?.toString?.(),
   profile: room.profile
     ? { url: room.profile.url, publicId: room.profile.publicId }
     : undefined,
@@ -88,6 +91,67 @@ export const createGroupRoom = async (
   }
 
   return toRoomResponse(populatedRoom);
+};
+
+export const ensureCourseRoom = async (
+  courseId: string,
+  requesterId: string,
+  role?: string,
+): Promise<RoomResponse> => {
+  const course = await courseModel.findById(courseId);
+  if (!course) {
+    throw new AppError("course not found", 404);
+  }
+
+  const instructorId = course.instructor?.toString();
+  if (role === "instructor" && instructorId && instructorId !== requesterId) {
+    throw new AppError("Only the course instructor can manage this room", 403);
+  }
+  if (role !== "admin" && role !== "instructor") {
+    const enrollment = await enrollmentModel.findOne({
+      course: courseId,
+      student: requesterId,
+    });
+    if (!enrollment) {
+      throw new AppError("You are not enrolled in this course", 403);
+    }
+  }
+
+  const enrollments = await enrollmentModel.find({ course: courseId });
+  const participantIds = Array.from(
+    new Set(
+      [
+        requesterId,
+        instructorId,
+        ...enrollments
+          .map((enrollment) => enrollment.student?.toString())
+          .filter(Boolean),
+      ].filter(Boolean) as string[],
+    ),
+  );
+
+  const room = await roomModel
+    .findOneAndUpdate(
+      { course: courseId },
+      {
+        $set: {
+          roomCreator: instructorId ?? requesterId,
+          isGroup: true,
+          name: course.title,
+          description: `Course room for ${course.title}`,
+          course: courseId,
+        },
+        $addToSet: { participants: { $each: participantIds } },
+      },
+      { new: true, upsert: true, setDefaultsOnInsert: true },
+    )
+    .populate("participants", "name profile");
+
+  if (!room) {
+    throw new AppError("Failed to create course room", 400);
+  }
+
+  return toRoomResponse(room);
 };
 
 export const findOrCreateDM = async (

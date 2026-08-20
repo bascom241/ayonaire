@@ -41,7 +41,7 @@ export const uploadLesson = async (data) => {
         isLocked: lesson.isLocked,
     };
 };
-const MAX_VIDEO_SIZE = 500 * 1024 * 1024; // 500MB
+const MAX_VIDEO_SIZE = Number(process.env.MAX_VIDEO_UPLOAD_SIZE_MB || 1500) * 1024 * 1024;
 export const uploadVideo = async (lessonId, data) => {
     const lesson = await lessonModel.findById(lessonId);
     if (!lesson) {
@@ -50,7 +50,7 @@ export const uploadVideo = async (lessonId, data) => {
     const uploadedVideos = [];
     for (const video of data.videos) {
         if (video.buffer.length > MAX_VIDEO_SIZE) {
-            throw new AppError(`Cant upload. ${video.title} exceeds 500MB`);
+            throw new AppError(`Cant upload. ${video.title} exceeds ${Math.round(MAX_VIDEO_SIZE / 1024 / 1024)}MB`, 413);
         }
         const result = await uploadMedia(video.buffer, "video");
         uploadedVideos.push({
@@ -194,6 +194,7 @@ export const viewLessonContent = async (data) => {
                             $mergeObjects: [
                                 "$$lesson",
                                 {
+                                    isLocked: false,
                                     isCompleted: {
                                         $in: ["$$lesson._id", myEnrollment?.comletedLessons ?? [],],
                                     },

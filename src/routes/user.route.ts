@@ -91,7 +91,15 @@ router.put(
 router.delete("/user/:id", authorize, restrictTo("admin"), removeUser);
 router.post("/get-profile", authorize, viewMyProfile);
 router.post("/add-profile", authorize, upload.single("profile"), uploadImage);
-router.put("/edit-profile", authorize, upload.single("profile"), edit);
+router.put(
+  "/edit-profile",
+  authorize,
+  upload.fields([
+    { name: "profile", maxCount: 1 },
+    { name: "coverPhoto", maxCount: 1 },
+  ]),
+  edit,
+);
 router.get("/leaderboard", authorize, getLeaderboard);
 router.post("/add", authorize, restrictTo("admin"), add);
 router.post("/invite", authorize, restrictTo("admin"), invite);

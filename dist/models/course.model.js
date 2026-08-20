@@ -29,7 +29,7 @@ const courseSchema = new Schema({
     },
     instructor: {
         type: Schema.Types.ObjectId,
-        ref: "Instructor",
+        ref: "User",
     },
     price: {
         type: Number,

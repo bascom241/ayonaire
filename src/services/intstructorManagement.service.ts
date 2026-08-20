@@ -115,24 +115,31 @@ export const getInstructorProfiles = async (): Promise<
     .find()
     .populate({
       path: "instructorId",
-      select: "name email loginHistory activity",
+      select: "name email loginHistory activity profile",
     })
     .populate({
       path: "instructorCourseCategory",
       select: "title",
-    });
+    })
+    .populate("courses", "title status");
 
   return instructors.map((inst: any) => ({
+    _id: inst._id.toString(),
     instructorId: {
+      _id: inst.instructorId._id.toString(),
       name: inst.instructorId.name,
       email: inst.instructorId.email,
       loginHistory: inst.instructorId.loginHistory,
       activity: inst.instructorId.activity,
+      profile: inst.instructorId.profile ?? null,
     },
     bio: inst.bio,
     expertise: inst.expertise,
     instructorCourseCategory: inst.instructorCourseCategory.title,
     applicationStatus: inst.applicationStatus,
+    courses: inst.courses ?? [],
+    createdAt: inst.createdAt,
+    updatedAt: inst.updatedAt,
   }));
 };
 
@@ -143,12 +150,13 @@ export const getInstructorProfile = async (
     .findOne({ instructorId: id })
     .populate({
       path: "instructorId",
-      select: "name email loginHistory activity",
+      select: "name email loginHistory activity profile",
     })
     .populate({
       path: "instructorCourseCategory",
       select: "title",
     })
+    .populate("courses", "title status")
     .lean();
 
   if (!instructor) {
@@ -159,15 +167,21 @@ export const getInstructorProfile = async (
   const populatedCategory = instructor.instructorCourseCategory as any;
 
   return {
+    _id: instructor._id.toString(),
     instructorId: {
+      _id: populatedUser._id.toString(),
       name: populatedUser.name,
       email: populatedUser.email,
       loginHistory: populatedUser.loginHistory,
       activity: populatedUser.activity,
+      profile: populatedUser.profile ?? null,
     },
     bio: instructor.bio,
     expertise: instructor.expertise,
     instructorCourseCategory: populatedCategory.title,
     applicationStatus: instructor.applicationStatus,
+    courses: instructor.courses ?? [],
+    createdAt: instructor.createdAt,
+    updatedAt: instructor.updatedAt,
   };
 };

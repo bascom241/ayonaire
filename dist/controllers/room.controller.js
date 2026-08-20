@@ -1,4 +1,4 @@
-import { createGroupRoom, findOrCreateDM, listMyRooms, } from "../services/room.service.js";
+import { createGroupRoom, ensureCourseRoom, findOrCreateDM, listMyRooms, } from "../services/room.service.js";
 import { AppError } from "../errors/AppError.js";
 export const createGroup = async (req, res, next) => {
     try {
@@ -40,6 +40,24 @@ export const createDM = async (req, res, next) => {
             otherUserId,
         };
         const data = await findOrCreateDM(dataToSend);
+        res.status(200).json({ success: true, data });
+    }
+    catch (error) {
+        next(error);
+    }
+};
+export const createCourseRoom = async (req, res, next) => {
+    try {
+        const authRequest = req;
+        const senderId = authRequest.user?.id;
+        if (!senderId) {
+            throw new AppError("Sender id is required", 400);
+        }
+        const courseId = req.params.courseId || req.body.courseId;
+        if (!courseId) {
+            throw new AppError("courseId is required", 400);
+        }
+        const data = await ensureCourseRoom(courseId, senderId, authRequest.user?.role);
         res.status(200).json({ success: true, data });
     }
     catch (error) {

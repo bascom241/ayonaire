@@ -40,6 +40,7 @@ export interface User {
   email: string;
   password: string;
   profile?: Profile | null;
+  coverPhoto?: Profile | null;
   bio?: string;
   linkedin?: string;
   website?: string;
@@ -136,6 +137,13 @@ export interface UserResponse {
       }
     | undefined
     | null;
+  coverPhoto?:
+    | {
+        url: string;
+        publicId: string;
+      }
+    | undefined
+    | null;
   bio?: string;
   linkedin?: string;
   website?: string;
@@ -152,6 +160,7 @@ export interface NonAdminUser {
   role: UserRole;
   status: UserStatus;
   profile?: Profile | null;
+  coverPhoto?: Profile | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -213,6 +222,7 @@ export interface EditProfileRequest {
   company?: string;
   instagram?: string;
   profile?: ProfileData;
+  coverPhoto?: ProfileData;
 }
 
 export interface EditProfileResponse {
@@ -223,6 +233,13 @@ export interface EditProfileResponse {
   company?: string;
   instagram?: string;
   profile?:
+    | {
+        url: string;
+        publicId: string;
+      }
+    | undefined
+    | null;
+  coverPhoto?:
     | {
         url: string;
         publicId: string;

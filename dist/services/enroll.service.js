@@ -5,6 +5,7 @@ import enrollmentModel from "../models/enrollment.model.js";
 import userModel from "../models/user.model.js";
 import { getPagination } from "../utils/getPagination.js";
 import { validateRequestBodyWithValues } from "../utils/validateRequestBody.js";
+import { ensureCourseRoom } from "./room.service.js";
 export const enrollStudent = async (data) => {
     const user = await userModel.findById(data.student);
     if (!user) {
@@ -24,6 +25,7 @@ export const enrollStudent = async (data) => {
     const course = await courseModel.findByIdAndUpdate(data.course, {
         $push: { students: data.student },
     });
+    await ensureCourseRoom(data.course.toString(), data.student.toString(), "user");
     return `${user.email} has been added to ${course?.title}`;
 };
 export const removeStudentFromCourse = async (data) => {
@@ -317,6 +319,7 @@ export const bulkEnrollStudents = async (courseId, studentIds) => {
         await courseModel.findByIdAndUpdate(courseId, {
             $addToSet: { students: studentId },
         });
+        await ensureCourseRoom(courseId, studentId, "user");
         enrolled.push(user.email);
     }
     return { enrolled, skipped };
@@ -349,6 +352,7 @@ export const bulkEnrollStudentsByEmail = async (courseId, emails) => {
         await courseModel.findByIdAndUpdate(courseId, {
             $addToSet: { students: user._id },
         });
+        await ensureCourseRoom(courseId, user._id.toString(), "user");
         enrolled.push(email);
     }
     return { enrolled, skipped };

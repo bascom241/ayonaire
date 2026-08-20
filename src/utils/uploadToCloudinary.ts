@@ -9,7 +9,11 @@ export const uploadMedia = (
   }
 
   return new Promise((resolve, reject) => {
-    const options = { folder: "ayoniareCourses", resource_type: type };
+    const options = {
+      folder: "ayoniareCourses",
+      resource_type: type,
+      chunk_size: type === "video" ? 20 * 1024 * 1024 : undefined,
+    };
 
     cloudinary.uploader
       .upload_stream(options, (error, result) => {
