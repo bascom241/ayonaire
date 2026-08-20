@@ -9,15 +9,17 @@ export const uploadMedia = (
   }
 
   return new Promise((resolve, reject) => {
-    const options = { folder: "ayoniareCourses", resource_type: type } as const;
+    const options = { folder: "ayoniareCourses", resource_type: type };
+
     const done = (error: any, result: any) => {
       if (error) reject(error);
       else resolve(result);
     };
 
+    // Use upload_chunked_stream for large files like videos
     const uploadStream =
       type === "video"
-        ? cloudinary.uploader.upload_large_stream(
+        ? cloudinary.uploader.upload_chunked_stream(
             { ...options, chunk_size: 20 * 1024 * 1024 },
             done,
           )
@@ -31,6 +33,10 @@ export const uploadFile = (
   fileBuffer: Buffer | undefined,
   type: "raw",
 ): Promise<any> => {
+  if (!fileBuffer) {
+    return Promise.reject(new Error("File buffer is required"));
+  }
+
   return new Promise((resolve, reject) => {
     cloudinary.uploader
       .upload_stream(
