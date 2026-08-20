@@ -10,6 +10,14 @@ interface MessageAuthRequest extends Request {
   user?: { id?: string };
 }
 
+function firstUploadedFile(
+  files: Express.Multer.File[] | { [fieldname: string]: Express.Multer.File[] } | undefined,
+  field: "media" | "file",
+) {
+  if (!files || Array.isArray(files)) return undefined;
+  return files[field]?.[0];
+}
+
 export const send = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const authRequest = req as MessageAuthRequest;
@@ -18,11 +26,13 @@ export const send = async (req: Request, res: Response, next: NextFunction) => {
       return res.status(400).json({ message: "Sender id is required" });
     }
     const { text, roomId } = req.body;
+    const media = firstUploadedFile(req.files, "media");
+    const file = firstUploadedFile(req.files, "file") ?? req.file;
     const dataToSend: MessageRequestData = {
       senderId,
       roomId,
-      media: req.file,
-      file: req.file,
+      media,
+      file,
       text,
     };
 
