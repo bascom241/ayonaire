@@ -691,6 +691,8 @@ export const viewProfile = async (userId: string): Promise<UserResponse> => {
     website: user.website,
     company: user.company,
     instagram: user.instagram,
+    activity: user.activity,
+    loginHistory: user.loginHistory,
     profile: getProfilePayload(user),
     coverPhoto: getCoverPhotoPayload(user),
   };

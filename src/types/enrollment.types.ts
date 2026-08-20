@@ -85,6 +85,11 @@ export interface StudentCourseDetail {
     url: string;
     publicId: string;
   };
+  introVideo?: {
+    url: string;
+    publicId: string;
+    duration: number;
+  };
   category?: string;
   instructor?: {
     id: string;

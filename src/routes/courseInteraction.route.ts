@@ -5,6 +5,7 @@ import {
   createQuestion,
   createReminder,
   createReview,
+  deleteReminder,
   questions,
   reminders,
   reviews,
@@ -38,6 +39,7 @@ router.put(
 
 router.get("/:courseId/reminders", authorize, reminders);
 router.post("/:courseId/reminders", authorize, createReminder);
+router.delete("/:courseId/reminders/:reminderId", authorize, deleteReminder);
 
 router.post("/:courseId/assistant", authorize, assistant);
 

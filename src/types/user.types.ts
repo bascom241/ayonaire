@@ -150,6 +150,8 @@ export interface UserResponse {
   website?: string;
   company?: string;
   instagram?: string;
+  activity?: Activity[];
+  loginHistory?: loginHistory[];
   status: UserStatus;
   createdAt: Date;
   updatedAt?: Date;

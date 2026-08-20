@@ -6,6 +6,7 @@ import {
   askCourseAssistant,
   createCourseQuestion,
   createLearningReminder,
+  deleteLearningReminder,
   getLessonTranscription,
   listCourseQuestions,
   listCourseReviews,
@@ -187,6 +188,23 @@ export const createReminder = async (
       req.body,
     );
     res.status(201).json({ success: true, data });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const deleteReminder = async (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const data = await deleteLearningReminder(
+      param(req.params.courseId, "courseId"),
+      param(req.params.reminderId, "reminderId"),
+      requireUserId(req),
+    );
+    res.status(200).json({ success: true, data });
   } catch (error) {
     next(error);
   }

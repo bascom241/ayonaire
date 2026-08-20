@@ -242,6 +242,26 @@ export const createLearningReminder = async (
   });
 };
 
+export const deleteLearningReminder = async (
+  courseId: string,
+  reminderId: string,
+  userId: string,
+) => {
+  await ensureCourse(courseId);
+
+  const reminder = await LearningReminder.findOneAndDelete({
+    _id: reminderId,
+    course: courseId,
+    user: userId,
+  });
+
+  if (!reminder) {
+    throw new AppError("learning reminder not found", 404);
+  }
+
+  return { deleted: true };
+};
+
 export const askCourseAssistant = async (
   data: { courseId: string; lessonId?: string; question: string },
 ) => {
