@@ -20,7 +20,7 @@ export const uploadMedia = (
     const uploadStream =
       type === "video"
         ? cloudinary.uploader.upload_chunked_stream(
-            { ...options, chunk_size: 20 * 1024 * 1024 },
+            { ...options, chunk_size: 6 * 1024 * 1024 },
             done,
           )
         : cloudinary.uploader.upload_stream(options, done);
