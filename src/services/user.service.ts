@@ -197,6 +197,7 @@ export const createUser = async (
     _id: user._id.toString(),
     name: user.name,
     email: user.email,
+    role: user.role,
     status: user.status,
     createdAt: user.createdAt,
   };
@@ -520,6 +521,7 @@ export const editUser = async (
       _id: user._id.toString(),
       name: user.name,
       email: user.email,
+      role: user.role,
       status: user.status,
       createdAt: user.createdAt,
     };
@@ -672,16 +674,18 @@ export const userActivity = async (id: string) => {
 export const viewProfile = async (userId: string): Promise<UserResponse> => {
   const user = await User.findById(userId);
 
-  console.log(user);
   if (!user) {
     throw new AppError("user not found");
   }
 
   return {
+    _id: user._id.toString(),
     email: user?.email,
     name: user?.name,
+    role: user.role,
     status: user?.status,
     createdAt: user?.createdAt,
+    updatedAt: user?.updatedAt,
     bio: user.bio,
     linkedin: user.linkedin,
     website: user.website,
@@ -924,6 +928,7 @@ export const addUser = async (data: AddUserDto): Promise<UserResponse> => {
     _id: user._id.toString(),
     name: user.name,
     email: user.email,
+    role: user.role,
     status: user.status,
     createdAt: user.createdAt,
   };
@@ -1074,6 +1079,7 @@ export const acceptInvite = async (
     _id: user._id.toString(),
     name: user.name,
     email: user.email,
+    role: user.role,
     status: user.status,
     createdAt: user.createdAt,
   };

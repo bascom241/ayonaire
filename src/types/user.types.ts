@@ -130,6 +130,7 @@ export interface UserResponse {
   _id?: string;
   name: string;
   email: string;
+  role: UserRole;
   profile?:
     | {
         url: string;
@@ -151,6 +152,7 @@ export interface UserResponse {
   instagram?: string;
   status: UserStatus;
   createdAt: Date;
+  updatedAt?: Date;
 }
 
 export interface NonAdminUser {
