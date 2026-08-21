@@ -8,6 +8,7 @@ import {
   LessonTranscription,
 } from "../models/courseInteraction.model.js";
 import { callAI } from "../utils/aiClient.js";
+import { io } from "../server.js";
 
 const ensureCourse = async (courseId: string) => {
   const course = await courseModel.findById(courseId);
@@ -50,6 +51,26 @@ const questionPayload = (question: any) => ({
   updatedAt: question.updatedAt,
 });
 
+const populatedQuestion = (questionId: any) =>
+  CourseQuestion.findById(questionId)
+    .populate("user", "name profile")
+    .populate("answers.user", "name profile");
+
+const emitQuestionChange = (
+  event: "course-question:new" | "course-question:update",
+  question: any,
+) => {
+  const payload = questionPayload(question);
+  io.to(`course:${payload.course}:qna`).emit(event, payload);
+  if (payload.lesson) {
+    io.to(`course:${payload.course}:lesson:${payload.lesson}:qna`).emit(
+      event,
+      payload,
+    );
+  }
+  return payload;
+};
+
 export const listCourseQuestions = async (
   courseId: string,
   lessonId?: string,
@@ -87,10 +108,8 @@ export const createCourseQuestion = async (
     details: data.details.trim(),
   });
 
-  const populated = await CourseQuestion.findById(question._id)
-    .populate("user", "name profile")
-    .populate("answers.user", "name profile");
-  return questionPayload(populated);
+  const populated = await populatedQuestion(question._id);
+  return emitQuestionChange("course-question:new", populated);
 };
 
 export const answerCourseQuestion = async (
@@ -109,7 +128,7 @@ export const answerCourseQuestion = async (
     .populate("answers.user", "name profile");
 
   if (!question) throw new AppError("question not found", 404);
-  return questionPayload(question);
+  return emitQuestionChange("course-question:update", question);
 };
 
 export const toggleQuestionUpvote = async (
@@ -126,6 +145,11 @@ export const toggleQuestionUpvote = async (
   await CourseQuestion.findByIdAndUpdate(questionId, {
     [hasUpvoted ? "$pull" : "$addToSet"]: { upvotes: userId },
   });
+
+  const updatedQuestion = await populatedQuestion(questionId);
+  if (updatedQuestion) {
+    emitQuestionChange("course-question:update", updatedQuestion);
+  }
 
   return { upvoted: !hasUpvoted };
 };

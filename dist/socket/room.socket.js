@@ -10,6 +10,22 @@ const roomSocket = (io) => {
         socket.on("room:leave", (roomId) => {
             socket.leave(roomId);
         });
+        socket.on("course:qna:join", ({ courseId, lessonId }) => {
+            if (!courseId)
+                return;
+            socket.join(`course:${courseId}:qna`);
+            if (lessonId) {
+                socket.join(`course:${courseId}:lesson:${lessonId}:qna`);
+            }
+        });
+        socket.on("course:qna:leave", ({ courseId, lessonId }) => {
+            if (!courseId)
+                return;
+            socket.leave(`course:${courseId}:qna`);
+            if (lessonId) {
+                socket.leave(`course:${courseId}:lesson:${lessonId}:qna`);
+            }
+        });
         socket.on("typing:start", ({ roomId, user }) => {
             socket.to(roomId).emit("typing:start", user);
         });

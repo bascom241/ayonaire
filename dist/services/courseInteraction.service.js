@@ -3,6 +3,7 @@ import courseModel from "../models/course.model.js";
 import lessonModel from "../models/lesson.model.js";
 import { CourseQuestion, CourseReview, LearningReminder, LessonTranscription, } from "../models/courseInteraction.model.js";
 import { callAI } from "../utils/aiClient.js";
+import { io } from "../server.js";
 const ensureCourse = async (courseId) => {
     const course = await courseModel.findById(courseId);
     if (!course)
@@ -43,6 +44,17 @@ const questionPayload = (question) => ({
     createdAt: question.createdAt,
     updatedAt: question.updatedAt,
 });
+const populatedQuestion = (questionId) => CourseQuestion.findById(questionId)
+    .populate("user", "name profile")
+    .populate("answers.user", "name profile");
+const emitQuestionChange = (event, question) => {
+    const payload = questionPayload(question);
+    io.to(`course:${payload.course}:qna`).emit(event, payload);
+    if (payload.lesson) {
+        io.to(`course:${payload.course}:lesson:${payload.lesson}:qna`).emit(event, payload);
+    }
+    return payload;
+};
 export const listCourseQuestions = async (courseId, lessonId) => {
     await ensureCourse(courseId);
     await ensureLesson(lessonId);
@@ -68,10 +80,8 @@ export const createCourseQuestion = async (userId, data) => {
         title: data.title.trim(),
         details: data.details.trim(),
     });
-    const populated = await CourseQuestion.findById(question._id)
-        .populate("user", "name profile")
-        .populate("answers.user", "name profile");
-    return questionPayload(populated);
+    const populated = await populatedQuestion(question._id);
+    return emitQuestionChange("course-question:new", populated);
 };
 export const answerCourseQuestion = async (userId, questionId, text) => {
     if (!text?.trim())
@@ -81,7 +91,7 @@ export const answerCourseQuestion = async (userId, questionId, text) => {
         .populate("answers.user", "name profile");
     if (!question)
         throw new AppError("question not found", 404);
-    return questionPayload(question);
+    return emitQuestionChange("course-question:update", question);
 };
 export const toggleQuestionUpvote = async (userId, questionId) => {
     const question = await CourseQuestion.findById(questionId);
@@ -91,6 +101,10 @@ export const toggleQuestionUpvote = async (userId, questionId) => {
     await CourseQuestion.findByIdAndUpdate(questionId, {
         [hasUpvoted ? "$pull" : "$addToSet"]: { upvotes: userId },
     });
+    const updatedQuestion = await populatedQuestion(questionId);
+    if (updatedQuestion) {
+        emitQuestionChange("course-question:update", updatedQuestion);
+    }
     return { upvoted: !hasUpvoted };
 };
 export const listCourseReviews = async (courseId) => {
