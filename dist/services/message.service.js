@@ -6,13 +6,30 @@ import { io } from "../server.js";
 import roomModel from "../models/room.model.js";
 import { getPagination } from "../utils/getPagination.js";
 const getProfilePayload = (user) => user?.profile ? { url: user.profile.url, publicId: user.profile.publicId } : null;
+const senderPayload = (user) => ({
+    id: user?._id?.toString?.() ?? "",
+    name: user?.name ?? "Unknown user",
+    profile: getProfilePayload(user),
+});
+const groupedReactions = (reactions = []) => {
+    const groups = new Map();
+    for (const reaction of reactions) {
+        const user = reaction.user;
+        if (!user)
+            continue;
+        const users = groups.get(reaction.emoji) ?? [];
+        users.push(senderPayload(user));
+        groups.set(reaction.emoji, users);
+    }
+    return Array.from(groups.entries()).map(([emoji, users]) => ({
+        emoji,
+        users,
+        count: users.length,
+    }));
+};
 const toMessageResponse = (message) => ({
     id: message._id.toString(),
-    senderId: {
-        id: message.senderId._id.toString(),
-        name: message.senderId.name,
-        profile: getProfilePayload(message.senderId),
-    },
+    senderId: senderPayload(message.senderId),
     roomId: message.roomId.toString(),
     text: message.text ? message.text : "",
     media: message.media
@@ -21,6 +38,7 @@ const toMessageResponse = (message) => ({
     file: message.file
         ? { url: message.file.url, publicId: message.file.publicId }
         : undefined,
+    reactions: groupedReactions(message.reactions),
     createdAt: message.createdAt.toISOString(),
 });
 export const sendMessage = async (data) => {
@@ -67,7 +85,8 @@ export const sendMessage = async (data) => {
     await roomModel.findByIdAndUpdate(roomId, {});
     const fullMessage = await messageModel
         .findById(message._id)
-        .populate("senderId", "name profile");
+        .populate("senderId", "name profile")
+        .populate("reactions.user", "name profile");
     if (!fullMessage) {
         throw new AppError("Error in fetching messages", 400);
     }
@@ -95,7 +114,8 @@ export const getMessagesForRoom = async (data) => {
             .sort({ createdAt: -1 })
             .skip(skip)
             .limit(limit)
-            .populate("senderId", "name profile"),
+            .populate("senderId", "name profile")
+            .populate("reactions.user", "name profile"),
         messageModel.countDocuments({ roomId }),
     ]);
     // Returned newest-first for pagination (page 1 = most recent), but a chat
@@ -110,4 +130,37 @@ export const getMessagesForRoom = async (data) => {
             totalPages: Math.ceil(total / limit),
         },
     };
+};
+export const toggleMessageReaction = async (messageId, userId, emoji) => {
+    if (!emoji?.trim()) {
+        throw new AppError("emoji is required", 400);
+    }
+    const message = await messageModel.findById(messageId);
+    if (!message) {
+        throw new AppError("message not found", 404);
+    }
+    const room = await roomModel.findOne({
+        _id: message.roomId,
+        participants: userId,
+    });
+    if (!room) {
+        throw new AppError("You are not a member of this conversation", 403);
+    }
+    const selectedEmoji = emoji.trim();
+    const hasReacted = (message.reactions ?? []).some((reaction) => reaction.emoji === selectedEmoji && reaction.user.toString() === userId);
+    await messageModel.findByIdAndUpdate(messageId, {
+        [hasReacted ? "$pull" : "$addToSet"]: {
+            reactions: { emoji: selectedEmoji, user: userId },
+        },
+    });
+    const updated = await messageModel
+        .findById(messageId)
+        .populate("senderId", "name profile")
+        .populate("reactions.user", "name profile");
+    if (!updated) {
+        throw new AppError("message not found", 404);
+    }
+    const response = toMessageResponse(updated);
+    io.to(response.roomId).emit("message:reaction", response);
+    return response;
 };

@@ -3,6 +3,7 @@ import { GetMessagesRoom, MessageRequestData } from "../types/message.types.js";
 import {
   getMessagesForRoom,
   sendMessage,
+  toggleMessageReaction,
 } from "../services/message.service.js";
 import { AppError } from "../errors/AppError.js";
 
@@ -67,6 +68,30 @@ export const getMessagesForARoom = async (
     };
 
     const data = await getMessagesForRoom(dataToSend);
+
+    res.status(200).json({ success: true, data });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const reactToMessage = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const authRequest = req as MessageAuthRequest;
+    const userId = authRequest.user?.id;
+    if (!userId) {
+      throw new AppError("unauthorized", 401);
+    }
+
+    const data = await toggleMessageReaction(
+      req.params.messageId,
+      userId,
+      req.body.emoji,
+    );
 
     res.status(200).json({ success: true, data });
   } catch (error) {

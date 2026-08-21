@@ -148,10 +148,14 @@ export const listMyRooms = async (userId) => {
         .find({ participants: userId })
         .populate("participants", "name profile")
         .sort({ updatedAt: -1 });
-    const roomsWithLastMessage = await Promise.all(rooms.map(async (room) => {
-        const lastMessage = await messageModel
-            .findOne({ roomId: room._id })
-            .sort({ createdAt: -1 });
+    const lastMessages = await messageModel.aggregate([
+        { $match: { roomId: { $in: rooms.map((room) => room._id) } } },
+        { $sort: { createdAt: -1 } },
+        { $group: { _id: "$roomId", message: { $first: "$$ROOT" } } },
+    ]);
+    const lastMessageByRoom = new Map(lastMessages.map((item) => [item._id.toString(), item.message]));
+    const roomsWithLastMessage = rooms.map((room) => {
+        const lastMessage = lastMessageByRoom.get(room._id.toString());
         return {
             ...toRoomResponse(room),
             lastMessage: lastMessage
@@ -164,7 +168,7 @@ export const listMyRooms = async (userId) => {
                 }
                 : null,
         };
-    }));
+    });
     return roomsWithLastMessage;
 };
 export const isRoomParticipant = async (roomId, userId) => {

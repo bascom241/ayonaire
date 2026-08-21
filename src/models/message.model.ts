@@ -35,6 +35,12 @@ const messageSchema = new Schema(
         ref: "User",
       },
     ],
+    reactions: [
+      {
+        emoji: { type: String, required: true },
+        user: { type: Schema.Types.ObjectId, ref: "User", required: true },
+      },
+    ],
   },
   { timestamps: true },
 );

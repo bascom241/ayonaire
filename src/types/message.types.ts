@@ -34,6 +34,11 @@ export interface MessageResponseData {
     url: string;
     publicId: string;
   };
+  reactions: {
+    emoji: string;
+    users: MessageSender[];
+    count: number;
+  }[];
   createdAt: string;
 }
 

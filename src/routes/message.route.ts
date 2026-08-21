@@ -3,6 +3,7 @@ const router = express.Router();
 import { authorize } from "../middlewares/auth.middleware.js";
 import {
   getMessagesForARoom,
+  reactToMessage,
   send,
 } from "../controllers/message.controller.js";
 import { upload } from "../middlewares/multer.js";
@@ -16,5 +17,6 @@ router.post(
   ]),
   send,
 );
+router.post("/:messageId/reactions", authorize, reactToMessage);
 router.get("/:roomId", authorize, getMessagesForARoom);
 export default router;
