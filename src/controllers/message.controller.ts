@@ -86,9 +86,13 @@ export const reactToMessage = async (
     if (!userId) {
       throw new AppError("unauthorized", 401);
     }
+    const messageId = req.params.messageId;
+    if (typeof messageId !== "string" || !messageId) {
+      throw new AppError("messageId is required", 400);
+    }
 
     const data = await toggleMessageReaction(
-      req.params.messageId,
+      messageId,
       userId,
       req.body.emoji,
     );

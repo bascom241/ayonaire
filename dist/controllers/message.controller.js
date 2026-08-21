@@ -59,7 +59,11 @@ export const reactToMessage = async (req, res, next) => {
         if (!userId) {
             throw new AppError("unauthorized", 401);
         }
-        const data = await toggleMessageReaction(req.params.messageId, userId, req.body.emoji);
+        const messageId = req.params.messageId;
+        if (typeof messageId !== "string" || !messageId) {
+            throw new AppError("messageId is required", 400);
+        }
+        const data = await toggleMessageReaction(messageId, userId, req.body.emoji);
         res.status(200).json({ success: true, data });
     }
     catch (error) {
