@@ -15,6 +15,10 @@ const messageSchema = new Schema(
     text: {
       type: String,
     },
+    replyTo: {
+      type: Schema.Types.ObjectId,
+      ref: "message",
+    },
     media: {
       type: {
         url: { type: String, required: true },

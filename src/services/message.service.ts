@@ -42,6 +42,13 @@ const toMessageResponse = (message: any): MessageResponseData => ({
   senderId: senderPayload(message.senderId),
   roomId: message.roomId.toString(),
   text: message.text ? message.text : "",
+  replyTo: message.replyTo
+    ? {
+        id: message.replyTo._id.toString(),
+        text: message.replyTo.text ?? "",
+        senderId: senderPayload(message.replyTo.senderId),
+      }
+    : null,
   media: message.media
     ? { url: message.media.url, publicId: message.media.publicId }
     : undefined,
@@ -55,7 +62,7 @@ const toMessageResponse = (message: any): MessageResponseData => ({
 export const sendMessage = async (
   data: MessageRequestData,
 ): Promise<MessageResponseData> => {
-  const { roomId, text, media, senderId, file } = data;
+  const { roomId, text, media, senderId, file, replyTo } = data;
   validateRequestBodyWithValues<MessageRequestData>(data, [
     "roomId",
     "senderId",
@@ -69,6 +76,13 @@ export const sendMessage = async (
   const room = await roomModel.findOne({ _id: roomId, participants: senderId });
   if (!room) {
     throw new AppError("You are not a member of this conversation", 403);
+  }
+
+  if (replyTo) {
+    const parentMessage = await messageModel.findOne({ _id: replyTo, roomId });
+    if (!parentMessage) {
+      throw new AppError("reply target not found in this conversation", 404);
+    }
   }
 
   let uploadMediaResult;
@@ -86,6 +100,7 @@ export const sendMessage = async (
     roomId,
     senderId,
     text,
+    replyTo: replyTo || undefined,
     media: uploadMediaResult
       ? {
           url: uploadMediaResult.secure_url,
@@ -108,6 +123,11 @@ export const sendMessage = async (
   const fullMessage = await messageModel
     .findById(message._id)
     .populate("senderId", "name profile")
+    .populate({
+      path: "replyTo",
+      select: "text senderId",
+      populate: { path: "senderId", select: "name profile" },
+    })
     .populate("reactions.user", "name profile");
 
   if (!fullMessage) {
@@ -147,6 +167,11 @@ export const getMessagesForRoom = async (
       .skip(skip)
       .limit(limit)
       .populate("senderId", "name profile")
+      .populate({
+        path: "replyTo",
+        select: "text senderId",
+        populate: { path: "senderId", select: "name profile" },
+      })
       .populate("reactions.user", "name profile"),
     messageModel.countDocuments({ roomId }),
   ]);
@@ -203,6 +228,11 @@ export const toggleMessageReaction = async (
   const updated = await messageModel
     .findById(messageId)
     .populate("senderId", "name profile")
+    .populate({
+      path: "replyTo",
+      select: "text senderId",
+      populate: { path: "senderId", select: "name profile" },
+    })
     .populate("reactions.user", "name profile");
 
   if (!updated) {

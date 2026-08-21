@@ -8,6 +8,7 @@ export interface MessageRequestData {
   senderId: string;
   roomId: string;
   text?: string;
+  replyTo?: string;
   media?: mediaData;
   file?: mediaData;
 }
@@ -26,6 +27,11 @@ export interface MessageResponseData {
   senderId: MessageSender;
   roomId: string;
   text: string;
+  replyTo?: {
+    id: string;
+    text: string;
+    senderId: MessageSender;
+  } | null;
   media?: {
     url: string;
     publicId: string;

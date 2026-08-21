@@ -12,7 +12,7 @@ export const send = async (req, res, next) => {
         if (!senderId) {
             return res.status(400).json({ message: "Sender id is required" });
         }
-        const { text, roomId } = req.body;
+        const { text, roomId, replyTo } = req.body;
         const media = firstUploadedFile(req.files, "media");
         const file = firstUploadedFile(req.files, "file") ?? req.file;
         const dataToSend = {
@@ -21,6 +21,7 @@ export const send = async (req, res, next) => {
             media,
             file,
             text,
+            replyTo,
         };
         const data = await sendMessage(dataToSend);
         res.status(200).json({ success: true, data });
