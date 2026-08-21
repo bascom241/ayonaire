@@ -3,6 +3,7 @@ const router = express.Router();
 import {
   upload,
   uploadVid,
+  addVideoUrl,
   markLesson,
   update,
   resume,
@@ -19,6 +20,12 @@ router.post(
   restrictTo("admin", "instructor"),
   uploadMulter.array("videos", 10),
   uploadVid,
+);
+router.post(
+  "/add-video-url",
+  authorize,
+  restrictTo("admin", "instructor"),
+  addVideoUrl,
 );
 router.post("/mark-lesson-as-completed", authorize, markLesson);
 router.post("/update-last-lesson", authorize, update);

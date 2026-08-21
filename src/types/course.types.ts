@@ -15,9 +15,19 @@ export enum CourseLevel {
 }
 
 export interface IntroVideo {
+  title?: string;
   url: string;
-  publicId: string;
+  publicId?: string;
   duration: number;
+  sourceType?: "upload" | "url";
+  provider?:
+    | "cloudinary"
+    | "youtube"
+    | "vimeo"
+    | "mux"
+    | "bunny"
+    | "cloudflare"
+    | "external";
 }
 
 export interface Thumbnail {
@@ -61,6 +71,10 @@ export interface CreateCourseRequest {
   category: string;
   thumbnail: thumbnailData;
   introVideo?: introVideoData;
+  introVideoUrl?: string;
+  introVideoTitle?: string;
+  introVideoProvider?: IntroVideo["provider"];
+  introVideoDuration?: number;
   instructor?: string;
   price: number;
   status: string;
@@ -87,9 +101,12 @@ export interface CreateCourseResponse {
   cohorts?: string[];
   enrollments: string[];
   introVideo?: {
+    title?: string;
     url: string;
-    publicId: string;
+    publicId?: string;
     duration: number;
+    sourceType?: "upload" | "url";
+    provider?: IntroVideo["provider"];
   };
 }
 

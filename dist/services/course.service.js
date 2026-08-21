@@ -11,14 +11,93 @@ import { InstructorApplicationStatus } from "../types/instructor.types.js";
 import { getPagination } from "../utils/getPagination.js";
 import enrollmentModel from "../models/enrollment.model.js";
 import { ensureCourseRoom } from "./room.service.js";
+import User from "../models/user.model.js";
+import { UserRole } from "../types/user.types.js";
 const getInstructorUserId = (instructor) => instructor?.instructorId?._id?.toString?.() ??
     instructor?.instructorId?.toString?.() ??
     instructor?.toString?.();
 const getInstructorName = (instructor) => instructor?.name ?? instructor?.instructorId?.name ?? "Unassigned";
+const isValidHttpUrl = (url) => {
+    try {
+        const parsedUrl = new URL(url);
+        return parsedUrl.protocol === "http:" || parsedUrl.protocol === "https:";
+    }
+    catch {
+        return false;
+    }
+};
+const inferVideoProvider = (url) => {
+    const host = new URL(url).hostname.replace(/^www\./, "").toLowerCase();
+    if (host.includes("youtube.com") || host.includes("youtu.be")) {
+        return "youtube";
+    }
+    if (host.includes("vimeo.com"))
+        return "vimeo";
+    if (host.includes("mux.com") || host.includes("mux.dev"))
+        return "mux";
+    if (host.includes("bunnycdn.com") || host.includes("bunny.net")) {
+        return "bunny";
+    }
+    if (host.includes("cloudflarestream.com"))
+        return "cloudflare";
+    if (host.includes("cloudinary.com"))
+        return "cloudinary";
+    return "external";
+};
+const buildIntroVideoFromUrl = (data) => {
+    if (!data.introVideoUrl)
+        return undefined;
+    if (!isValidHttpUrl(data.introVideoUrl)) {
+        throw new AppError("A valid http(s) introVideoUrl is required", 400);
+    }
+    return {
+        title: data.introVideoTitle || "Course intro video",
+        url: data.introVideoUrl,
+        duration: data.introVideoDuration ?? 0,
+        sourceType: "url",
+        provider: data.introVideoProvider ?? inferVideoProvider(data.introVideoUrl),
+    };
+};
+const formatIntroVideo = (introVideo) => introVideo
+    ? {
+        title: introVideo.title,
+        url: introVideo.url,
+        publicId: introVideo.publicId,
+        duration: introVideo.duration,
+        sourceType: introVideo.sourceType,
+        provider: introVideo.provider,
+    }
+    : undefined;
 const addCourseToInstructorProfile = async (instructorUserId, courseId) => {
     if (!instructorUserId)
         return;
     await instructorProfileModel.findOneAndUpdate({ instructorId: instructorUserId }, { $addToSet: { courses: courseId } });
+};
+const getAssignableInstructor = async (instructorId) => {
+    const instructor = await instructorProfileModel
+        .findOne({ instructorId })
+        .populate("instructorId", "name role");
+    if (instructor) {
+        if (instructor.applicationStatus !== InstructorApplicationStatus.APPROVED) {
+            throw new AppError("Instructor has not been approved yet", 404);
+        }
+        return {
+            userId: getInstructorUserId(instructor),
+            name: instructor.instructorId.name,
+            profileId: instructor._id,
+        };
+    }
+    const instructorUser = await User.findOne({
+        _id: instructorId,
+        role: UserRole.INSTRUCTOR,
+    }).select("name");
+    if (!instructorUser) {
+        throw new AppError("instructor not found", 400);
+    }
+    return {
+        userId: instructorUser._id.toString(),
+        name: instructorUser.name,
+    };
 };
 export const createCourseCategory = async (title) => {
     const existing = await CourseCategory.findOne({ title });
@@ -59,13 +138,24 @@ export const createCourse = async (data) => {
             url: uploadIntroVidResult.secure_url,
             publicId: uploadIntroVidResult.public_id,
             duration: uploadIntroVidResult.duration || 0,
+            sourceType: "upload",
+            provider: "cloudinary",
         };
     }
+    else {
+        const introVideoFromUrl = buildIntroVideoFromUrl(data);
+        if (introVideoFromUrl) {
+            courseData.introVideo = introVideoFromUrl;
+        }
+    }
+    let assignedInstructorId;
     if (data.instructor) {
-        courseData.instructor = new mongoose.Types.ObjectId(data.instructor);
+        const instructor = await getAssignableInstructor(data.instructor);
+        assignedInstructorId = instructor.userId;
+        courseData.instructor = new mongoose.Types.ObjectId(instructor.userId);
     }
     const course = await courseModel.create(courseData);
-    await addCourseToInstructorProfile(data.instructor, course._id);
+    await addCourseToInstructorProfile(assignedInstructorId, course._id);
     return {
         _id: course._id.toString(),
         title: course.title,
@@ -79,13 +169,7 @@ export const createCourse = async (data) => {
             url: course.thumbnail.url,
             publicId: course.thumbnail.publicId,
         },
-        introVideo: course.introVideo
-            ? {
-                url: course.introVideo.url,
-                publicId: course.introVideo.publicId,
-                duration: course.introVideo.duration,
-            }
-            : undefined,
+        introVideo: formatIntroVideo(course.introVideo),
         students: course.students?.map((id) => id.toString()),
         modules: course.modules?.map((id) => id.toString()),
         enrollments: course.enrollments?.map((id) => id.toString()),
@@ -93,10 +177,15 @@ export const createCourse = async (data) => {
         completionCertificate: course.completionCertificate,
     };
 };
-export const updateCourse = async (courseId, data) => {
+export const updateCourse = async (courseId, data, userId, role) => {
     const course = await courseModel.findById(courseId);
     if (!course)
         throw new Error("Course not found");
+    if (role !== "admin" &&
+        course.instructor &&
+        course.instructor.toString() !== userId) {
+        throw new AppError("You do not own this course", 403);
+    }
     if (data.thumbnail) {
         if (course.thumbnail?.publicId) {
             await deleteImage(course.thumbnail.publicId);
@@ -116,7 +205,15 @@ export const updateCourse = async (courseId, data) => {
             url: uploadedVideoResult.secure_url,
             publicId: uploadedVideoResult.public_id,
             duration: uploadedVideoResult.duration,
+            sourceType: "upload",
+            provider: "cloudinary",
         };
+    }
+    else if (data.introVideoUrl) {
+        if (course.introVideo?.publicId) {
+            await deleteImage(course.introVideo.publicId);
+        }
+        course.introVideo = buildIntroVideoFromUrl(data);
     }
     if (data.title !== undefined)
         course.title = data.title;
@@ -130,8 +227,13 @@ export const updateCourse = async (courseId, data) => {
         course.status = data.status;
     if (data.courseLevel !== undefined)
         course.courseLevel = data.courseLevel;
-    if (data.instructor !== undefined)
-        course.instructor = new mongoose.Types.ObjectId(data.instructor);
+    if (data.instructor !== undefined) {
+        const instructor = await getAssignableInstructor(data.instructor);
+        if (role !== "admin" && instructor.userId !== userId) {
+            throw new AppError("You cannot assign this course to another instructor", 403);
+        }
+        course.instructor = new mongoose.Types.ObjectId(instructor.userId);
+    }
     if (data.completionCertificate !== undefined)
         course.completionCertificate = data.completionCertificate;
     const updatedCourse = await course.save();
@@ -155,43 +257,29 @@ export const updateCourse = async (courseId, data) => {
         enrollments: updatedCourse.enrollments.map((id) => id.toString()),
         completionCount: updatedCourse.completionCount,
         completionCertificate: updatedCourse.completionCertificate,
-        introVideo: updatedCourse.introVideo
-            ? {
-                url: updatedCourse.introVideo.url,
-                publicId: updatedCourse.introVideo.publicId,
-                duration: updatedCourse.introVideo.duration,
-            }
-            : undefined,
+        introVideo: formatIntroVideo(updatedCourse.introVideo),
     };
 };
 export const assignInstuctorToCourse = async (instructorId, courseId) => {
-    const instructor = await instructorProfileModel
-        .findOne({ instructorId: instructorId })
-        .populate("instructorId", "name");
-    if (!instructor) {
-        throw new AppError("instructor not found", 400);
-    }
+    const instructor = await getAssignableInstructor(instructorId);
     const courseToAssignInstructorTo = await courseModel.findById(courseId);
-    if (instructor.applicationStatus === InstructorApplicationStatus.APPROVED) {
-        if (courseToAssignInstructorTo) {
-            if (courseToAssignInstructorTo?.instructor) {
-                throw new AppError("course already belong to an instructor", 404);
-            }
-            courseToAssignInstructorTo.instructor = new mongoose.Types.ObjectId(getInstructorUserId(instructor));
-            await courseToAssignInstructorTo.save();
-            await instructorProfileModel.findByIdAndUpdate(instructor._id, {
+    if (courseToAssignInstructorTo) {
+        if (courseToAssignInstructorTo?.instructor) {
+            throw new AppError("course already belong to an instructor", 404);
+        }
+        courseToAssignInstructorTo.instructor = new mongoose.Types.ObjectId(instructor.userId);
+        await courseToAssignInstructorTo.save();
+        if (instructor.profileId) {
+            await instructorProfileModel.findByIdAndUpdate(instructor.profileId, {
                 $addToSet: { courses: courseToAssignInstructorTo._id },
             });
-            await ensureCourseRoom(courseId, getInstructorUserId(instructor), "instructor");
         }
-        else {
-            throw new AppError("course does not exits", 400);
-        }
+        await ensureCourseRoom(courseId, instructor.userId, "instructor");
     }
     else {
-        throw new AppError("Instructor Has not been approved yet", 404);
+        throw new AppError("course does not exits", 400);
     }
-    return `${instructor.instructorId.name} has been approved to ${courseToAssignInstructorTo.title}`;
+    return `${instructor.name} has been approved to ${courseToAssignInstructorTo.title}`;
 };
 export const saveCourseAsDraft = async (data) => {
     const uploadResult = await uploadMedia(data.thumbnail.buffer, "image");
@@ -213,13 +301,24 @@ export const saveCourseAsDraft = async (data) => {
             url: uploadIntroVidResult.secure_url,
             publicId: uploadIntroVidResult.public_id,
             duration: uploadIntroVidResult.duration || 0,
+            sourceType: "upload",
+            provider: "cloudinary",
         };
     }
+    else {
+        const introVideoFromUrl = buildIntroVideoFromUrl(data);
+        if (introVideoFromUrl) {
+            courseData.introVideo = introVideoFromUrl;
+        }
+    }
+    let assignedInstructorId;
     if (data.instructor) {
-        courseData.instructor = new mongoose.Types.ObjectId(data.instructor);
+        const instructor = await getAssignableInstructor(data.instructor);
+        assignedInstructorId = instructor.userId;
+        courseData.instructor = new mongoose.Types.ObjectId(instructor.userId);
     }
     const course = await courseModel.create(courseData);
-    await addCourseToInstructorProfile(data.instructor, course._id);
+    await addCourseToInstructorProfile(assignedInstructorId, course._id);
     return {
         _id: course._id.toString(),
         title: course.title,
@@ -233,13 +332,7 @@ export const saveCourseAsDraft = async (data) => {
             url: course.thumbnail.url,
             publicId: course.thumbnail.publicId,
         },
-        introVideo: course.introVideo
-            ? {
-                url: course.introVideo.url,
-                publicId: course.introVideo.publicId,
-                duration: course.introVideo.duration,
-            }
-            : undefined,
+        introVideo: formatIntroVideo(course.introVideo),
         students: course.students?.map((id) => id.toString()),
         modules: course.modules?.map((id) => id.toString()),
         enrollments: course.enrollments?.map((id) => id.toString()),

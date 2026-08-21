@@ -16,7 +16,7 @@ router.put("/edit", authorize, restrictTo("admin", "instructor"), upload.fields(
     { name: "introVideo", maxCount: 1 },
 ]), edit);
 router.put("/assign", authorize, restrictTo("admin"), assign);
-router.put("/save-to-draft", authorize, restrictTo("admin"), upload.fields([
+router.put("/save-to-draft", authorize, restrictTo("admin", "instructor"), upload.fields([
     { name: "thumbnail", maxCount: 1 },
     { name: "introVideo", maxCount: 1 },
 ]), saveToDraft);

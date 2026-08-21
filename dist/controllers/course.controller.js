@@ -27,6 +27,7 @@ export const getCourseCategories = async (req, res, next) => {
         next(error);
     }
 };
+const resolveInstructorId = (req) => req.user?.role === "instructor" ? req.user.id : req.body.instructorId;
 export const create = async (req, res, next) => {
     try {
         const { thumbnail, introVideo } = getCourseUploadFiles(req);
@@ -39,9 +40,15 @@ export const create = async (req, res, next) => {
             category: req.body.category,
             price: req.body.price,
             status: req.body.status,
-            instructor: req.body.instructorId,
+            instructor: resolveInstructorId(req),
             thumbnail,
             introVideo,
+            introVideoUrl: req.body.introVideoUrl,
+            introVideoTitle: req.body.introVideoTitle,
+            introVideoProvider: req.body.introVideoProvider,
+            introVideoDuration: req.body.introVideoDuration !== undefined
+                ? Number(req.body.introVideoDuration)
+                : undefined,
             courseLevel: req.body.courseLevel,
         };
         const data = await createCourse(dataToSend);
@@ -69,16 +76,22 @@ export const edit = async (req, res, next) => {
             category: req.body.category,
             price: req.body.price,
             status: req.body.status,
-            instructor: req.body.instructorId,
+            instructor: resolveInstructorId(req),
             thumbnail,
             introVideo,
+            introVideoUrl: req.body.introVideoUrl,
+            introVideoTitle: req.body.introVideoTitle,
+            introVideoProvider: req.body.introVideoProvider,
+            introVideoDuration: req.body.introVideoDuration !== undefined
+                ? Number(req.body.introVideoDuration)
+                : undefined,
             courseLevel: req.body.courseLevel,
             completionCertificate: req.body.completionCertificate !== undefined
                 ? req.body.completionCertificate === "true" ||
                     req.body.completionCertificate === true
                 : undefined,
         };
-        const data = await updateCourse(courseId, dataToSend);
+        const data = await updateCourse(courseId, dataToSend, req.user?.id, req.user?.role);
         res.status(200).json({
             success: true,
             message: "Course edit successfully",
@@ -118,9 +131,15 @@ export const saveToDraft = async (req, res, next) => {
             category: req.body.category,
             price: req.body.price,
             status: req.body.status,
-            instructor: req.body.instructorId,
+            instructor: resolveInstructorId(req),
             thumbnail,
             introVideo,
+            introVideoUrl: req.body.introVideoUrl,
+            introVideoTitle: req.body.introVideoTitle,
+            introVideoProvider: req.body.introVideoProvider,
+            introVideoDuration: req.body.introVideoDuration !== undefined
+                ? Number(req.body.introVideoDuration)
+                : undefined,
             courseLevel: req.body.courseLevel,
         };
         const data = await saveCourseAsDraft(dataToSend);

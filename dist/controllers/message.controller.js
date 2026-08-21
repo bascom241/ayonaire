@@ -1,5 +1,10 @@
 import { getMessagesForRoom, sendMessage, } from "../services/message.service.js";
 import { AppError } from "../errors/AppError.js";
+function firstUploadedFile(files, field) {
+    if (!files || Array.isArray(files))
+        return undefined;
+    return files[field]?.[0];
+}
 export const send = async (req, res, next) => {
     try {
         const authRequest = req;
@@ -8,11 +13,13 @@ export const send = async (req, res, next) => {
             return res.status(400).json({ message: "Sender id is required" });
         }
         const { text, roomId } = req.body;
+        const media = firstUploadedFile(req.files, "media");
+        const file = firstUploadedFile(req.files, "file") ?? req.file;
         const dataToSend = {
             senderId,
             roomId,
-            media: req.file,
-            file: req.file,
+            media,
+            file,
             text,
         };
         const data = await sendMessage(dataToSend);

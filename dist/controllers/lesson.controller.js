@@ -1,4 +1,4 @@
-import { getResumeLesson, markLessonAsCompleted, updateLastLesson, uploadLesson, viewLessonContent, viewCourseContentForOwner, } from "../services/lesson.service.js";
+import { getResumeLesson, markLessonAsCompleted, updateLastLesson, uploadLesson, addLessonVideoUrl, viewLessonContent, viewCourseContentForOwner, } from "../services/lesson.service.js";
 import { AppError } from "../errors/AppError.js";
 import { uploadVideo } from "../services/lesson.service.js";
 export const upload = async (req, res, next) => {
@@ -67,6 +67,29 @@ export const uploadVid = async (req, res, next) => {
             success: true,
             data,
             message: "Lesson Video created succefully",
+        });
+    }
+    catch (error) {
+        next(error);
+    }
+};
+export const addVideoUrl = async (req, res, next) => {
+    try {
+        const { lessonId, title, url, duration, provider } = req.body;
+        if (!lessonId || !url) {
+            throw new AppError("lessonId and url are required", 400);
+        }
+        const data = await addLessonVideoUrl({
+            lessonId,
+            title,
+            url,
+            duration: duration !== undefined ? Number(duration) : undefined,
+            provider,
+        });
+        res.status(200).json({
+            success: true,
+            data,
+            message: "Lesson video URL added successfully",
         });
     }
     catch (error) {

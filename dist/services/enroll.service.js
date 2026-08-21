@@ -199,6 +199,16 @@ export const getEnrolledCourseDetail = async (studentId, courseId) => {
         thumbnail: course.thumbnail
             ? { url: course.thumbnail.url, publicId: course.thumbnail.publicId }
             : undefined,
+        introVideo: course.introVideo
+            ? {
+                title: course.introVideo.title,
+                url: course.introVideo.url,
+                publicId: course.introVideo.publicId,
+                duration: course.introVideo.duration,
+                sourceType: course.introVideo.sourceType,
+                provider: course.introVideo.provider,
+            }
+            : undefined,
         category: course.category?.toString(),
         instructor,
         price: course.price,

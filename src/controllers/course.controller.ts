@@ -84,6 +84,13 @@ export const create = async (
       instructor: resolveInstructorId(req),
       thumbnail,
       introVideo,
+      introVideoUrl: req.body.introVideoUrl,
+      introVideoTitle: req.body.introVideoTitle,
+      introVideoProvider: req.body.introVideoProvider,
+      introVideoDuration:
+        req.body.introVideoDuration !== undefined
+          ? Number(req.body.introVideoDuration)
+          : undefined,
       courseLevel: req.body.courseLevel,
     };
 
@@ -117,6 +124,13 @@ export const edit = async (req: AuthRequest, res: Response, next: NextFunction) 
       instructor: resolveInstructorId(req),
       thumbnail,
       introVideo,
+      introVideoUrl: req.body.introVideoUrl,
+      introVideoTitle: req.body.introVideoTitle,
+      introVideoProvider: req.body.introVideoProvider,
+      introVideoDuration:
+        req.body.introVideoDuration !== undefined
+          ? Number(req.body.introVideoDuration)
+          : undefined,
       courseLevel: req.body.courseLevel,
       completionCertificate:
         req.body.completionCertificate !== undefined
@@ -179,6 +193,13 @@ export const saveToDraft = async (
       instructor: resolveInstructorId(req),
       thumbnail,
       introVideo,
+      introVideoUrl: req.body.introVideoUrl,
+      introVideoTitle: req.body.introVideoTitle,
+      introVideoProvider: req.body.introVideoProvider,
+      introVideoDuration:
+        req.body.introVideoDuration !== undefined
+          ? Number(req.body.introVideoDuration)
+          : undefined,
       courseLevel: req.body.courseLevel,
     };
 

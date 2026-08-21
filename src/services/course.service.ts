@@ -7,6 +7,7 @@ import {
   CourseStatus,
   CreateCourseRequest,
   CreateCourseResponse,
+  IntroVideo,
   SingleAdminCourse,
 } from "../types/course.types.js";
 import { uploadMedia } from "../utils/uploadToCloudinary.js";
@@ -28,6 +29,59 @@ const getInstructorUserId = (instructor: any) =>
 
 const getInstructorName = (instructor: any) =>
   instructor?.name ?? instructor?.instructorId?.name ?? "Unassigned";
+
+const isValidHttpUrl = (url: string) => {
+  try {
+    const parsedUrl = new URL(url);
+    return parsedUrl.protocol === "http:" || parsedUrl.protocol === "https:";
+  } catch {
+    return false;
+  }
+};
+
+const inferVideoProvider = (url: string): IntroVideo["provider"] => {
+  const host = new URL(url).hostname.replace(/^www\./, "").toLowerCase();
+
+  if (host.includes("youtube.com") || host.includes("youtu.be")) {
+    return "youtube";
+  }
+  if (host.includes("vimeo.com")) return "vimeo";
+  if (host.includes("mux.com") || host.includes("mux.dev")) return "mux";
+  if (host.includes("bunnycdn.com") || host.includes("bunny.net")) {
+    return "bunny";
+  }
+  if (host.includes("cloudflarestream.com")) return "cloudflare";
+  if (host.includes("cloudinary.com")) return "cloudinary";
+
+  return "external";
+};
+
+const buildIntroVideoFromUrl = (data: Partial<CreateCourseRequest>) => {
+  if (!data.introVideoUrl) return undefined;
+  if (!isValidHttpUrl(data.introVideoUrl)) {
+    throw new AppError("A valid http(s) introVideoUrl is required", 400);
+  }
+
+  return {
+    title: data.introVideoTitle || "Course intro video",
+    url: data.introVideoUrl,
+    duration: data.introVideoDuration ?? 0,
+    sourceType: "url" as const,
+    provider: data.introVideoProvider ?? inferVideoProvider(data.introVideoUrl),
+  };
+};
+
+const formatIntroVideo = (introVideo: any) =>
+  introVideo
+    ? {
+        title: introVideo.title,
+        url: introVideo.url,
+        publicId: introVideo.publicId,
+        duration: introVideo.duration,
+        sourceType: introVideo.sourceType,
+        provider: introVideo.provider,
+      }
+    : undefined;
 
 const addCourseToInstructorProfile = async (
   instructorUserId: string | undefined,
@@ -125,7 +179,14 @@ export const createCourse = async (
       url: uploadIntroVidResult.secure_url,
       publicId: uploadIntroVidResult.public_id,
       duration: uploadIntroVidResult.duration || 0,
+      sourceType: "upload",
+      provider: "cloudinary",
     };
+  } else {
+    const introVideoFromUrl = buildIntroVideoFromUrl(data);
+    if (introVideoFromUrl) {
+      courseData.introVideo = introVideoFromUrl;
+    }
   }
 
   let assignedInstructorId: string | undefined;
@@ -151,13 +212,7 @@ export const createCourse = async (
       url: course.thumbnail.url,
       publicId: course.thumbnail.publicId,
     },
-    introVideo: course.introVideo
-      ? {
-          url: course.introVideo.url,
-          publicId: course.introVideo.publicId,
-          duration: course.introVideo.duration,
-        }
-      : undefined,
+    introVideo: formatIntroVideo(course.introVideo),
     students: course.students?.map((id) => id.toString()),
     modules: course.modules?.map((id) => id.toString()),
     enrollments: course.enrollments?.map((id) => id.toString()),
@@ -208,7 +263,15 @@ export const updateCourse = async (
       url: uploadedVideoResult.secure_url,
       publicId: uploadedVideoResult.public_id,
       duration: uploadedVideoResult.duration,
+      sourceType: "upload",
+      provider: "cloudinary",
     };
+  } else if (data.introVideoUrl) {
+    if (course.introVideo?.publicId) {
+      await deleteImage(course.introVideo.publicId);
+    }
+
+    course.introVideo = buildIntroVideoFromUrl(data);
   }
 
   if (data.title !== undefined) course.title = data.title;
@@ -254,13 +317,7 @@ export const updateCourse = async (
     enrollments: updatedCourse.enrollments.map((id) => id.toString()),
     completionCount: updatedCourse.completionCount,
     completionCertificate: updatedCourse.completionCertificate,
-    introVideo: updatedCourse.introVideo
-      ? {
-          url: updatedCourse.introVideo.url,
-          publicId: updatedCourse.introVideo.publicId,
-          duration: updatedCourse.introVideo.duration,
-        }
-      : undefined,
+    introVideo: formatIntroVideo(updatedCourse.introVideo),
   };
 };
 
@@ -320,7 +377,14 @@ export const saveCourseAsDraft = async (
       url: uploadIntroVidResult.secure_url,
       publicId: uploadIntroVidResult.public_id,
       duration: uploadIntroVidResult.duration || 0,
+      sourceType: "upload",
+      provider: "cloudinary",
     };
+  } else {
+    const introVideoFromUrl = buildIntroVideoFromUrl(data);
+    if (introVideoFromUrl) {
+      courseData.introVideo = introVideoFromUrl;
+    }
   }
 
   let assignedInstructorId: string | undefined;
@@ -346,13 +410,7 @@ export const saveCourseAsDraft = async (
       url: course.thumbnail.url,
       publicId: course.thumbnail.publicId,
     },
-    introVideo: course.introVideo
-      ? {
-          url: course.introVideo.url,
-          publicId: course.introVideo.publicId,
-          duration: course.introVideo.duration,
-        }
-      : undefined,
+    introVideo: formatIntroVideo(course.introVideo),
     students: course.students?.map((id) => id.toString()),
     modules: course.modules?.map((id) => id.toString()),
     enrollments: course.enrollments?.map((id) => id.toString()),

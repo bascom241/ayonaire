@@ -42,6 +42,33 @@ export const uploadLesson = async (data) => {
     };
 };
 const MAX_VIDEO_SIZE = Number(process.env.MAX_VIDEO_UPLOAD_SIZE_MB || 1500) * 1024 * 1024;
+const isValidHttpUrl = (url) => {
+    try {
+        const parsedUrl = new URL(url);
+        return parsedUrl.protocol === "http:" || parsedUrl.protocol === "https:";
+    }
+    catch {
+        return false;
+    }
+};
+const inferVideoProvider = (url) => {
+    const host = new URL(url).hostname.replace(/^www\./, "").toLowerCase();
+    if (host.includes("youtube.com") || host.includes("youtu.be")) {
+        return "youtube";
+    }
+    if (host.includes("vimeo.com"))
+        return "vimeo";
+    if (host.includes("mux.com") || host.includes("mux.dev"))
+        return "mux";
+    if (host.includes("bunnycdn.com") || host.includes("bunny.net")) {
+        return "bunny";
+    }
+    if (host.includes("cloudflarestream.com"))
+        return "cloudflare";
+    if (host.includes("cloudinary.com"))
+        return "cloudinary";
+    return "external";
+};
 export const uploadVideo = async (lessonId, data) => {
     const lesson = await lessonModel.findById(lessonId);
     if (!lesson) {
@@ -58,6 +85,8 @@ export const uploadVideo = async (lessonId, data) => {
             url: result.secure_url,
             publicId: result.public_id,
             duration: result.duration || 0,
+            sourceType: "upload",
+            provider: "cloudinary",
         });
     }
     lesson.videos.push(...uploadedVideos);
@@ -65,9 +94,28 @@ export const uploadVideo = async (lessonId, data) => {
     return {
         title: result.videos.map((t) => t.title),
         url: result.videos.map((u) => u.url),
-        publicId: result.videos.map((p) => p.publicId),
+        publicId: result.videos.map((p) => p.publicId ?? undefined),
         duration: result.videos.map((d) => d.duration),
     };
+};
+export const addLessonVideoUrl = async (data) => {
+    if (!isValidHttpUrl(data.url)) {
+        throw new AppError("A valid http(s) video URL is required", 400);
+    }
+    const lesson = await lessonModel.findById(data.lessonId);
+    if (!lesson) {
+        throw new AppError("lesson not found", 400);
+    }
+    const video = {
+        title: data.title || "Lesson video",
+        url: data.url,
+        duration: data.duration ?? 0,
+        sourceType: "url",
+        provider: data.provider ?? inferVideoProvider(data.url),
+    };
+    lesson.videos.push(video);
+    await lesson.save();
+    return video;
 };
 export const markLessonAsCompleted = async (data) => {
     const enrollment = await enrollmentModel.findOne({

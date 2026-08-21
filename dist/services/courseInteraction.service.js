@@ -170,6 +170,18 @@ export const createLearningReminder = async (courseId, userId, data) => {
         calendarProvider: data.calendarProvider ?? "none",
     });
 };
+export const deleteLearningReminder = async (courseId, reminderId, userId) => {
+    await ensureCourse(courseId);
+    const reminder = await LearningReminder.findOneAndDelete({
+        _id: reminderId,
+        course: courseId,
+        user: userId,
+    });
+    if (!reminder) {
+        throw new AppError("learning reminder not found", 404);
+    }
+    return { deleted: true };
+};
 export const askCourseAssistant = async (data) => {
     const course = await ensureCourse(data.courseId);
     const lesson = await ensureLesson(data.lessonId);

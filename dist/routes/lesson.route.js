@@ -1,10 +1,11 @@
 import express from "express";
 const router = express.Router();
-import { upload, uploadVid, markLesson, update, resume, view, viewOwn, } from "../controllers/lesson.controller.js";
+import { upload, uploadVid, addVideoUrl, markLesson, update, resume, view, viewOwn, } from "../controllers/lesson.controller.js";
 import { authorize, restrictTo } from "../middlewares/auth.middleware.js";
 import { upload as uploadMulter } from "../middlewares/multer.js";
 router.post("/upload", authorize, restrictTo("admin", "instructor"), upload);
 router.post("/upload-video", authorize, restrictTo("admin", "instructor"), uploadMulter.array("videos", 10), uploadVid);
+router.post("/add-video-url", authorize, restrictTo("admin", "instructor"), addVideoUrl);
 router.post("/mark-lesson-as-completed", authorize, markLesson);
 router.post("/update-last-lesson", authorize, update);
 router.get("/resume-last-lesson", authorize, resume);

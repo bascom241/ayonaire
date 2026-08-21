@@ -2,9 +2,18 @@ import { Types } from "mongoose";
 
 export interface LessonVideo {
   title: string;
-  url: string; // Cloudinary secure_url whic i provide
-  publicId: string; // Cloudinary public_id
+  url: string;
+  publicId?: string;
   duration: number;
+  sourceType?: "upload" | "url";
+  provider?:
+    | "cloudinary"
+    | "youtube"
+    | "vimeo"
+    | "mux"
+    | "bunny"
+    | "cloudflare"
+    | "external";
 }
 
 export interface LessonMaterial {
@@ -82,8 +91,16 @@ export interface UploadVideoRequest {
 export interface UploadVideoReponse {
   title: string[];
   url: string[];
-  publicId: string[];
+  publicId: (string | undefined)[];
   duration: number[];
+}
+
+export interface AddLessonVideoUrlRequest {
+  lessonId: string;
+  title: string;
+  url: string;
+  duration?: number;
+  provider?: LessonVideo["provider"];
 }
 
 export interface MarkLessonCompleted {

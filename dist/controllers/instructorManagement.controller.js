@@ -49,7 +49,12 @@ export const getProfiles = async (req, res, next) => {
 };
 export const getProfile = async (req, res, next) => {
     try {
-        const { userId } = req.body;
+        const userId = typeof req.query.instructorId === "string"
+            ? req.query.instructorId
+            : req.body.userId;
+        if (!userId) {
+            throw new AppError("instructorId is required", 400);
+        }
         const data = await getInstructorProfile(userId);
         res.status(200).json({ success: true, data });
     }

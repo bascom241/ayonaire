@@ -1,5 +1,5 @@
 import express from "express";
-import { answerQuestion, assistant, createQuestion, createReminder, createReview, questions, reminders, reviews, saveTranscription, transcription, upvoteQuestion, } from "../controllers/courseInteraction.controller.js";
+import { answerQuestion, assistant, createQuestion, createReminder, createReview, deleteReminder, questions, reminders, reviews, saveTranscription, transcription, upvoteQuestion, } from "../controllers/courseInteraction.controller.js";
 import { authorize, restrictTo } from "../middlewares/auth.middleware.js";
 const router = express.Router();
 router.get("/:courseId/questions", authorize, questions);
@@ -12,5 +12,6 @@ router.get("/:courseId/lessons/:lessonId/transcription", authorize, transcriptio
 router.put("/:courseId/lessons/:lessonId/transcription", authorize, restrictTo("admin", "instructor"), saveTranscription);
 router.get("/:courseId/reminders", authorize, reminders);
 router.post("/:courseId/reminders", authorize, createReminder);
+router.delete("/:courseId/reminders/:reminderId", authorize, deleteReminder);
 router.post("/:courseId/assistant", authorize, assistant);
 export default router;

@@ -14,6 +14,24 @@ import User from "../models/user.model.js";
 import { InstructorApplicationStatus, } from "../types/instructor.types.js";
 import { UserRole } from "../types/user.types.js";
 import categoryModel from "../models/category.model.js";
+const mapUserToInstructorResponse = (user) => ({
+    _id: user._id.toString(),
+    instructorId: {
+        _id: user._id.toString(),
+        name: user.name,
+        email: user.email,
+        loginHistory: user.loginHistory ?? [],
+        activity: user.activity ?? [],
+        profile: user.profile ?? null,
+    },
+    bio: user.bio ?? "",
+    expertise: [],
+    instructorCourseCategory: "-",
+    applicationStatus: InstructorApplicationStatus.APPROVED,
+    courses: [],
+    createdAt: user.createdAt,
+    updatedAt: user.updatedAt,
+});
 export const applyAsInstructor = async (userId, data) => {
     const user = await User.findById(userId);
     if (!user) {
@@ -79,7 +97,14 @@ export const getInstructorProfiles = async () => {
         select: "title",
     })
         .populate("courses", "title status");
-    return instructors.map((inst) => ({
+    const instructorUserIds = instructors
+        .map((inst) => inst.instructorId?._id)
+        .filter(Boolean);
+    const usersWithoutProfiles = await User.find({
+        role: UserRole.INSTRUCTOR,
+        _id: { $nin: instructorUserIds },
+    }).select("name email loginHistory activity profile bio createdAt updatedAt");
+    const profileResponses = instructors.map((inst) => ({
         _id: inst._id.toString(),
         instructorId: {
             _id: inst.instructorId._id.toString(),
@@ -97,6 +122,10 @@ export const getInstructorProfiles = async () => {
         createdAt: inst.createdAt,
         updatedAt: inst.updatedAt,
     }));
+    return [
+        ...profileResponses,
+        ...usersWithoutProfiles.map(mapUserToInstructorResponse),
+    ];
 };
 export const getInstructorProfile = async (id) => {
     const instructor = await instructorProfileModel
@@ -112,7 +141,14 @@ export const getInstructorProfile = async (id) => {
         .populate("courses", "title status")
         .lean();
     if (!instructor) {
-        throw new AppError("Instructor profile not found", 404);
+        const instructorUser = await User.findOne({
+            _id: id,
+            role: UserRole.INSTRUCTOR,
+        }).select("name email loginHistory activity profile bio createdAt updatedAt");
+        if (!instructorUser) {
+            throw new AppError("Instructor profile not found", 404);
+        }
+        return mapUserToInstructorResponse(instructorUser);
     }
     const populatedUser = instructor.instructorId;
     const populatedCategory = instructor.instructorCourseCategory;

@@ -1,5 +1,5 @@
 import { AppError } from "../errors/AppError.js";
-import { answerCourseQuestion, askCourseAssistant, createCourseQuestion, createLearningReminder, getLessonTranscription, listCourseQuestions, listCourseReviews, listLearningReminders, toggleQuestionUpvote, upsertCourseReview, upsertLessonTranscription, } from "../services/courseInteraction.service.js";
+import { answerCourseQuestion, askCourseAssistant, createCourseQuestion, createLearningReminder, deleteLearningReminder, getLessonTranscription, listCourseQuestions, listCourseReviews, listLearningReminders, toggleQuestionUpvote, upsertCourseReview, upsertLessonTranscription, } from "../services/courseInteraction.service.js";
 const requireUserId = (req) => {
     const userId = req.user?.id;
     if (!userId)
@@ -107,6 +107,15 @@ export const createReminder = async (req, res, next) => {
     try {
         const data = await createLearningReminder(param(req.params.courseId, "courseId"), requireUserId(req), req.body);
         res.status(201).json({ success: true, data });
+    }
+    catch (error) {
+        next(error);
+    }
+};
+export const deleteReminder = async (req, res, next) => {
+    try {
+        const data = await deleteLearningReminder(param(req.params.courseId, "courseId"), param(req.params.reminderId, "reminderId"), requireUserId(req));
+        res.status(200).json({ success: true, data });
     }
     catch (error) {
         next(error);

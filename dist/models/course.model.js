@@ -14,9 +14,28 @@ const courseSchema = new Schema({
     },
     introVideo: {
         type: {
+            title: String,
             url: { type: String, required: true },
-            publicId: { type: String, required: true },
-            duration: { type: Number, required: true },
+            publicId: String,
+            duration: { type: Number, default: 0 },
+            sourceType: {
+                type: String,
+                enum: ["upload", "url"],
+                default: "upload",
+            },
+            provider: {
+                type: String,
+                enum: [
+                    "cloudinary",
+                    "youtube",
+                    "vimeo",
+                    "mux",
+                    "bunny",
+                    "cloudflare",
+                    "external",
+                ],
+                default: "cloudinary",
+            },
         },
     },
     description: {
