@@ -1,4 +1,14 @@
 import { editFeed, createFeed, viewFeeds, deleteFeed, likePost, commentOnAPost, deleteComment, sharePost, reportPost, getCommunityStats, } from "../services/feed.service.js";
+import { getCommunityLeaderboard } from "../services/communityLeaderboard.service.js";
+export const communityLeaderboard = async (req, res, next) => {
+    try {
+        const data = await getCommunityLeaderboard(req.query.period || "all-time", req.query.limit ? Number(req.query.limit) : 10);
+        res.json({ success: true, data });
+    }
+    catch (error) {
+        next(error);
+    }
+};
 export const create = async (req, res, next) => {
     try {
         const { content, tag, channel } = req.body;

@@ -30,6 +30,7 @@ const feedSchema = new Schema(
       type: String,
       enum: Object.values(FeedType),
       default: FeedType.FEED,
+      default: FeedType.FEED,
     },
 
     referenceId: {
@@ -88,5 +89,7 @@ const feedSchema = new Schema(
   { timestamps: true },
 );
 feedSchema.index({ likes: 1 });
+feedSchema.index({ type: 1, createdAt: -1 });
+feedSchema.index({ "comments.createdAt": -1 });
 
 export default mongoose.model("Feed", feedSchema);

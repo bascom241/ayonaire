@@ -11,6 +11,7 @@ import {
   getCommunityStats,
 } from "../services/feed.service.js";
 import { Response, Request, NextFunction } from "express";
+import { CommunityPeriod, getCommunityLeaderboard } from "../services/communityLeaderboard.service.js";
 import {
   CommentFeedRequest,
   CreateFeedRequest,
@@ -26,6 +27,13 @@ export interface AuthRequest<T = any> extends Request {
   body: T;
   user?: { id: string; email?: string };
 }
+
+export const communityLeaderboard = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const data = await getCommunityLeaderboard((req.query.period as CommunityPeriod) || "all-time", req.query.limit ? Number(req.query.limit) : 10);
+    res.json({ success: true, data });
+  } catch (error) { next(error); }
+};
 
 export const create = async (
   req: AuthRequest,

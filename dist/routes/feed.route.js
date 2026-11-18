@@ -1,13 +1,14 @@
 import express from "express";
 const router = express.Router();
 import { authorize } from "../middlewares/auth.middleware.js";
-import { create, edit, deleteF, view, likeFeed, commentOnAfeed, deleteC, shareFeed, reportFeed, communityStats, } from "../controllers/feed.controller.js";
+import { create, edit, deleteF, view, likeFeed, commentOnAfeed, deleteC, shareFeed, reportFeed, communityStats, communityLeaderboard, } from "../controllers/feed.controller.js";
 import { upload } from "../middlewares/multer.js";
 router.post("/", authorize, upload.single("media"), create);
 router.put("/", authorize, upload.single("media"), edit);
 router.delete("/", authorize, deleteF);
 router.get("/", authorize, view);
 router.get("/community-stats", authorize, communityStats);
+router.get("/community-leaderboard", authorize, communityLeaderboard);
 router.post("/like", authorize, likeFeed);
 router.post("/comment", authorize, commentOnAfeed);
 router.delete("/comment", authorize, deleteC);

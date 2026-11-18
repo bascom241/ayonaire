@@ -52,4 +52,5 @@ const askForHelpQuestionSchema = new Schema(
   { timestamps: true },
 );
 
+askForHelpQuestionSchema.index({ "answers.createdAt": -1 });
 export default mongoose.model("AskForHelpQuestion", askForHelpQuestionSchema);
