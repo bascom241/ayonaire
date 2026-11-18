@@ -30,7 +30,6 @@ const feedSchema = new Schema(
       type: String,
       enum: Object.values(FeedType),
       default: FeedType.FEED,
-      default: FeedType.FEED,
     },
 
     referenceId: {
