@@ -8,6 +8,7 @@ import {
   LessonTranscription,
 } from "../models/courseInteraction.model.js";
 import { callAI } from "../utils/aiClient.js";
+import { nextReminderTime, reminderLocalParts } from "../utils/reminderSchedule.js";
 import { io } from "../server.js";
 
 const ensureCourse = async (courseId: string) => {
@@ -245,16 +246,24 @@ export const listLearningReminders = async (courseId: string, userId: string) =>
   await ensureCourse(courseId);
   const reminders = await LearningReminder.find({ course: courseId, user: userId })
     .sort({ createdAt: -1 });
-  return { reminders };
+  return { reminders, deliveryAvailable: Boolean(process.env.BREVO_API_KEY && process.env.EMAIL_FROM) };
 };
 
 export const createLearningReminder = async (
   courseId: string,
   userId: string,
-  data: { name?: string; frequency?: string; time: string; calendarProvider?: string },
+  data: { name?: string; frequency?: string; time: string; calendarProvider?: string; timezone?: string },
 ) => {
   await ensureCourse(courseId);
-  if (!data.time?.trim()) throw new AppError("time is required", 400);
+  if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(data.time ?? "")) throw new AppError("A valid time is required", 400);
+  if (!data.timezone || typeof data.timezone !== "string") throw new AppError("A time zone is required", 400);
+  if (!data.frequency || !["Daily", "Weekly", "Once"].includes(data.frequency)) throw new AppError("Invalid frequency", 400);
+  let weekday: number;
+  let nextDeliveryAt: Date;
+  try {
+    weekday = reminderLocalParts(new Date(), data.timezone).weekday;
+    nextDeliveryAt = nextReminderTime(new Date(), data.timezone, data.time, data.frequency, weekday);
+  } catch { throw new AppError("Invalid time zone or schedule", 400); }
 
   return LearningReminder.create({
     course: courseId,
@@ -262,6 +271,9 @@ export const createLearningReminder = async (
     name: data.name,
     frequency: data.frequency,
     time: data.time,
+    timezone: data.timezone,
+    weekday,
+    nextDeliveryAt,
     calendarProvider: data.calendarProvider ?? "none",
   });
 };
@@ -293,10 +305,12 @@ export const askCourseAssistant = async (
   const lesson = await ensureLesson(data.lessonId);
   if (!data.question?.trim()) throw new AppError("question is required", 400);
 
-  const answer = await callAI(
+  let answer: string;
+  try { answer = await callAI(
     "course assistant response",
     `Course: ${course.title}\nLesson: ${lesson?.title ?? "Current course"}\nStudent question: ${data.question}`,
-  );
+    true,
+  ); } catch { throw new AppError("The course assistant is temporarily unavailable", 503); }
 
   return {
     answer,

@@ -34,7 +34,9 @@ export const getAll = async (req, res, next) => {
 export const getSingle = async (req, res, next) => {
     try {
         const quizId = req.params.quizId;
-        const data = await getQuizById(quizId);
+        if (!req.user?.id)
+            throw new AppError("Unauthorized", 401);
+        const data = await getQuizById(quizId, req.user.id, req.user.role);
         res.status(200).json({ success: true, data });
     }
     catch (error) {

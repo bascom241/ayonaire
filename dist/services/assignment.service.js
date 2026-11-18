@@ -96,7 +96,13 @@ export const listAssignments = async (userId, role, query) => {
         filter.status = query.status;
     if (query.cohort)
         filter.cohort = query.cohort;
-    if (role !== "admin") {
+    if (role === "user" || role === "student") {
+        const courses = await enrollmentModel.find({ student: userId }).distinct("course");
+        filter.course = query.course && courses.some((id) => id.toString() === query.course)
+            ? query.course : { $in: query.course ? [] : courses };
+        filter.status = "published";
+    }
+    else if (role !== "admin") {
         filter.instructor = userId;
     }
     else if (query.instructor) {
@@ -157,7 +163,7 @@ export const listAssignments = async (userId, role, query) => {
         },
     };
 };
-export const getAssignmentById = async (assignmentId) => {
+export const getAssignmentById = async (assignmentId, userId, role) => {
     const assignment = await assignmentModel
         .findById(assignmentId)
         .populate("course", "title")
@@ -165,6 +171,9 @@ export const getAssignmentById = async (assignmentId) => {
         .populate("module", "title");
     if (!assignment) {
         throw new AppError("Assignment not found", 404);
+    }
+    if ((role === "user" || role === "student") && (assignment.status !== "published" || !(await enrollmentModel.exists({ student: userId, course: assignment.course?._id })))) {
+        throw new AppError("You are not enrolled in this course", 403);
     }
     return assignment;
 };
@@ -224,6 +233,8 @@ export const submitAssignment = async (data) => {
     if (!enrollment) {
         throw new AppError("You are not enrolled in this course", 403);
     }
+    if (assignment.status !== "published")
+        throw new AppError("Assignment not available", 403);
     if (!data.text && !data.file) {
         throw new AppError("Provide either text or a file for the submission", 400);
     }
@@ -254,6 +265,12 @@ export const listSubmissionsForAssignment = async (assignmentId, userId, role) =
     const assignment = await assignmentModel.findById(assignmentId);
     if (!assignment) {
         throw new AppError("Assignment not found", 404);
+    }
+    if (role === "user" || role === "student") {
+        const enrollment = await enrollmentModel.exists({ student: userId, course: assignment.course });
+        if (!enrollment)
+            throw new AppError("You are not enrolled in this course", 403);
+        return assignmentSubmissionModel.find({ assignment: assignmentId, student: userId }).populate("student", "name email");
     }
     if (role !== "admin" && assignment.instructor.toString() !== userId) {
         throw new AppError("You do not own this assignment", 403);

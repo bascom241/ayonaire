@@ -22,7 +22,7 @@ router.post(
   upload.array("materials", 10),
   create,
 );
-router.get("/", authorize, restrictTo("admin", "instructor"), getAll);
+router.get("/", authorize, getAll);
 router.get(
   "/submissions",
   authorize,
@@ -51,7 +51,6 @@ router.post(
 router.get(
   "/:assignmentId/submissions",
   authorize,
-  restrictTo("admin", "instructor"),
   getSubmissions,
 );
 router.put(

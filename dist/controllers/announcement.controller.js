@@ -35,7 +35,7 @@ export const create = async (req, res, next) => {
 export const getAll = async (req, res, next) => {
     try {
         const query = req.query;
-        const data = await getAllAnnounceMents(query);
+        const data = await getAllAnnounceMents(query, req.user?.id, req.user?.role);
         res.status(200).json({ success: true, data });
     }
     catch (error) {

@@ -121,10 +121,14 @@ export const markLessonAsCompleted = async (data) => {
     const enrollment = await enrollmentModel.findOne({
         student: data.studentId,
         course: data.courseId,
+        status: { $ne: "cancelled" },
     });
     if (!enrollment) {
         throw new AppError("enrollment not fount", 404);
     }
+    const lesson = await lessonModel.findOne({ _id: data.lessonId, course: data.courseId, isPublished: true });
+    if (!lesson || (lesson.isLocked && !lesson.isFreePreview))
+        throw new AppError("Lesson is unavailable", 403);
     if (!enrollment.comletedLessons.some((id) => id.toString() === data.lessonId.toString())) {
         enrollment.comletedLessons.push(new mongoose.Types.ObjectId(data.lessonId));
     }
@@ -132,13 +136,14 @@ export const markLessonAsCompleted = async (data) => {
         course: data.courseId,
         isPublished: true,
     });
+    const completedPublishedLessons = await lessonModel.countDocuments({
+        _id: { $in: enrollment.comletedLessons }, course: data.courseId, isPublished: true,
+    });
     enrollment.progress =
         totalLessons > 0
-            ? (enrollment.comletedLessons.length / totalLessons) * 100
+            ? (completedPublishedLessons / totalLessons) * 100
             : 0;
-    if (enrollment.progress >= 100) {
-        enrollment.completed = true;
-    }
+    enrollment.completed = enrollment.progress >= 100;
     await enrollment.save();
     if (enrollment.completed) {
         await issueCertificateIfEligible(data.studentId, data.courseId);
@@ -156,10 +161,14 @@ export const updateLastLesson = async (data) => {
     const enrollment = await enrollmentModel.findOne({
         student: data.studentId,
         course: data.courseId,
+        status: { $ne: "cancelled" },
     });
     if (!enrollment) {
         throw new AppError("enrollment not fount", 404);
     }
+    const lesson = await lessonModel.findOne({ _id: data.lessonId, course: data.courseId, isPublished: true });
+    if (!lesson || (lesson.isLocked && !lesson.isFreePreview))
+        throw new AppError("Lesson is unavailable", 403);
     const updatedEnrollmentLastLesson = await enrollmentModel.findOneAndUpdate({ student: data.studentId, course: data.courseId }, { lastLesson: data.lessonId }, { new: true });
     if (!updatedEnrollmentLastLesson) {
         throw new AppError("could not update last lesson", 400);
@@ -181,18 +190,22 @@ export const getResumeLesson = async (data) => {
     const enrollment = await enrollmentModel.findOne({
         student: data.studentId,
         course: data.courseId,
+        status: { $ne: "cancelled" },
     });
     if (!enrollment) {
         throw new AppError("enrollment not found", 400);
     }
     if (enrollment.lastLesson) {
-        return { lessonId: enrollment.lastLesson.toString() };
+        const last = await lessonModel.findOne({ _id: enrollment.lastLesson, course: data.courseId, isPublished: true, $or: [{ isLocked: false }, { isFreePreview: true }] });
+        if (last)
+            return { lessonId: last._id.toString() };
     }
     // fallback → return first lesson
     const firstLesson = await lessonModel
         .findOne({
         course: data.courseId,
         isPublished: true,
+        $or: [{ isLocked: false }, { isFreePreview: true }],
     })
         .sort({ order: 1 });
     return { lessonId: firstLesson ? firstLesson._id.toString() : null };
@@ -201,6 +214,7 @@ export const viewLessonContent = async (data) => {
     const myEnrollment = await enrollmentModel.findOne({
         student: data.studentId,
         course: data.courseId,
+        status: { $ne: "cancelled" },
     });
     if (!myEnrollment) {
         throw new AppError("You are not enrolled in this course", 403);
@@ -217,8 +231,8 @@ export const viewLessonContent = async (data) => {
         {
             $lookup: {
                 from: "lessons",
-                localField: "_id",
-                foreignField: "module",
+                let: { moduleId: "$_id" },
+                pipeline: [{ $match: { $expr: { $and: [{ $eq: ["$module", "$$moduleId"] }, { $eq: ["$isPublished", true] }] } } }],
                 as: "lessons",
             },
         },
@@ -242,7 +256,8 @@ export const viewLessonContent = async (data) => {
                             $mergeObjects: [
                                 "$$lesson",
                                 {
-                                    isLocked: false,
+                                    videos: { $cond: [{ $and: ["$$lesson.isLocked", { $not: ["$$lesson.isFreePreview"] }] }, [], "$$lesson.videos"] },
+                                    materials: { $cond: [{ $and: ["$$lesson.isLocked", { $not: ["$$lesson.isFreePreview"] }] }, [], "$$lesson.materials"] },
                                     isCompleted: {
                                         $in: ["$$lesson._id", myEnrollment?.comletedLessons ?? [],],
                                     },

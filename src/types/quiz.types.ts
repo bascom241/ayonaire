@@ -95,6 +95,10 @@ export interface SubmitQuizDto {
 
 export interface SubmitQuizResponse {
   score: number;
+  totalPoints: number;
+  correctCount: number;
+  totalQuestions: number;
+  completed: boolean;
   answers: {
     question: string;
     selectedOptions: string[];

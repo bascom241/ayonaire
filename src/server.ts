@@ -8,6 +8,7 @@ import { connectRedis } from "./config/redis.js";
 import http from "http";
 import { Server } from "socket.io";
 import connectSocket from "./socket/index.js";
+import { startReminderDelivery } from "./services/reminderDelivery.service.js";
 
 console.log("Starting server...");
 const server = http.createServer(app);
@@ -37,6 +38,7 @@ const startServer = async () => {
     console.log("⏳ Connecting to database...");
     await connecToDB();
     console.log("✅ Database connected");
+    startReminderDelivery();
 
     server.listen(port, "0.0.0.0", () => {
       console.log(`🚀 Server running on port ${port}`);

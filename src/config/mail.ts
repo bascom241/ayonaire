@@ -34,6 +34,12 @@ const sendTransactionalEmail = async (
   return { success: true, data: response };
 };
 
+export const sendLearningReminderEmail = async (to: string, name: string) => {
+  if (!process.env.BREVO_API_KEY || !process.env.EMAIL_FROM) throw new Error("Reminder email is not configured");
+  const safeName = name.replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character] ?? character);
+  await sendTransactionalEmail(to, "Your learning reminder", `<p>It's time for ${safeName}.</p><p>Visit your student dashboard to continue learning.</p>`);
+};
+
 export const sendVerificationEmail = async (
   to: string,
   name: string,

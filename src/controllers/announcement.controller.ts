@@ -53,13 +53,13 @@ export const create = async (
 };
 
 export const getAll = async (
-  req: Request,
+  req: AuthRequest,
   res: Response,
   next: NextFunction,
 ) => {
   try {
     const query = req.query;
-    const data = await getAllAnnounceMents(query);
+    const data = await getAllAnnounceMents(query, req.user?.id, req.user?.role);
     res.status(200).json({ success: true, data });
   } catch (error) {
     next(error);

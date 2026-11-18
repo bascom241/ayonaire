@@ -1,6 +1,9 @@
 import { NextFunction, Response } from "express";
 import { AuthRequest } from "../middlewares/auth.middleware.js";
 import { AppError } from "../errors/AppError.js";
+import { CourseNote, LearningReminder } from "../models/courseInteraction.model.js";
+import lessonModel from "../models/lesson.model.js";
+import { nextReminderTime, reminderLocalParts } from "../utils/reminderSchedule.js";
 import {
   answerCourseQuestion,
   askCourseAssistant,
@@ -27,6 +30,50 @@ const param = (value: string | string[] | undefined, name: string) => {
     throw new AppError(`${name} is required`, 400);
   }
   return value;
+};
+
+export const notes = async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const items = await CourseNote.find({ course: req.params.courseId, user: requireUserId(req) }).populate("lesson", "title").sort({ createdAt: -1 });
+    res.json({ success: true, data: items.map((item: any) => ({ id: item._id, lessonId: item.lesson?._id, lessonTitle: item.lesson?.title ?? "Deleted lesson", content: item.content, createdAt: item.createdAt })) });
+  } catch (error) { next(error); }
+};
+export const createNote = async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    if (typeof req.body.content !== "string" || !req.body.content.trim() || !req.body.lessonId) throw new AppError("Lesson and content are required", 400);
+    const item = await CourseNote.create({ course: param(req.params.courseId, "courseId"), lesson: req.body.lessonId, user: requireUserId(req), content: req.body.content });
+    res.status(201).json({ success: true, data: item });
+  } catch (error) { next(error); }
+};
+export const importNotes = async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const courseId = param(req.params.courseId, "courseId");
+    const userId = requireUserId(req);
+    if (!Array.isArray(req.body.notes) || req.body.notes.length > 500) throw new AppError("A maximum of 500 notes can be imported at once", 400);
+    const imported: string[] = [];
+    const failed: string[] = [];
+    for (const note of req.body.notes) {
+      if (typeof note?.id !== "string" || !note.id || note.id.length > 128 || typeof note.lessonId !== "string" || typeof note.content !== "string" || !note.content.trim() || note.content.length > 20000 || !Number.isFinite(Date.parse(note.createdAt))) { if (typeof note?.id === "string") failed.push(note.id); continue; }
+      try {
+        if (!(await lessonModel.exists({ _id: note.lessonId, course: courseId }))) { failed.push(note.id); continue; }
+        try { await CourseNote.updateOne({ course: courseId, user: userId, legacyId: note.id }, { $setOnInsert: { course: courseId, user: userId, legacyId: note.id, lesson: note.lessonId, content: note.content.trim(), createdAt: new Date(note.createdAt) } }, { upsert: true, timestamps: false, runValidators: true }); }
+        catch (error: any) { if (error?.code !== 11000) throw error; }
+        const saved = await CourseNote.findOne({ course: courseId, user: userId, legacyId: note.id });
+        if (saved && saved.lesson.toString() === note.lessonId && saved.content === note.content.trim() && saved.createdAt?.getTime() === new Date(note.createdAt).getTime()) imported.push(note.id);
+        else failed.push(note.id);
+      } catch (error: any) {
+        failed.push(note.id);
+      }
+    }
+    res.json({ success: true, data: { imported, failed } });
+  } catch (error) { next(error); }
+};
+export const deleteNote = async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const item = await CourseNote.findOneAndDelete({ _id: param(req.params.noteId, "noteId"), course: param(req.params.courseId, "courseId"), user: requireUserId(req) });
+    if (!item) throw new AppError("Note not found", 404);
+    res.json({ success: true });
+  } catch (error) { next(error); }
 };
 
 export const questions = async (
@@ -191,6 +238,23 @@ export const createReminder = async (
   } catch (error) {
     next(error);
   }
+};
+
+export const activateReminder = async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const reminder = await LearningReminder.findOne({ _id: param(req.params.reminderId, "reminderId"), course: param(req.params.courseId, "courseId"), user: requireUserId(req) });
+    if (!reminder) throw new AppError("Reminder not found", 404);
+    if (reminder.timezone) throw new AppError("Reminder is already activated", 409);
+    const timezone = req.body.timezone;
+    if (typeof timezone !== "string" || !/^([01]\d|2[0-3]):[0-5]\d$/.test(reminder.time)) throw new AppError("A valid time zone and reminder time are required", 400);
+    let weekday: number;
+    let nextDeliveryAt: Date;
+    try { weekday = reminderLocalParts(new Date(), timezone).weekday; nextDeliveryAt = nextReminderTime(new Date(), timezone, reminder.time, reminder.frequency, weekday); }
+    catch { throw new AppError("Invalid time zone or schedule", 400); }
+    const updated = await LearningReminder.findOneAndUpdate({ _id: reminder._id, user: requireUserId(req), $or: [{ timezone: { $exists: false } }, { timezone: null }] }, { $set: { timezone, weekday, nextDeliveryAt }, $unset: { lastError: "" } }, { new: true });
+    if (!updated) throw new AppError("Reminder is already activated", 409);
+    res.json({ success: true, data: updated });
+  } catch (error) { next(error); }
 };
 
 export const deleteReminder = async (

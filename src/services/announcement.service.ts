@@ -5,6 +5,7 @@ import {
 import { AppError } from "../errors/AppError.js";
 import announcementModel from "../models/announcement.model.js";
 import cohortModel from "../models/cohort.model.js";
+import enrollmentModel from "../models/enrollment.model.js";
 import courseModel from "../models/course.model.js";
 import userModel from "../models/user.model.js";
 import {
@@ -142,6 +143,8 @@ export const createAnnouncement = async (
 
 export const getAllAnnounceMents = async (
   data: any,
+  userId?: string,
+  role?: string,
 ): Promise<AnnouncementResponse> => {
   const { page, skip, limit } = getPagination(data);
 
@@ -150,6 +153,13 @@ export const getAllAnnounceMents = async (
   if (data.cohort) filter.cohort = data.cohort;
   if (data.createdBy) filter.createdBy = data.createdBy;
   if (data.status) filter.status = data.status;
+
+  if (role === "user" || role === "student") {
+    const courses = await enrollmentModel.find({ student: userId, status: { $ne: "cancelled" } }).distinct("course");
+    const cohorts = await cohortModel.find({ students: userId }).distinct("_id");
+    filter.status = "published";
+    filter.$or = [{ course: { $in: courses } }, { cohort: { $in: cohorts } }, { students: userId }];
+  }
 
   const [announcements, total] = await Promise.all([
     announcementModel.find(filter).skip(skip).limit(limit).sort({ createdAt: -1 }),

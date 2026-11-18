@@ -42,6 +42,13 @@ const learningReminderSchema = new Schema({
         default: "Daily",
     },
     time: { type: String, required: true },
+    timezone: { type: String },
+    weekday: { type: Number, min: 0, max: 6 },
+    nextDeliveryAt: { type: Date },
+    leaseUntil: { type: Date },
+    leaseToken: { type: String },
+    lastSentAt: { type: Date },
+    lastError: { type: String },
     calendarProvider: {
         type: String,
         enum: ["google", "apple", "none"],
@@ -49,7 +56,18 @@ const learningReminderSchema = new Schema({
     },
 }, { timestamps: true });
 learningReminderSchema.index({ course: 1, user: 1, createdAt: -1 });
+learningReminderSchema.index({ nextDeliveryAt: 1, leaseUntil: 1 });
 export const CourseQuestion = mongoose.model("CourseQuestion", questionSchema);
 export const CourseReview = mongoose.model("CourseReview", reviewSchema);
 export const LessonTranscription = mongoose.model("LessonTranscription", transcriptionSchema);
 export const LearningReminder = mongoose.model("LearningReminder", learningReminderSchema);
+const noteSchema = new Schema({
+    course: { type: Schema.Types.ObjectId, ref: "Course", required: true },
+    lesson: { type: Schema.Types.ObjectId, ref: "Lesson", required: true },
+    user: { type: Schema.Types.ObjectId, ref: "User", required: true },
+    content: { type: String, required: true, trim: true, maxlength: 20000 },
+    legacyId: { type: String, maxlength: 128 },
+}, { timestamps: true });
+noteSchema.index({ course: 1, user: 1, createdAt: -1 });
+noteSchema.index({ course: 1, user: 1, legacyId: 1 }, { unique: true, partialFilterExpression: { legacyId: { $type: "string" } } });
+export const CourseNote = mongoose.model("CourseNote", noteSchema);

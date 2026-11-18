@@ -1,3 +1,5 @@
+import { authenticateSocket } from "./authenticateSocket.js";
+import { canAccessCourse } from "../middlewares/courseAccess.middleware.js";
 const roomSocket = (io) => {
     io.on("connection", (socket) => {
         console.log(socket.id);
@@ -10,9 +12,19 @@ const roomSocket = (io) => {
         socket.on("room:leave", (roomId) => {
             socket.leave(roomId);
         });
-        socket.on("course:qna:join", ({ courseId, lessonId }) => {
+        socket.on("course:qna:join", async ({ courseId, lessonId }) => {
             if (!courseId)
                 return;
+            const authenticated = await new Promise((resolve) => authenticateSocket(socket, (error) => resolve(!error)));
+            if (!authenticated)
+                return;
+            try {
+                if (!(await canAccessCourse(courseId, socket.data.user.id, socket.data.user.role)))
+                    return;
+            }
+            catch {
+                return;
+            }
             socket.join(`course:${courseId}:qna`);
             if (lessonId) {
                 socket.join(`course:${courseId}:lesson:${lessonId}:qna`);

@@ -3,6 +3,7 @@ import moduleModel from "../models/module.model.js";
 import questionModel from "../models/question.model.js";
 import quizModel from "../models/quiz.model.js";
 import quizAttemptModel from "../models/quizAttempt.model.js";
+import enrollmentModel from "../models/enrollment.model.js";
 import { getPagination } from "../utils/getPagination.js";
 import { validateRequestBodyWithValues } from "../utils/validateRequestBody.js";
 export const createQuiz = async (data) => {
@@ -36,7 +37,14 @@ export const listQuizzes = async (userId, role, query) => {
         filter.status = query.status;
     if (query.module)
         filter.module = query.module;
-    if (role !== "admin") {
+    if (role === "user" || role === "student") {
+        const courses = await enrollmentModel.find({ student: userId }).distinct("course");
+        const modules = await moduleModel.find({ course: { $in: courses } }).distinct("_id");
+        filter.module = query.module && modules.some((id) => id.toString() === query.module)
+            ? query.module : { $in: query.module ? [] : modules };
+        filter.status = "active";
+    }
+    else if (role !== "admin") {
         filter.createdBy = userId;
     }
     else if (query.createdBy) {
@@ -101,7 +109,7 @@ export const listQuizzes = async (userId, role, query) => {
         },
     };
 };
-export const getQuizById = async (quizId) => {
+export const getQuizById = async (quizId, userId, role) => {
     const quiz = await quizModel
         .findById(quizId)
         .populate("questions")
@@ -112,6 +120,16 @@ export const getQuizById = async (quizId) => {
     });
     if (!quiz) {
         throw new AppError("Quiz not found", 404);
+    }
+    if (role === "user" || role === "student") {
+        const module = await moduleModel.findById(quiz.module?._id ?? quiz.module);
+        if (quiz.status !== "active" || !module || !(await enrollmentModel.exists({ student: userId, course: module.course }))) {
+            throw new AppError("Quiz not available", 403);
+        }
+        const safe = quiz.toObject();
+        safe.questions = safe.questions.map((q) => ({ ...q, options: q.options.map(({ isCorrect, ...option }) => option) }));
+        safe.course = safe.module?.course;
+        return safe;
     }
     return quiz;
 };
@@ -224,18 +242,32 @@ export const submitQuiz = async (data) => {
         "userId",
         "answers",
     ]);
+    const quiz = await quizModel.findById(data.quizId);
+    if (!quiz || quiz.status !== "active")
+        throw new AppError("Quiz not available", 404);
+    const module = await moduleModel.findById(quiz.module);
+    if (!module || !(await enrollmentModel.exists({ student: data.userId, course: module.course })))
+        throw new AppError("You are not enrolled in this course", 403);
+    if (!quiz.allowRetakes && await quizAttemptModel.exists({ quiz: data.quizId, user: data.userId, completed: true }))
+        throw new AppError("Retakes are not allowed", 400);
     const questions = await questionModel.find({
         quiz: data.quizId,
     });
+    if (!Array.isArray(data.answers) || new Set(data.answers.map((answer) => answer.questionId)).size !== data.answers.length) {
+        throw new AppError("Invalid or duplicate answers", 400);
+    }
     let score = 0;
     const gradedAnswers = data.answers.map((answer) => {
         const question = questions.find((q) => q._id.toString() === answer.questionId);
         if (!question) {
-            throw new Error("Question not found");
+            throw new AppError("Question not found", 400);
+        }
+        if (!Array.isArray(answer.selectedOptions) || new Set(answer.selectedOptions).size !== answer.selectedOptions.length || answer.selectedOptions.some((id) => !question.options.some((option) => option._id.toString() === id))) {
+            throw new AppError("Invalid selected options", 400);
         }
         const correctOptions = question.options
             .filter((opt) => opt.isCorrect)
-            .map((opt) => opt.text);
+            .map((opt) => opt._id.toString());
         const isCorrect = JSON.stringify(correctOptions.sort()) ===
             JSON.stringify(answer.selectedOptions.sort());
         if (isCorrect) {
@@ -256,6 +288,10 @@ export const submitQuiz = async (data) => {
     });
     return {
         score,
+        totalPoints: quiz.totalPoints,
+        correctCount: gradedAnswers.filter((answer) => answer.isCorrect).length,
+        totalQuestions: questions.length,
+        completed: true,
         answers: gradedAnswers,
     };
 };

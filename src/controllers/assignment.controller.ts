@@ -92,13 +92,14 @@ export const getAll = async (
 };
 
 export const getSingle = async (
-  req: Request,
+  req: AuthRequest,
   res: Response,
   next: NextFunction,
 ) => {
   try {
     const assignmentId = req.params.assignmentId as string;
-    const data = await getAssignmentById(assignmentId);
+    if (!req.user?.id) throw new AppError("Unauthorized", 401);
+    const data = await getAssignmentById(assignmentId, req.user.id, req.user.role);
     res.status(200).json({ success: true, data });
   } catch (error) {
     next(error);

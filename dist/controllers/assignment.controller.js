@@ -58,7 +58,9 @@ export const getAll = async (req, res, next) => {
 export const getSingle = async (req, res, next) => {
     try {
         const assignmentId = req.params.assignmentId;
-        const data = await getAssignmentById(assignmentId);
+        if (!req.user?.id)
+            throw new AppError("Unauthorized", 401);
+        const data = await getAssignmentById(assignmentId, req.user.id, req.user.role);
         res.status(200).json({ success: true, data });
     }
     catch (error) {
