@@ -5,6 +5,8 @@ import {
   ensureCourseRoom,
   findOrCreateDM,
   listMyRooms,
+  listAssignedInstructors,
+  messageCourseInstructor,
 } from "../services/room.service.js";
 import { AppError } from "../errors/AppError.js";
 
@@ -45,6 +47,24 @@ export const createGroup = async (
   } catch (error) {
     next(error);
   }
+};
+
+export const instructors = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const id = (req as RoomAuthRequest).user?.id;
+    if (!id) throw new AppError("unauthorized", 401);
+    res.json({ success: true, data: await listAssignedInstructors(id) });
+  } catch (error) { next(error); }
+};
+
+export const instructorConversation = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const id = (req as RoomAuthRequest).user?.id;
+    if (!id) throw new AppError("unauthorized", 401);
+    const courseId = req.params.courseId;
+    if (typeof courseId !== "string") throw new AppError("courseId is required", 400);
+    res.json({ success: true, data: await messageCourseInstructor(courseId, id) });
+  } catch (error) { next(error); }
 };
 
 export const createDM = async (

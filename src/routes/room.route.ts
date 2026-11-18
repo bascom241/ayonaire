@@ -6,12 +6,16 @@ import {
   createDM,
   createCourseRoom,
   list,
+  instructors,
+  instructorConversation,
 } from "../controllers/room.controller.js";
 import { upload } from "../middlewares/multer.js";
 
 router.post("/", authorize, upload.single("profile"), createGroup);
 router.post("/dm", authorize, createDM);
 router.post("/course/:courseId", authorize, createCourseRoom);
+router.get("/instructors", authorize, instructors);
+router.post("/course/:courseId/instructor", authorize, instructorConversation);
 router.get("/", authorize, list);
 
 export default router;

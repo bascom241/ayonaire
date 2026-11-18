@@ -159,10 +159,12 @@ export const getMessagesForRoom = async (
   }
 
   const { page, limit, skip } = getPagination(query);
+  const search = typeof query?.search === "string" ? query.search.trim().slice(0, 200) : "";
+  const filter = search ? { roomId, text: { $regex: search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), $options: "i" } } : { roomId };
 
   const [messages, total] = await Promise.all([
     messageModel
-      .find({ roomId })
+      .find(filter)
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit)
@@ -173,7 +175,7 @@ export const getMessagesForRoom = async (
         populate: { path: "senderId", select: "name profile" },
       })
       .populate("reactions.user", "name profile"),
-    messageModel.countDocuments({ roomId }),
+    messageModel.countDocuments(filter),
   ]);
 
   // Returned newest-first for pagination (page 1 = most recent), but a chat
@@ -242,4 +244,16 @@ export const toggleMessageReaction = async (
   const response = toMessageResponse(updated);
   io.to(response.roomId).emit("message:reaction", response);
   return response;
+};
+
+export const deleteOwnMessage = async (messageId: string, userId: string) => {
+  const message = await messageModel.findById(messageId);
+  if (!message) throw new AppError("Message not found", 404);
+  const room = await roomModel.exists({ _id: message.roomId, participants: userId });
+  if (!room) throw new AppError("You are not a member of this conversation", 403);
+  if (message.senderId.toString() !== userId) throw new AppError("You can only delete your own messages", 403);
+  await messageModel.deleteOne({ _id: messageId, senderId: userId });
+  const result = { id: messageId, roomId: message.roomId.toString() };
+  io.to(result.roomId).emit("message:deleted", result);
+  return result;
 };

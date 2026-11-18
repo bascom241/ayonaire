@@ -1,4 +1,4 @@
-import { getMessagesForRoom, sendMessage, toggleMessageReaction, } from "../services/message.service.js";
+import { getMessagesForRoom, sendMessage, toggleMessageReaction, deleteOwnMessage, } from "../services/message.service.js";
 import { AppError } from "../errors/AppError.js";
 function firstUploadedFile(files, field) {
     if (!files || Array.isArray(files))
@@ -24,6 +24,21 @@ export const send = async (req, res, next) => {
             replyTo,
         };
         const data = await sendMessage(dataToSend);
+        res.status(200).json({ success: true, data });
+    }
+    catch (error) {
+        next(error);
+    }
+};
+export const deleteMessage = async (req, res, next) => {
+    try {
+        const userId = req.user?.id;
+        if (!userId)
+            throw new AppError("unauthorized", 401);
+        const messageId = req.params.messageId;
+        if (typeof messageId !== "string" || !messageId)
+            throw new AppError("messageId is required", 400);
+        const data = await deleteOwnMessage(messageId, userId);
         res.status(200).json({ success: true, data });
     }
     catch (error) {

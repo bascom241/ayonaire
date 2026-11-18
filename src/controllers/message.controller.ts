@@ -4,6 +4,7 @@ import {
   getMessagesForRoom,
   sendMessage,
   toggleMessageReaction,
+  deleteOwnMessage,
 } from "../services/message.service.js";
 import { AppError } from "../errors/AppError.js";
 
@@ -43,6 +44,17 @@ export const send = async (req: Request, res: Response, next: NextFunction) => {
   } catch (error) {
     next(error);
   }
+};
+
+export const deleteMessage = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const userId = (req as MessageAuthRequest).user?.id;
+    if (!userId) throw new AppError("unauthorized", 401);
+    const messageId = req.params.messageId;
+    if (typeof messageId !== "string" || !messageId) throw new AppError("messageId is required", 400);
+    const data = await deleteOwnMessage(messageId, userId);
+    res.status(200).json({ success: true, data });
+  } catch (error) { next(error); }
 };
 
 export const getMessagesForARoom = async (

@@ -1,0 +1,38 @@
+import { describe, expect, it, vi } from "vitest";
+
+const mocks = vi.hoisted(() => ({ exists: vi.fn(), authenticate: vi.fn() }));
+vi.mock("../models/room.model.js", () => ({ default: { exists: mocks.exists } }));
+vi.mock("../socket/authenticateSocket.js", () => ({ authenticateSocket: mocks.authenticate }));
+vi.mock("../middlewares/courseAccess.middleware.js", () => ({ canAccessCourse: vi.fn() }));
+import roomSocket from "../socket/room.socket.js";
+
+describe("messaging socket security", () => {
+  it("requires authentication and joins only rooms where the authenticated user is a participant", async () => {
+    const handlers: Record<string, (...args: any[]) => any> = {};
+    const socket = { data: { user: { id: "student" } }, rooms: new Set<string>(), on: vi.fn((name, cb) => { handlers[name] = cb; }), join: vi.fn(), to: vi.fn() };
+    const io = { use: vi.fn(), on: vi.fn((_event, callback) => callback(socket)) };
+    roomSocket(io as any);
+    expect(io.use).toHaveBeenCalledWith(mocks.authenticate);
+    const id = "507f1f77bcf86cd799439011";
+    const ack = vi.fn();
+    mocks.exists.mockResolvedValueOnce(null).mockResolvedValueOnce({ _id: id });
+    await handlers["room:join"]({ roomId: id }, ack);
+    expect(socket.join).not.toHaveBeenCalled();
+    expect(ack).toHaveBeenLastCalledWith({ success: false });
+    expect(mocks.exists).toHaveBeenCalledWith({ _id: id, participants: "student" });
+    await handlers["room:join"]({ roomId: id }, ack);
+    expect(socket.join).toHaveBeenCalledWith(id);
+    expect(ack).toHaveBeenLastCalledWith({ success: true });
+  });
+  it("does not relay typing into an unjoined room or trust the supplied user", () => {
+    const handlers: Record<string, (...args: any[]) => any> = {};
+    const emit = vi.fn();
+    const socket = { data: { user: { id: "student" } }, rooms: new Set<string>(), on: vi.fn((name, cb) => { handlers[name] = cb; }), to: vi.fn(() => ({ emit })) };
+    roomSocket({ use: vi.fn(), on: vi.fn((_event, callback) => callback(socket)) } as any);
+    handlers["typing:start"]({ roomId: "room", user: "spoofed" });
+    expect(emit).not.toHaveBeenCalled();
+    socket.rooms.add("room");
+    handlers["typing:start"]({ roomId: "room", user: "spoofed" });
+    expect(emit).toHaveBeenCalledWith("typing:start", { roomId: "room", userId: "student" });
+  });
+});

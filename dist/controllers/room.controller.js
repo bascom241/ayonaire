@@ -1,4 +1,4 @@
-import { createGroupRoom, ensureCourseRoom, findOrCreateDM, listMyRooms, } from "../services/room.service.js";
+import { createGroupRoom, ensureCourseRoom, findOrCreateDM, listMyRooms, listAssignedInstructors, messageCourseInstructor, } from "../services/room.service.js";
 import { AppError } from "../errors/AppError.js";
 export const createGroup = async (req, res, next) => {
     try {
@@ -22,6 +22,31 @@ export const createGroup = async (req, res, next) => {
         };
         const data = await createGroupRoom(dataToSend);
         res.status(201).json({ success: true, data });
+    }
+    catch (error) {
+        next(error);
+    }
+};
+export const instructors = async (req, res, next) => {
+    try {
+        const id = req.user?.id;
+        if (!id)
+            throw new AppError("unauthorized", 401);
+        res.json({ success: true, data: await listAssignedInstructors(id) });
+    }
+    catch (error) {
+        next(error);
+    }
+};
+export const instructorConversation = async (req, res, next) => {
+    try {
+        const id = req.user?.id;
+        if (!id)
+            throw new AppError("unauthorized", 401);
+        const courseId = req.params.courseId;
+        if (typeof courseId !== "string")
+            throw new AppError("courseId is required", 400);
+        res.json({ success: true, data: await messageCourseInstructor(courseId, id) });
     }
     catch (error) {
         next(error);

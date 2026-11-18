@@ -5,6 +5,7 @@ import {
   getMessagesForARoom,
   reactToMessage,
   send,
+  deleteMessage,
 } from "../controllers/message.controller.js";
 import { upload } from "../middlewares/multer.js";
 
@@ -18,5 +19,6 @@ router.post(
   send,
 );
 router.post("/:messageId/reactions", authorize, reactToMessage);
+router.delete("/:messageId", authorize, deleteMessage);
 router.get("/:roomId", authorize, getMessagesForARoom);
 export default router;

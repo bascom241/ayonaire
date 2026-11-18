@@ -13,6 +13,7 @@ import {
 } from "../types/room.types.js";
 import { uploadMedia } from "../utils/uploadToCloudinary.js";
 import { validateRequestBodyWithValues } from "../utils/validateRequestBody.js";
+import { EnrollmentStatus } from "../types/enrollment.types.js";
 
 const getProfilePayload = (user: any) =>
   user?.profile ? { url: user.profile.url, publicId: user.profile.publicId } : null;
@@ -237,4 +238,23 @@ export const isRoomParticipant = async (
 ): Promise<boolean> => {
   const room = await roomModel.findOne({ _id: roomId, participants: userId });
   return !!room;
+};
+
+export const listAssignedInstructors = async (studentId: string) => {
+  const enrollments = await enrollmentModel.find({ student: studentId, status: { $ne: EnrollmentStatus.CANCELLED } })
+    .populate({ path: "course", select: "title instructor", populate: { path: "instructor", select: "name profile" } });
+  return enrollments.flatMap((enrollment: any) => {
+    const course = enrollment.course;
+    const instructor = course?.instructor;
+    if (!course || !instructor?._id) return [];
+    return [{ courseId: course._id.toString(), courseTitle: course.title, instructor: { id: instructor._id.toString(), name: instructor.name, profile: getProfilePayload(instructor) } }];
+  });
+};
+
+export const messageCourseInstructor = async (courseId: string, studentId: string) => {
+  const enrollment = await enrollmentModel.findOne({ course: courseId, student: studentId, status: { $ne: EnrollmentStatus.CANCELLED } });
+  if (!enrollment) throw new AppError("You are not enrolled in this course", 403);
+  const course = await courseModel.findById(courseId);
+  if (!course?.instructor) throw new AppError("This course has no assigned instructor", 404);
+  return findOrCreateDM({ userId: studentId, otherUserId: course.instructor.toString() });
 };
