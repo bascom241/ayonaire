@@ -3,8 +3,16 @@ import { authenticateSocket } from "./authenticateSocket.js";
 import { canAccessCourse } from "../middlewares/courseAccess.middleware.js";
 import mongoose from "mongoose";
 import roomModel from "../models/room.model.js";
+import { assertCurrentCourseRoomAccess } from "../services/roomAccess.service.js";
 
 const roomSocket = (io: Server) => {
+  const broadcastPresence = async (roomId: string) => {
+    try {
+      const members = await io.in(roomId).fetchSockets();
+      const userIds = Array.from(new Set(members.map((member) => member.data.user?.id).filter(Boolean)));
+      io.to(roomId).emit("room:presence", { roomId, userIds });
+    } catch { /* A presence failure must not prevent messaging. */ }
+  };
   io.use(authenticateSocket);
   io.on("connection", (socket) => {
     socket.on("room:join", async (data, ack) => {
@@ -14,20 +22,34 @@ const roomSocket = (io: Server) => {
         return;
       }
       try {
-        const room = await roomModel.exists({ _id: roomId, participants: socket.data.user.id });
+        const room = await roomModel.findOne({ _id: roomId, participants: socket.data.user.id });
         if (!room) {
           if (typeof ack === "function") ack({ success: false });
           return;
         }
+        await assertCurrentCourseRoomAccess(room, socket.data.user.id);
         await socket.join(roomId);
+        void broadcastPresence(roomId);
         if (typeof ack === "function") ack({ success: true });
       } catch {
         if (typeof ack === "function") ack({ success: false });
       }
     });
 
-    socket.on("room:leave", (roomId) => {
-      socket.leave(roomId);
+    socket.on("room:leave", async (roomId) => {
+      if (typeof roomId !== "string" || !socket.rooms.has(roomId)) return;
+      await socket.leave(roomId);
+      void broadcastPresence(roomId);
+    });
+
+    socket.on("room:presence:request", (data) => {
+      const roomId = data?.roomId;
+      if (typeof roomId === "string" && socket.rooms.has(roomId)) void broadcastPresence(roomId);
+    });
+
+    socket.on("disconnecting", () => {
+      const rooms = [...socket.rooms].filter((roomId) => mongoose.isValidObjectId(roomId));
+      setTimeout(() => { for (const roomId of rooms) void broadcastPresence(roomId); }, 0);
     });
 
     socket.on("course:qna:join", async ({ courseId, lessonId }) => {

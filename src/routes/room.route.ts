@@ -1,6 +1,6 @@
 import express from "express";
 const router = express.Router();
-import { authorize } from "../middlewares/auth.middleware.js";
+import { authorize, restrictTo } from "../middlewares/auth.middleware.js";
 import {
   createGroup,
   createDM,
@@ -8,14 +8,25 @@ import {
   list,
   instructors,
   instructorConversation,
+  instructorStudents,
 } from "../controllers/room.controller.js";
 import { upload } from "../middlewares/multer.js";
+import { announcementMode, createEvent, deleteEvent, events, pins, preference, read, thread } from "../controllers/chatFeatures.controller.js";
 
 router.post("/", authorize, upload.single("profile"), createGroup);
 router.post("/dm", authorize, createDM);
 router.post("/course/:courseId", authorize, createCourseRoom);
 router.get("/instructors", authorize, instructors);
+router.get("/instructor/students", authorize, restrictTo("instructor"), instructorStudents);
 router.post("/course/:courseId/instructor", authorize, instructorConversation);
+router.get("/:roomId/pins", authorize, pins);
+router.get("/:roomId/threads/:messageId", authorize, thread);
+router.get("/:roomId/events", authorize, events);
+router.post("/:roomId/events", authorize, createEvent);
+router.delete("/:roomId/events/:eventId", authorize, deleteEvent);
+router.post("/:roomId/read", authorize, read);
+router.put("/:roomId/preferences/:preference", authorize, preference);
+router.put("/:roomId/announcement-mode", authorize, announcementMode);
 router.get("/", authorize, list);
 
 export default router;

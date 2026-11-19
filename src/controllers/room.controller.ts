@@ -7,6 +7,7 @@ import {
   listMyRooms,
   listAssignedInstructors,
   messageCourseInstructor,
+  listInstructorStudents,
 } from "../services/room.service.js";
 import { AppError } from "../errors/AppError.js";
 
@@ -55,6 +56,10 @@ export const instructors = async (req: Request, res: Response, next: NextFunctio
     if (!id) throw new AppError("unauthorized", 401);
     res.json({ success: true, data: await listAssignedInstructors(id) });
   } catch (error) { next(error); }
+};
+
+export const instructorStudents = async (req: Request, res: Response, next: NextFunction) => {
+  try { const id = (req as RoomAuthRequest).user?.id; if (!id) throw new AppError("unauthorized", 401); res.json({ success: true, data: await listInstructorStudents(id) }); } catch (error) { next(error); }
 };
 
 export const instructorConversation = async (req: Request, res: Response, next: NextFunction) => {

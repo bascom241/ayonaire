@@ -46,6 +46,10 @@ export interface MessageResponseData {
     count: number;
   }[];
   createdAt: string;
+  editedAt?: string;
+  pinnedAt?: string;
+  readBy?: string[];
+  threadRoot?: string;
 }
 
 export interface GetMessagesRoom {
@@ -61,5 +65,6 @@ export interface GetMessagesResponse {
     page: number;
     limit: number;
     totalPages: number;
+    nextCursor?: string | null;
   };
 }

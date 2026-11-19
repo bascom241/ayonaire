@@ -16,6 +16,9 @@ const roomSchema = new Schema({
             required: true,
         },
     ],
+    mutedBy: [{ type: Schema.Types.ObjectId, ref: "User" }],
+    pinnedBy: [{ type: Schema.Types.ObjectId, ref: "User" }],
+    announcementOnly: { type: Boolean, default: false },
     name: {
         type: String,
     },

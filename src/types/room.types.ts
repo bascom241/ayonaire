@@ -40,6 +40,7 @@ export interface RoomResponse {
   description?: string;
   isGroup: boolean;
   course?: string;
+  announcementOnly?: boolean;
   profile?: {
     url: string;
     publicId: string;
@@ -52,4 +53,7 @@ export interface RoomResponse {
 
 export interface RoomListItem extends RoomResponse {
   lastMessage: RoomLastMessage | null;
+  unreadCount: number;
+  muted: boolean;
+  pinned: boolean;
 }

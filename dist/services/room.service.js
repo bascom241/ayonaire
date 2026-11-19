@@ -7,6 +7,8 @@ import enrollmentModel from "../models/enrollment.model.js";
 import { uploadMedia } from "../utils/uploadToCloudinary.js";
 import { validateRequestBodyWithValues } from "../utils/validateRequestBody.js";
 import { EnrollmentStatus } from "../types/enrollment.types.js";
+import mongoose from "mongoose";
+import { assertCurrentCourseRoomAccess } from "./roomAccess.service.js";
 const getProfilePayload = (user) => user?.profile ? { url: user.profile.url, publicId: user.profile.publicId } : null;
 const toRoomResponse = (room) => ({
     id: room._id.toString(),
@@ -14,6 +16,7 @@ const toRoomResponse = (room) => ({
     description: room.description,
     isGroup: room.isGroup,
     course: room.course?.toString?.(),
+    announcementOnly: !!room.announcementOnly,
     profile: room.profile
         ? { url: room.profile.url, publicId: room.profile.publicId }
         : undefined,
@@ -73,19 +76,20 @@ export const ensureCourseRoom = async (courseId, requesterId, role) => {
         throw new AppError("course not found", 404);
     }
     const instructorId = course.instructor?.toString();
-    if (role === "instructor" && instructorId && instructorId !== requesterId) {
+    if (role === "instructor" && instructorId !== requesterId) {
         throw new AppError("Only the course instructor can manage this room", 403);
     }
     if (role !== "admin" && role !== "instructor") {
         const enrollment = await enrollmentModel.findOne({
             course: courseId,
             student: requesterId,
+            status: { $ne: EnrollmentStatus.CANCELLED },
         });
         if (!enrollment) {
             throw new AppError("You are not enrolled in this course", 403);
         }
     }
-    const enrollments = await enrollmentModel.find({ course: courseId });
+    const enrollments = await enrollmentModel.find({ course: courseId, status: { $ne: EnrollmentStatus.CANCELLED } });
     const participantIds = Array.from(new Set([
         requesterId,
         instructorId,
@@ -145,20 +149,40 @@ export const findOrCreateDM = async (data) => {
     return toRoomResponse(room);
 };
 export const listMyRooms = async (userId) => {
-    const rooms = await roomModel
+    const listedRooms = await roomModel
         .find({ participants: userId })
         .populate("participants", "name profile")
         .sort({ updatedAt: -1 });
+    const access = await Promise.all(listedRooms.map(async (room) => {
+        try {
+            await assertCurrentCourseRoomAccess(room, userId);
+            return true;
+        }
+        catch (error) {
+            if (error instanceof AppError && error.statusCode === 403)
+                return false;
+            throw error;
+        }
+    }));
+    const rooms = listedRooms.filter((_room, index) => access[index]);
     const lastMessages = await messageModel.aggregate([
         { $match: { roomId: { $in: rooms.map((room) => room._id) } } },
         { $sort: { createdAt: -1 } },
         { $group: { _id: "$roomId", message: { $first: "$$ROOT" } } },
     ]);
     const lastMessageByRoom = new Map(lastMessages.map((item) => [item._id.toString(), item.message]));
+    const unreadCounts = await messageModel.aggregate([
+        { $match: { roomId: { $in: rooms.map((room) => room._id) }, senderId: { $ne: new mongoose.Types.ObjectId(userId) }, readBy: { $ne: new mongoose.Types.ObjectId(userId) } } },
+        { $group: { _id: "$roomId", count: { $sum: 1 } } },
+    ]);
+    const unreadByRoom = new Map(unreadCounts.map((item) => [item._id.toString(), item.count]));
     const roomsWithLastMessage = rooms.map((room) => {
         const lastMessage = lastMessageByRoom.get(room._id.toString());
         return {
             ...toRoomResponse(room),
+            unreadCount: unreadByRoom.get(room._id.toString()) ?? 0,
+            muted: (room.mutedBy ?? []).some((id) => id.toString() === userId),
+            pinned: (room.pinnedBy ?? []).some((id) => id.toString() === userId),
             lastMessage: lastMessage
                 ? {
                     text: lastMessage.text || undefined,
@@ -186,6 +210,17 @@ export const listAssignedInstructors = async (studentId) => {
             return [];
         return [{ courseId: course._id.toString(), courseTitle: course.title, instructor: { id: instructor._id.toString(), name: instructor.name, profile: getProfilePayload(instructor) } }];
     });
+};
+export const listInstructorStudents = async (instructorId) => {
+    const courses = await courseModel.find({ instructor: instructorId }).select("_id");
+    const enrollments = await enrollmentModel.find({ course: { $in: courses.map((course) => course._id) }, status: { $ne: EnrollmentStatus.CANCELLED } }).populate("student", "name profile");
+    const students = new Map();
+    for (const enrollment of enrollments) {
+        const student = enrollment.student;
+        if (student?._id)
+            students.set(student._id.toString(), { id: student._id.toString(), name: student.name, profile: getProfilePayload(student) });
+    }
+    return Array.from(students.values()).sort((a, b) => a.name.localeCompare(b.name));
 };
 export const messageCourseInstructor = async (courseId, studentId) => {
     const enrollment = await enrollmentModel.findOne({ course: courseId, student: studentId, status: { $ne: EnrollmentStatus.CANCELLED } });

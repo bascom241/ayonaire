@@ -8,6 +8,7 @@ import {
   deleteMessage,
 } from "../controllers/message.controller.js";
 import { upload } from "../middlewares/multer.js";
+import { edit, pinMessage } from "../controllers/chatFeatures.controller.js";
 
 router.post(
   "/send",
@@ -19,6 +20,8 @@ router.post(
   send,
 );
 router.post("/:messageId/reactions", authorize, reactToMessage);
+router.patch("/:messageId", authorize, edit);
+router.put("/:messageId/pin", authorize, pinMessage);
 router.delete("/:messageId", authorize, deleteMessage);
 router.get("/:roomId", authorize, getMessagesForARoom);
 export default router;

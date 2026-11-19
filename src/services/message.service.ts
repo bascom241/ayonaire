@@ -11,6 +11,8 @@ import { io } from "../server.js";
 import roomModel from "../models/room.model.js";
 import { GetMessagesRoom } from "../types/message.types.js";
 import { getPagination } from "../utils/getPagination.js";
+import { assertCurrentCourseRoomAccess } from "./roomAccess.service.js";
+import userModel from "../models/user.model.js";
 
 const getProfilePayload = (user: any) =>
   user?.profile ? { url: user.profile.url, publicId: user.profile.publicId } : null;
@@ -37,7 +39,7 @@ const groupedReactions = (reactions: any[] = []) => {
   }));
 };
 
-const toMessageResponse = (message: any): MessageResponseData => ({
+export const toMessageResponse = (message: any, includeReadBy = false): MessageResponseData => ({
   id: message._id.toString(),
   senderId: senderPayload(message.senderId),
   roomId: message.roomId.toString(),
@@ -57,6 +59,10 @@ const toMessageResponse = (message: any): MessageResponseData => ({
     : undefined,
   reactions: groupedReactions(message.reactions),
   createdAt: message.createdAt.toISOString(),
+  editedAt: message.editedAt?.toISOString(),
+  pinnedAt: message.pinnedAt?.toISOString(),
+  readBy: includeReadBy ? (message.readBy ?? []).map((id: any) => id.toString()) : undefined,
+  threadRoot: message.threadRoot?.toString(),
 });
 
 export const sendMessage = async (
@@ -77,12 +83,19 @@ export const sendMessage = async (
   if (!room) {
     throw new AppError("You are not a member of this conversation", 403);
   }
+  await assertCurrentCourseRoomAccess(room, senderId);
+  if (room.isGroup && room.announcementOnly) {
+    const sender = await userModel.findById(senderId).select("role");
+    if (sender?.role !== "admin" && !(sender?.role === "instructor" && room.roomCreator.toString() === senderId)) throw new AppError("Only the instructor or an administrator can post announcements", 403);
+  }
 
+  let threadRoot;
   if (replyTo) {
     const parentMessage = await messageModel.findOne({ _id: replyTo, roomId });
     if (!parentMessage) {
       throw new AppError("reply target not found in this conversation", 404);
     }
+    threadRoot = parentMessage.threadRoot ?? parentMessage._id;
   }
 
   let uploadMediaResult;
@@ -101,6 +114,7 @@ export const sendMessage = async (
     senderId,
     text,
     replyTo: replyTo || undefined,
+    threadRoot,
     media: uploadMediaResult
       ? {
           url: uploadMediaResult.secure_url,
@@ -134,7 +148,7 @@ export const sendMessage = async (
     throw new AppError("Error in fetching messages", 400);
   }
 
-  const response = toMessageResponse(fullMessage);
+  const response = toMessageResponse(fullMessage, !room.isGroup);
 
   io.to(roomId).emit("message:new", response);
 
@@ -157,16 +171,23 @@ export const getMessagesForRoom = async (
   if (!room) {
     throw new AppError("You are not a member of this conversation", 403);
   }
+  await assertCurrentCourseRoomAccess(room, requesterId);
 
   const { page, limit, skip } = getPagination(query);
   const search = typeof query?.search === "string" ? query.search.trim().slice(0, 200) : "";
-  const filter = search ? { roomId, text: { $regex: search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), $options: "i" } } : { roomId };
+  const filter: any = search ? { roomId, text: { $regex: search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), $options: "i" } } : { roomId };
+  const before = typeof query?.before === "string" ? query.before : "";
+  if (before) {
+    const anchor = await messageModel.findOne({ _id: before, roomId });
+    if (!anchor) throw new AppError("Message cursor not found in this conversation", 400);
+    filter.$or = [{ createdAt: { $lt: anchor.createdAt } }, { createdAt: anchor.createdAt, _id: { $lt: anchor._id } }];
+  }
 
   const [messages, total] = await Promise.all([
     messageModel
       .find(filter)
-      .sort({ createdAt: -1 })
-      .skip(skip)
+      .sort({ createdAt: -1, _id: -1 })
+      .skip(before ? 0 : skip)
       .limit(limit)
       .populate("senderId", "name profile")
       .populate({
@@ -175,12 +196,12 @@ export const getMessagesForRoom = async (
         populate: { path: "senderId", select: "name profile" },
       })
       .populate("reactions.user", "name profile"),
-    messageModel.countDocuments(filter),
+    messageModel.countDocuments(search ? { roomId, text: filter.text } : { roomId }),
   ]);
 
   // Returned newest-first for pagination (page 1 = most recent), but a chat
   // thread reads oldest-first, so the page itself is reversed before return.
-  const formattedMessages = messages.reverse().map(toMessageResponse);
+  const formattedMessages = messages.reverse().map((message) => toMessageResponse(message, !room.isGroup));
 
   return {
     messages: formattedMessages,
@@ -189,6 +210,7 @@ export const getMessagesForRoom = async (
       page,
       limit,
       totalPages: Math.ceil(total / limit),
+      nextCursor: messages.length === limit ? messages[0]._id.toString() : null,
     },
   };
 };
@@ -214,6 +236,7 @@ export const toggleMessageReaction = async (
   if (!room) {
     throw new AppError("You are not a member of this conversation", 403);
   }
+  await assertCurrentCourseRoomAccess(room, userId);
 
   const selectedEmoji = emoji.trim();
   const hasReacted = (message.reactions ?? []).some(
@@ -241,7 +264,7 @@ export const toggleMessageReaction = async (
     throw new AppError("message not found", 404);
   }
 
-  const response = toMessageResponse(updated);
+  const response = toMessageResponse(updated, !room.isGroup);
   io.to(response.roomId).emit("message:reaction", response);
   return response;
 };
@@ -249,8 +272,9 @@ export const toggleMessageReaction = async (
 export const deleteOwnMessage = async (messageId: string, userId: string) => {
   const message = await messageModel.findById(messageId);
   if (!message) throw new AppError("Message not found", 404);
-  const room = await roomModel.exists({ _id: message.roomId, participants: userId });
+  const room = await roomModel.findOne({ _id: message.roomId, participants: userId });
   if (!room) throw new AppError("You are not a member of this conversation", 403);
+  await assertCurrentCourseRoomAccess(room, userId);
   if (message.senderId.toString() !== userId) throw new AppError("You can only delete your own messages", 403);
   await messageModel.deleteOne({ _id: messageId, senderId: userId });
   const result = { id: messageId, roomId: message.roomId.toString() };

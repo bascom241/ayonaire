@@ -1,4 +1,4 @@
-import { createGroupRoom, ensureCourseRoom, findOrCreateDM, listMyRooms, listAssignedInstructors, messageCourseInstructor, } from "../services/room.service.js";
+import { createGroupRoom, ensureCourseRoom, findOrCreateDM, listMyRooms, listAssignedInstructors, messageCourseInstructor, listInstructorStudents, } from "../services/room.service.js";
 import { AppError } from "../errors/AppError.js";
 export const createGroup = async (req, res, next) => {
     try {
@@ -33,6 +33,17 @@ export const instructors = async (req, res, next) => {
         if (!id)
             throw new AppError("unauthorized", 401);
         res.json({ success: true, data: await listAssignedInstructors(id) });
+    }
+    catch (error) {
+        next(error);
+    }
+};
+export const instructorStudents = async (req, res, next) => {
+    try {
+        const id = req.user?.id;
+        if (!id)
+            throw new AppError("unauthorized", 401);
+        res.json({ success: true, data: await listInstructorStudents(id) });
     }
     catch (error) {
         next(error);

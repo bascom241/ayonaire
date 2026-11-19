@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 const mocks = vi.hoisted(() => ({ exists: vi.fn(), authenticate: vi.fn() }));
-vi.mock("../models/room.model.js", () => ({ default: { exists: mocks.exists } }));
+vi.mock("../models/room.model.js", () => ({ default: { findOne: mocks.exists } }));
 vi.mock("../socket/authenticateSocket.js", () => ({ authenticateSocket: mocks.authenticate }));
 vi.mock("../middlewares/courseAccess.middleware.js", () => ({ canAccessCourse: vi.fn() }));
 import roomSocket from "../socket/room.socket.js";
@@ -32,5 +32,18 @@ describe("messaging socket security", () => {
         socket.rooms.add("room");
         handlers["typing:start"]({ roomId: "room", user: "spoofed" });
         expect(emit).toHaveBeenCalledWith("typing:start", { roomId: "room", userId: "student" });
+    });
+    it("does not reveal presence to sockets outside the room", async () => {
+        const handlers = {};
+        const emit = vi.fn();
+        const sockets = vi.fn().mockResolvedValue([{ data: { user: { id: "member" } } }]);
+        const socket = { data: { user: { id: "student" } }, rooms: new Set(), on: vi.fn((name, cb) => { handlers[name] = cb; }) };
+        const io = { use: vi.fn(), on: vi.fn((_event, callback) => callback(socket)), in: vi.fn(() => ({ fetchSockets: sockets })), to: vi.fn(() => ({ emit })) };
+        roomSocket(io);
+        handlers["room:presence:request"]({ roomId: "room" });
+        expect(sockets).not.toHaveBeenCalled();
+        socket.rooms.add("room");
+        handlers["room:presence:request"]({ roomId: "room" });
+        await vi.waitFor(() => expect(emit).toHaveBeenCalledWith("room:presence", { roomId: "room", userIds: ["member"] }));
     });
 });
