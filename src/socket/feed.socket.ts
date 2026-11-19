@@ -182,6 +182,16 @@ const feedSocket = (io: Server) => {
       }
     });
 
+    socket.on("feed:get", async (payload: { feedId?: string }, ack?: unknown) => {
+      const respond = safeAck(ack);
+      try {
+        if (!payload?.feedId || !mongoose.isValidObjectId(payload.feedId)) throw new Error("Invalid post link");
+        const data = await getFeedById(payload.feedId);
+        if (!data) throw new Error("Post not found");
+        respond({ success: true, data });
+      } catch (err) { respond({ success: false, message: errorMessage(err) }); }
+    });
+
     socket.on("feed:like", async (payload: LikeFeedPayload, ack?: unknown) => {
       const respond = safeAck(ack);
       try {
